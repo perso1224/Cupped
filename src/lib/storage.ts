@@ -113,6 +113,13 @@ export async function persistPhoto(tempUri: string, id: string): Promise<string>
   if (dest.exists) dest.delete();
   const source = await shrinkPhoto(tempUri);
   await new File(source).copy(dest);
+  if (source !== tempUri) {
+    try {
+      new File(source).delete(); // küçültülmüş geçici kopya
+    } catch {
+      // önemli değil
+    }
+  }
   return `cups/${id}.jpg`;
 }
 
@@ -259,16 +266,21 @@ export function recordShare(source: ShareSource, result: 'tap' | 'completed', ac
 }
 
 /** Tüm verileri tek bir JSON dosyasına yazar (yedek / kurucuya göndermek için). Dosya adresini döner. */
-export async function exportAllData(): Promise<string> {
-  const [entries, profile, metrics, counters] = await Promise.all([loadEntries(), loadProfile(), loadMetrics(), loadCounters()]);
-  const d = new Date();
-  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-  const file = new File(Paths.cache, `cupped-yedek-${stamp}.json`);
-  file.create({ overwrite: true });
-  await file.write(
-    JSON.stringify({ app: 'Cupped', format: 1, exportedAt: d.toISOString(), profile, entries, metrics, counters }, null, 2),
-  );
-  return file.uri;
+export function exportAllData(): Promise<string> {
+  return enqueue(async () => {
+    // Okunamayan veri varsa boş "yedek" üretmek yerine hata ver (kullanıcı uyarılır)
+    const entries = await readEntriesStrict();
+    const [profile, metrics, counters, settings] = await Promise.all([loadProfile(), loadMetrics(), loadCounters(), loadSettings()]);
+    const d = new Date();
+    const p2 = (n: number) => String(n).padStart(2, '0');
+    const stamp = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}`;
+    const file = new File(Paths.cache, `cupped-yedek-${stamp}.json`);
+    file.create({ overwrite: true });
+    await file.write(
+      JSON.stringify({ app: 'Cupped', format: 1, exportedAt: d.toISOString(), profile, settings, entries, metrics, counters }, null, 2),
+    );
+    return file.uri;
+  });
 }
 
 // ---------- Ayarlar (bellekte de tutulur; değişince useSettings dinleyicileri güncellenir) ----------
@@ -286,24 +298,34 @@ export function subscribeSettings(fn: (s: Settings) => void): () => void {
   return () => settingsListeners.delete(fn);
 }
 
-export async function loadSettings(): Promise<Settings> {
-  if (settingsLoaded) return settingsCache;
-  try {
-    settingsCache = normalizeSettings(JSON.parse((await AsyncStorage.getItem(SETTINGS_KEY)) ?? 'null'));
-  } catch {
-    settingsCache = normalizeSettings(null);
+let settingsLoading: Promise<Settings> | null = null;
+
+/** Ayarları bir kez yükler; aynı anda gelen çağrılar aynı yüklemeyi bekler (bir değişiklik ezilmesin). */
+export function loadSettings(): Promise<Settings> {
+  if (settingsLoaded) return Promise.resolve(settingsCache);
+  if (!settingsLoading) {
+    settingsLoading = (async () => {
+      try {
+        settingsCache = normalizeSettings(JSON.parse((await AsyncStorage.getItem(SETTINGS_KEY)) ?? 'null'));
+      } catch {
+        settingsCache = normalizeSettings(null);
+      }
+      settingsLoaded = true;
+      settingsListeners.forEach((fn) => fn(settingsCache));
+      return settingsCache;
+    })();
   }
-  settingsLoaded = true;
-  settingsListeners.forEach((fn) => fn(settingsCache));
-  return settingsCache;
+  return settingsLoading;
 }
 
-export async function updateSettings(patch: Partial<Settings>): Promise<Settings> {
-  const next = normalizeSettings({ ...(await loadSettings()), ...patch });
-  settingsCache = next;
-  settingsListeners.forEach((fn) => fn(next));
-  await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
-  return next;
+export function updateSettings(patch: Partial<Settings>): Promise<Settings> {
+  return enqueue(async () => {
+    const next = normalizeSettings({ ...(await loadSettings()), ...patch });
+    settingsCache = next;
+    settingsListeners.forEach((fn) => fn(next));
+    await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+    return next;
+  });
 }
 
 // ---------- Yedekten geri yükleme ve silme ----------
@@ -312,17 +334,32 @@ export async function updateSettings(patch: Partial<Settings>): Promise<Settings
  * Dışa aktarılmış yedek dosyasını (JSON) okuyup fincanları birleştirir (aynı id'ler tekrar eklenmez).
  * Profil yoksa yedekteki profil kullanılır. Eklenen fincan sayısını döner.
  */
+export class InvalidBackupError extends Error {}
+
 export function importBackup(json: string): Promise<number> {
   return enqueue(async () => {
-    const data = JSON.parse(json) as { entries?: unknown; profile?: unknown };
-    const incoming = parseEntries(JSON.stringify(Array.isArray(data.entries) ? data.entries : []));
+    let data: { app?: unknown; format?: unknown; entries?: unknown; profile?: unknown; settings?: unknown };
+    try {
+      data = JSON.parse(json);
+    } catch {
+      throw new InvalidBackupError('json');
+    }
+    // Sadece Cupped yedekleri (başka uygulamanın JSON'u "0 eklendi" diye başarılı görünmesin)
+    if (!data || data.app !== 'Cupped' || !Array.isArray(data.entries) || (typeof data.format === 'number' && data.format > 1)) {
+      throw new InvalidBackupError('format');
+    }
+    const incoming = parseEntries(JSON.stringify(data.entries));
     const current = await readEntriesStrict();
     const ids = new Set(current.map((e) => e.id));
     // Yedekteki fotoğraflar bu telefonda yok: fotoğrafsız eklenir
     const added = incoming.filter((e) => !ids.has(e.id)).map((e) => ({ ...e, photoUri: null }));
     await writeEntries([...added, ...current]);
-    if (!(await loadProfile()) && data.profile && typeof data.profile === 'object') {
-      await saveProfile(data.profile as Profile);
+    // Ayarlar: bu telefonda hâlâ varsayılanlar kullanılıyorsa yedekteki ayarları al (hatırlatma saati, kafein…)
+    if (data.settings && JSON.stringify(await loadSettings()) === JSON.stringify(normalizeSettings(null))) {
+      const next = normalizeSettings(data.settings);
+      settingsCache = next;
+      settingsListeners.forEach((fn) => fn(next));
+      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
     }
     return added.length;
   });
@@ -331,12 +368,22 @@ export function importBackup(json: string): Promise<number> {
 /** Tüm verileri siler (fincanlar, fotoğraflar, profil, ölçümler, ayarlar). Geri alınamaz. */
 export function deleteAllData(): Promise<void> {
   return enqueue(async () => {
-    await AsyncStorage.multiRemove([ENTRIES_KEY, ENTRIES_BACKUP_KEY, COUNTERS_KEY, METRICS_KEY, SETTINGS_KEY, PROFILE_KEY]);
+    // Tüm Cupped anahtarları (yedek ve bozuk-kopya anahtarları dahil)
+    const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('cupped.'));
+    await AsyncStorage.multiRemove(keys);
     try {
       const dir = new Directory(Paths.document, 'cups');
       if (dir.exists) dir.delete();
     } catch {
       // fotoğraf klasörü silinemese de veriler silinmiş olur
+    }
+    // Önbellekteki dışa aktarma dosyaları ve geçici fotoğraflar
+    try {
+      for (const item of Paths.cache.list()) {
+        if (item instanceof File && (item.name.startsWith('cupped-yedek-') || /\.(jpe?g|png)$/i.test(item.name))) item.delete();
+      }
+    } catch {
+      // önbellek temizlenemese de veriler silinmiş olur
     }
     settingsCache = normalizeSettings(null);
     settingsListeners.forEach((fn) => fn(settingsCache));

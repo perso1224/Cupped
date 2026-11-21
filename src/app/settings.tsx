@@ -1,21 +1,21 @@
 import Constants from 'expo-constants';
+import { BackButton } from '../components/NavButtons';
 import { File } from 'expo-file-system';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '../components/Icon';
 import { ListRow, ListSection } from '../components/List';
 import { tr } from '../i18n/tr';
 import type { PalateGoal } from '../lib/onboarding';
-import { refreshReminder, setReminderEnabled } from '../lib/reminders';
+import { cancelReminders, refreshReminder, setReminderEnabled } from '../lib/reminders';
 import { CAFFEINE_REFS, REMINDER_TIMES, timeLabel } from '../lib/settings';
 import { shareFile } from '../lib/share';
 import { deleteAllData, exportAllData, importBackup, saveProfile, updateSettings } from '../lib/storage';
 import { useMetrics } from '../lib/useMetrics';
 import { useProfile } from '../lib/useProfile';
 import { useSettings } from '../lib/useSettings';
-import { colors, tint, type } from '../theme';
+import { colors, tint, type, layout } from '../theme';
 
 const GOALS: PalateGoal[] = ['explore', 'brew', 'taste', 'log'];
 
@@ -49,9 +49,17 @@ export default function SettingsScreen() {
 
   async function saveNick() {
     if (!profile || nick === null) return;
-    await saveProfile({ ...profile, nickname: nick.trim().slice(0, 24) });
+    const clean = nick.trim().replace(/^@+/, '').slice(0, 24);
     setNick(null);
+    if (clean !== profile.nickname) await saveProfile({ ...profile, nickname: clean });
   }
+
+  // Geri'ye klavye açıkken basılsa da takma ad kaybolmasın
+  const latest = useRef({ saveNick });
+  useEffect(() => {
+    latest.current.saveNick = saveNick;
+  });
+  useEffect(() => () => void latest.current.saveNick(), []);
 
   async function toggleReminder(v: boolean) {
     const ok = await setReminderEnabled(v);
@@ -72,6 +80,7 @@ export default function SettingsScreen() {
       const picked = await File.pickFileAsync({ mimeTypes: ['application/json'] });
       if (picked.canceled || !picked.result) return;
       const added = await importBackup(await picked.result.text());
+      refreshReminder();
       Alert.alert(tr.settings.importDone(added));
     } catch {
       Alert.alert(tr.settings.importError);
@@ -82,7 +91,7 @@ export default function SettingsScreen() {
     confirm(tr.settings.deleteAllTitle, tr.settings.deleteAllBody, tr.settings.deleteAllOk, () =>
       confirm(tr.settings.deleteAllTitle2, tr.settings.deleteAllBody2, tr.settings.deleteAllOk, async () => {
         await deleteAllData();
-        router.replace('/onboarding');
+        await cancelReminders(); // gezinme kendiliğinden tanıtıma geçer
       }),
     );
   }
@@ -90,13 +99,10 @@ export default function SettingsScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 40 }}
+      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: 16, paddingBottom: insets.bottom + 40 }}
       keyboardShouldPersistTaps="handled"
     >
-      <Pressable onPress={() => router.back()} hitSlop={12} style={styles.back}>
-        <Icon name="chevron-back" size={24} color={colors.accent} />
-        <Text style={styles.backText}>{tr.settings.back}</Text>
-      </Pressable>
+      <BackButton label={tr.profile.title} />
       <Text style={styles.title}>{tr.settings.title}</Text>
 
       <ListSection title={tr.settings.profile}>
@@ -109,9 +115,8 @@ export default function SettingsScreen() {
               value={nickValue}
               onChangeText={setNick}
               onEndEditing={saveNick}
-              onSubmitEditing={saveNick}
               placeholder={tr.onboarding.nickPlaceholder}
-              placeholderTextColor="#C4BEB6"
+              placeholderTextColor={colors.tertiary}
               autoCapitalize="none"
               returnKeyType="done"
               style={styles.input}

@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   badgeText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   ringWrap: { alignSelf: 'center', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   body: { alignItems: 'center', paddingHorizontal: 24 },
-  kicker: { fontSize: 12, fontWeight: '800', color: colors.accent, letterSpacing: 1.2 },
+  kicker: { fontSize: 12, fontWeight: '800', color: colors.accentText, letterSpacing: 1.2 },
   typeName: { fontWeight: '900', color: colors.text, marginTop: 4, textAlign: 'center', letterSpacing: -0.5 },
   tagline: { fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 6, lineHeight: 20 },
   footer: { position: 'absolute', left: 16, right: 16, alignItems: 'center' },

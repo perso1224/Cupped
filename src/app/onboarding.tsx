@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Animated, Easing, KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Icon } from '../components/Icon';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PressScale, haptic } from '../components/motion';
+import { PressScale, haptic, reduceMotionNow } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { BRAND } from '../config/brand';
 import { tr, upper } from '../i18n/tr';
@@ -34,6 +35,10 @@ export default function Onboarding() {
   const [fade] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
+    if (reduceMotionNow()) {
+      fade.setValue(1);
+      return;
+    }
     fade.setValue(0);
     Animated.timing(fade, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [step, fade]);
@@ -45,7 +50,7 @@ export default function Onboarding() {
   }
 
   function toggleNote(n: TasteNote) {
-    haptic.select();
+    
     setA((p) => {
       const cur = p.notes ?? [];
       if (cur.includes(n)) return { ...p, notes: cur.filter((x) => x !== n) };
@@ -64,11 +69,15 @@ export default function Onboarding() {
   };
   const starterTypeId = starterPalateTypeId(answers);
 
+  const finishing = useRef(false);
   async function finish() {
+    if (finishing.current) return; // çift dokunuş
+    finishing.current = true;
+    // Profil kaydedilince gezinme kendiliğinden ana sayfaya geçer (_layout: Stack.Protected).
     await saveProfile({ ...answers, starterTypeId, onboardedAt: new Date().toISOString() });
     haptic.success();
-    router.replace('/');
-    setTimeout(() => router.push('/new'), 350);
+    // Ana sayfa yerleştikten sonra ilk fincan ekranını aç
+    setTimeout(() => router.push('/new'), 450);
   }
 
   let content: React.ReactNode;
@@ -180,9 +189,9 @@ export default function Onboarding() {
       <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 }}>
         {step >= 1 && step <= QUESTIONS ? (
           <View style={styles.topRow}>
-            <Pressable onPress={() => setStep((s) => s - 1)} hitSlop={12}>
-              <Text style={styles.back}>‹</Text>
-            </Pressable>
+            <PressScale onPress={() => setStep((s) => s - 1)} hitSlop={12} scaleTo={0.9} accessibilityLabel={tr.settings.back}>
+              <Icon name="chevron-back" size={26} color={colors.text} />
+            </PressScale>
             <View style={styles.progress}>
               <View style={[styles.progressFill, { width: `${(step / QUESTIONS) * 100}%` }]} />
             </View>
@@ -215,7 +224,7 @@ function Option({ label, selected, onPress }: { label: string; selected: boolean
 }
 
 const styles = StyleSheet.create({
-  brand: { fontSize: 22, fontWeight: '900', color: colors.accent, letterSpacing: -0.3 },
+  brand: { fontSize: 22, fontWeight: '900', color: colors.accentText, letterSpacing: -0.3 },
   welcomeTitle: { fontSize: 44, fontWeight: '900', color: colors.text, letterSpacing: -1.5, lineHeight: 48, marginTop: 12 },
   body: { fontSize: 17, color: colors.muted, lineHeight: 25, marginTop: 16 },
   topRow: { flexDirection: 'row', alignItems: 'center' },
@@ -250,7 +259,7 @@ const styles = StyleSheet.create({
   },
   revealCard: { backgroundColor: colors.black, borderRadius: 28, padding: 28 },
   revealKicker: { color: colors.accent, fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },
-  revealNick: { color: '#BDB6AC', fontSize: 16, fontWeight: '700', marginTop: 10 },
+  revealNick: { color: colors.mutedOnDark, fontSize: 16, fontWeight: '700', marginTop: 10 },
   revealName: { color: colors.white, fontSize: 40, fontWeight: '900', letterSpacing: -1, marginTop: 8, lineHeight: 44 },
-  revealTagline: { color: '#CFC8BE', fontSize: 17, lineHeight: 24, marginTop: 12 },
+  revealTagline: { color: colors.mutedOnDark, fontSize: 17, lineHeight: 24, marginTop: 12 },
 });

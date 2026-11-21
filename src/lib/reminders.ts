@@ -16,8 +16,28 @@ Notifications.setNotificationHandler({
   }),
 });
 
-/** Ayar açıksa bildirimi yeniden kurar; kapalıysa hepsini iptal eder. Hata verirse sessizce geçer. */
-export async function refreshReminder(): Promise<void> {
+const REMINDER_ID = 'cupped-daily';
+let chain: Promise<void> = Promise.resolve();
+
+/**
+ * Ayar açıksa bildirimi yeniden kurar; kapalıysa hepsini iptal eder. Hata verirse sessizce geçer.
+ * Çağrılar sıraya girer: aynı anda gelen iki çağrı iki bildirim kurmasın.
+ */
+export function refreshReminder(): Promise<void> {
+  chain = chain.then(doRefresh, doRefresh);
+  return chain;
+}
+
+/** Tüm hatırlatmaları iptal eder (ör. "Tüm verileri sil"). */
+export function cancelReminders(): Promise<void> {
+  chain = chain.then(
+    () => Notifications.cancelAllScheduledNotificationsAsync().catch(() => {}),
+    () => Notifications.cancelAllScheduledNotificationsAsync().catch(() => {}),
+  );
+  return chain;
+}
+
+async function doRefresh(): Promise<void> {
   try {
     const m = await loadMetrics();
     await Notifications.cancelAllScheduledNotificationsAsync();
@@ -29,6 +49,7 @@ export async function refreshReminder(): Promise<void> {
     const s = await loadSettings();
     const r = nextReminder(days, currentStreak(entries), new Date(), s.reminderHour, s.reminderMinute);
     await Notifications.scheduleNotificationAsync({
+      identifier: REMINDER_ID,
       content: { title: r.title, body: r.body },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at },
     });

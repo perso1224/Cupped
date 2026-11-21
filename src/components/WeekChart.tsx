@@ -4,6 +4,7 @@ import Svg, { Line } from 'react-native-svg';
 import { tr } from '../i18n/tr';
 import type { StripDay } from '../lib/progress';
 import { colors, type } from '../theme';
+import { reduceMotionNow } from './motion';
 
 const H = 120;
 
@@ -13,6 +14,10 @@ export function WeekChart({ days }: { days: StripDay[] }) {
   const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
   const [grow] = useState(() => new Animated.Value(0));
   useEffect(() => {
+    if (reduceMotionNow()) {
+      grow.setValue(1);
+      return;
+    }
     grow.setValue(0);
     Animated.timing(grow, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [grow, scores.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps

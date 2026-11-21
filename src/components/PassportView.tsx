@@ -83,8 +83,9 @@ export function PassportView({ header, focus }: { header: ReactNode; focus?: Pas
       <Text style={styles.section} onLayout={(e) => handleSectionLayout('places', e.nativeEvent.layout.y)}>{tr.passport.places}</Text>
       {p.places.length === 0 ? <Text style={styles.empty}>{tr.passport.noPlaces}</Text> : null}
       <View style={styles.stamps}>
-        {p.places.map((pl) => (
-          <View key={pl.name} style={styles.placeStamp}>
+        {p.places.map((pl, i) => (
+          <FadeIn key={pl.name} index={i} style={styles.placeWrap}>
+          <View style={styles.placeStamp}>
             <Text style={styles.placeName} numberOfLines={2}>
               {pl.name}
             </Text>
@@ -93,6 +94,7 @@ export function PassportView({ header, focus }: { header: ReactNode; focus?: Pas
               {new Date(pl.firstVisit).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
             </Text>
           </View>
+          </FadeIn>
         ))}
       </View>
     </ScrollView>
@@ -110,12 +112,13 @@ function Stamp({ label, earned }: { label: string; earned: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  summary: { ...type.headline, color: colors.accent, marginTop: 4 },
+  summary: { ...type.headline, color: colors.accentText, marginTop: 4 },
   section: { ...type.title2, marginTop: 28, marginBottom: 12 },
-  stamps: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
+  stamps: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   stamp: {
-    width: '31%',
-    margin: 4,
+    flexBasis: '30%',
+    flexGrow: 1,
+    maxWidth: '32%',
     minHeight: 64,
     borderRadius: 16,
     alignItems: 'center',
@@ -125,20 +128,18 @@ const styles = StyleSheet.create({
   },
   stampOn: { backgroundColor: colors.black, borderColor: colors.black },
   stampOff: { backgroundColor: 'transparent', borderColor: colors.line, borderStyle: 'dashed' },
-  stampText: { fontSize: 13, fontWeight: '700', color: colors.muted, textAlign: 'center' },
+  stampText: { ...type.footnote, fontWeight: '600', textAlign: 'center' },
   badge: { flexDirection: 'row', alignItems: 'center', padding: 14, marginBottom: 10 },
   badgeIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   badgeName: { ...type.headline },
   progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   progressTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.line, overflow: 'hidden', marginRight: 8 },
   progressFill: { height: 6, backgroundColor: colors.accent },
-  progressText: { fontSize: 12, fontWeight: '700', color: colors.muted },
+  progressText: { ...type.caption, fontWeight: '700' },
   badgeDesc: { ...type.footnote, marginTop: 2 },
   empty: { ...type.subhead },
+  placeWrap: { flexBasis: '46%', flexGrow: 1, maxWidth: '49%' },
   placeStamp: {
-    width: '46%',
-    flexGrow: 1,
-    margin: 4,
     borderRadius: 18,
     padding: 14,
     backgroundColor: colors.accentSoft,

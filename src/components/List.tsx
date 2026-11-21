@@ -75,15 +75,15 @@ export function ListRow({
         <Switch
           value={toggle}
           onValueChange={(v) => {
-            haptic.select();
             onToggle?.(v);
+            haptic.select();
           }}
           trackColor={{ true: colors.accent, false: colors.line }}
           thumbColor="#fff"
           ios_backgroundColor={colors.line}
         />
       ) : null}
-      {chevron ? <Icon name="chevron-forward" size={18} color="#C4BEB6" /> : null}
+      {chevron ? <Icon name="chevron-forward" size={18} color={colors.tertiary} /> : null}
     </View>
   );
   if (!onPress) return content;

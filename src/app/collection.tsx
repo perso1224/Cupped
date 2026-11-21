@@ -1,6 +1,6 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Icon } from '../components/Icon';
+import { useLocalSearchParams } from 'expo-router';
+import { BackButton } from '../components/NavButtons';
+import { StyleSheet, Text, View } from 'react-native';
 import { PassportView, type PassportFocus } from '../components/PassportView';
 import { tr } from '../i18n/tr';
 import { colors, type } from '../theme';
@@ -13,10 +13,7 @@ export default function Collection() {
       focus={focus}
       header={
         <View>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.back}>
-            <Icon name="chevron-back" size={24} color={colors.accent} />
-            <Text style={styles.backText}>{tr.profile.title}</Text>
-          </Pressable>
+          <BackButton label={tr.profile.title} />
           <Text style={styles.title}>{tr.passport.title}</Text>
         </View>
       }

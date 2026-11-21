@@ -12,7 +12,6 @@ import {
   InputAccessoryView,
   Keyboard,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,7 +19,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { animateLayout, haptic } from '../components/motion';
+import { Icon } from '../components/Icon';
+import { CloseButton, goBack } from '../components/NavButtons';
+import { PressScale, animateLayout, haptic, reduceMotionNow } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
 import { computePalateTypeId } from '../lib/palate';
@@ -29,7 +30,7 @@ import { refreshReminder } from '../lib/reminders';
 import { knownPlaces, loadEntries, newId, persistPhoto, saveEntry, updateMetrics } from '../lib/storage';
 import { brewRatio, earnedBadges } from '../lib/progress';
 import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from '../lib/types';
-import { colors } from '../theme';
+import { colors, type } from '../theme';
 
 /** Klavyenin üstündeki "Bitti" çubuğu (sayı klavyesinde ve notta Return tuşu yok). */
 const KB_DONE = 'cupped-kb-done';
@@ -86,12 +87,28 @@ export default function NewCup() {
 
   const places = knownPlaces(history).slice(0, 6);
 
+  /** Kapat: bir şey seçildiyse önce sor (tam ekran modalda kaydırarak kapatma yok, tek çıkış burası). */
+  function closeNew() {
+    const dirty = !!(photo || method || where || typed.trim() || notes.length || origin.trim() || dose || water || grind || note.trim());
+    if (!dirty) return goBack();
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm?.(tr.capture.discardTitle)) goBack();
+      return;
+    }
+    Alert.alert(tr.capture.discardTitle, tr.capture.discardBody, [
+      { text: tr.capture.keepEditing, style: 'cancel' },
+      { text: tr.capture.discard, style: 'destructive', onPress: goBack },
+    ]);
+  }
+
   async function takePhoto() {
     if (!cameraReady || capturing) return;
     setCapturing(true);
     // Deklanşör flaşı (iOS kamerasındaki gibi kısa beyaz parlama)
-    flash.setValue(0.85);
-    Animated.timing(flash, { toValue: 0, duration: 260, useNativeDriver: true }).start();
+    if (!reduceMotionNow()) {
+      flash.setValue(0.85);
+      Animated.timing(flash, { toValue: 0, duration: 260, useNativeDriver: true }).start();
+    }
     haptic.light();
     try {
       const pic = await cameraRef.current?.takePictureAsync({ quality: 0.6 });
@@ -159,7 +176,7 @@ export default function NewCup() {
       }).catch(() => {});
       refreshReminder();
       haptic.success();
-      router.replace({ pathname: '/cup/[id]', params: { id, fresh: '1', ...(newBadges ? { badges: newBadges } : {}) } });
+      router.replace({ pathname: '/result/[id]', params: { id, fresh: '1', ...(newBadges ? { badges: newBadges } : {}) } });
     } catch {
       Alert.alert(tr.capture.saveError);
     } finally {
@@ -195,28 +212,34 @@ export default function NewCup() {
           </View>
         ) : null}
 
-        <Pressable onPress={() => router.back()} style={[styles.close, { top: insets.top + 8 }]} hitSlop={12}>
-          <Text style={styles.closeText}>✕</Text>
-        </Pressable>
+        <View style={[styles.close, { top: insets.top + 8 }]}>
+          <CloseButton dark onPress={closeNew} />
+        </View>
 
         <View style={[styles.cameraBar, { paddingBottom: insets.bottom + 20 }]}>
-          <Pressable onPress={pickFromGallery} style={styles.sideBtn}>
+          <PressScale onPress={pickFromGallery} scaleTo={0.93} style={styles.sideBtn}>
+            <Icon name="images-outline" size={24} color={colors.white} />
             <Text style={styles.sideText}>{tr.capture.fromGallery}</Text>
-          </Pressable>
-          <Pressable
+          </PressScale>
+          <PressScale
             onPress={takePhoto}
             disabled={!permission?.granted || !cameraReady || capturing}
-            style={({ pressed }) => [
-              styles.shutter,
-              (!permission?.granted || !cameraReady || capturing) && { opacity: 0.3 },
-              pressed && { transform: [{ scale: 0.92 }] },
-            ]}
+            scaleTo={0.9}
+            style={[styles.shutter, (!permission?.granted || !cameraReady || capturing) && { opacity: 0.3 }]}
           >
             <View style={styles.shutterInner} />
-          </Pressable>
-          <Pressable onPress={() => setStep('details')} style={styles.sideBtn}>
+          </PressScale>
+          <PressScale
+            onPress={() => {
+              haptic.select();
+              setStep('details');
+            }}
+            scaleTo={0.93}
+            style={styles.sideBtn}
+          >
+            <Icon name="arrow-forward-circle-outline" size={24} color={colors.white} />
             <Text style={styles.sideText}>{tr.capture.skipPhoto}</Text>
-          </Pressable>
+          </PressScale>
         </View>
       </View>
     );
@@ -234,12 +257,16 @@ export default function NewCup() {
         automaticallyAdjustKeyboardInsets
       >
         <View style={styles.topRow}>
-          <Pressable onPress={() => setStep('photo')} hitSlop={12}>
-            {photo ? <Image source={{ uri: photo }} style={styles.preview} /> : <View style={[styles.preview, styles.previewEmpty]}><Text style={{ fontSize: 28 }}>☕</Text></View>}
-          </Pressable>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text style={[styles.closeText, { color: colors.text }]}>✕</Text>
-          </Pressable>
+          <CloseButton onPress={closeNew} />
+          <PressScale onPress={() => setStep('photo')} hitSlop={12} scaleTo={0.95} accessibilityLabel={tr.capture.retake}>
+            {photo ? (
+              <Image source={{ uri: photo }} style={styles.preview} />
+            ) : (
+              <View style={[styles.preview, styles.previewEmpty]}>
+                <Icon name="camera" size={28} color={colors.accent} />
+              </View>
+            )}
+          </PressScale>
         </View>
 
         <Text style={styles.q}>{tr.capture.how}</Text>
@@ -288,16 +315,19 @@ export default function NewCup() {
           />
         </View>
 
-        <Pressable
+        <PressScale
           onPress={() => {
+            haptic.select();
             animateLayout();
             setShowDetail((v) => !v);
           }}
           hitSlop={8}
+          scaleTo={0.96}
           style={styles.detailToggle}
         >
+          <Icon name={showDetail ? 'chevron-up-circle-outline' : 'add-circle-outline'} size={20} color={colors.accentText} />
           <Text style={styles.detailToggleText}>{showDetail ? tr.capture.hideDetail : tr.capture.addDetail}</Text>
-        </Pressable>
+        </PressScale>
 
         {showDetail ? (
           <View>
@@ -381,9 +411,9 @@ export default function NewCup() {
       {Platform.OS === 'ios' ? (
         <InputAccessoryView nativeID={KB_DONE}>
           <View style={styles.kbBar}>
-            <Pressable onPress={() => Keyboard.dismiss()} hitSlop={10}>
+            <PressScale onPress={() => Keyboard.dismiss()} hitSlop={10} scaleTo={0.92}>
               <Text style={styles.kbDone}>{tr.capture.keyboardDone}</Text>
-            </Pressable>
+            </PressScale>
           </View>
         </InputAccessoryView>
       ) : null}
@@ -398,8 +428,7 @@ const styles = StyleSheet.create({
   permission: { flex: 1, paddingHorizontal: 28 },
   permTitle: { color: colors.white, fontSize: 26, fontWeight: '800' },
   permBody: { color: '#CFCAC3', fontSize: 16, marginTop: 10, lineHeight: 22 },
-  close: { position: 'absolute', left: 20, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
-  closeText: { color: colors.white, fontSize: 20, fontWeight: '600' },
+  close: { position: 'absolute', left: 20 },
   cameraBar: {
     position: 'absolute',
     left: 0,
@@ -413,19 +442,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   sideBtn: { width: 96, alignItems: 'center' },
-  sideText: { color: colors.white, fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  sideText: { color: colors.white, fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 4 },
   shutter: { width: 78, height: 78, borderRadius: 39, borderWidth: 4, borderColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   shutterInner: { width: 62, height: 62, borderRadius: 31, backgroundColor: colors.white },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   preview: { width: 88, height: 88, borderRadius: 18 },
   previewEmpty: { backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  q: { fontSize: 26, fontWeight: '900', color: colors.text, marginTop: 24, marginBottom: 12 },
+  q: { ...type.title2, marginTop: 24, marginBottom: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap' },
   inputRow: { marginTop: 4 },
-  detailToggle: { marginTop: 24, alignSelf: 'flex-start' },
-  detailToggleText: { fontSize: 16, fontWeight: '800', color: colors.accent },
+  detailToggle: { marginTop: 24, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6 },
+  detailToggleText: { fontSize: 16, fontWeight: '800', color: colors.accentText },
   detailHint: { fontSize: 14, color: colors.muted, lineHeight: 20, marginTop: 8 },
-  label: { fontSize: 15, fontWeight: '800', color: colors.text, marginTop: 20, marginBottom: 10 },
+  label: { ...type.headline, marginTop: 20, marginBottom: 10 },
   unit: { fontSize: 12, fontWeight: '700', color: colors.muted, marginBottom: 6 },
   input: {
     height: 50,
@@ -439,5 +468,5 @@ const styles = StyleSheet.create({
   },
   saveBar: { paddingHorizontal: 20, paddingTop: 12, backgroundColor: colors.bg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   kbBar: { flexDirection: 'row', justifyContent: 'flex-end', backgroundColor: '#F1EEE9', paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
-  kbDone: { fontSize: 16, fontWeight: '800', color: colors.accent },
+  kbDone: { fontSize: 16, fontWeight: '800', color: colors.accentText },
 });

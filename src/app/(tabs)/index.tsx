@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { Fragment } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
 import { Icon } from '../../components/Icon';
 import { WeekChart } from '../../components/WeekChart';
 import { WeekStrip } from '../../components/WeekStrip';
 import { MetricTile, MiniRing, Pager } from '../../components/dashboard';
-import { FadeIn, Pop, PressScale, animateLayout } from '../../components/motion';
+import { FadeIn, Pop, PressScale, animateLayout, haptic } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
 import { tr, upper } from '../../i18n/tr';
@@ -50,7 +50,9 @@ export default function Home() {
   const caffeine = caffeineToday(list, now);
   const level = levelProgress(list);
   const nudge = dailyNudge(list, now);
-  const highlights = insights(list, now).slice(0, 3);
+  const highlights = insights(list, now)
+    .filter((h) => settings.showCaffeine || h.id !== 'caffeine')
+    .slice(0, 3);
   const type_ = list.length ? getPalateType(computePalateTypeId(list)) : profile ? getPalateType(profile.starterTypeId) : null;
   const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
   const dateLabel = upper(now.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }));
@@ -173,7 +175,7 @@ export default function Home() {
         <>
           {/* BUGÜN */}
           <SectionHeader title={tr.home.today} />
-          <Pager width={pageW} pages={settings.showCaffeine ? [scorePage, caffeinePage] : [scorePage]} />
+          <Pager key={settings.showCaffeine ? 2 : 1} width={pageW} pages={settings.showCaffeine ? [scorePage, caffeinePage] : [scorePage]} />
 
           {askReminder ? (
             <Card style={{ marginTop: 14 }}>
@@ -218,7 +220,14 @@ export default function Home() {
 
           {type_ ? (
             <FadeIn index={1}>
-              <PressScale onPress={() => router.push('/card')} scaleTo={0.98} style={styles.typeCard}>
+              <PressScale
+                onPress={() => {
+                  haptic.light();
+                  router.push('/card');
+                }}
+                scaleTo={0.98}
+                style={styles.typeCard}
+              >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={styles.typeIcon}>
                     <Icon name="color-palette" size={20} color="#fff" />
@@ -227,7 +236,7 @@ export default function Home() {
                     <Text style={styles.cardTitle}>{tr.home.palateType}</Text>
                     <Text style={styles.typeName}>{type_.name}</Text>
                   </View>
-                  <Icon name="chevron-forward" size={18} color="#C4BEB6" />
+                  <Icon name="chevron-forward" size={18} color={colors.tertiary} />
                 </View>
                 {level ? (
                   <>
@@ -244,8 +253,12 @@ export default function Home() {
           ) : null}
 
           {banner ? (
+            <FadeIn index={2}>
             <PressScale
-              onPress={() => router.push({ pathname: '/wrapped', params: { period: 'month', offset: String(banner.offset) } })}
+              onPress={() => {
+                haptic.light();
+                router.push({ pathname: '/wrapped', params: { period: 'month', offset: String(banner.offset) } });
+              }}
               scaleTo={0.97}
               style={styles.banner}
             >
@@ -257,6 +270,7 @@ export default function Home() {
                 <Icon name="play" size={20} color={colors.black} />
               </View>
             </PressScale>
+            </FadeIn>
           ) : null}
 
           {/* ÖNE ÇIKANLAR */}
@@ -288,9 +302,9 @@ export default function Home() {
           <View style={styles.sectionRow}>
             <Text style={styles.sectionTitle}>{tr.home.recent}</Text>
             {list.length > 5 ? (
-              <Pressable onPress={() => router.push('/history')} hitSlop={10}>
+              <PressScale onPress={() => router.push('/history')} hitSlop={10} scaleTo={0.94}>
                 <Text style={styles.link}>{tr.home.seeAll}</Text>
-              </Pressable>
+              </PressScale>
             ) : null}
           </View>
           <FadeIn index={3}>
@@ -344,7 +358,7 @@ const styles = StyleSheet.create({
   streakText: { ...type.headline, fontWeight: '700' },
   sectionTitle: { ...type.title2 },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 28, marginBottom: 12 },
-  link: { ...type.body, color: colors.accent },
+  link: { ...type.body, color: colors.accentText },
   bigCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 22 },
   bigNumber: { fontSize: 48, fontWeight: '800', color: colors.text, letterSpacing: -1.5 },
   bigUnit: { fontSize: 20, fontWeight: '700', color: colors.muted, letterSpacing: 0 },
@@ -374,7 +388,7 @@ const styles = StyleSheet.create({
   typeName: { ...type.title3, marginTop: 1 },
   banner: { marginTop: 12, backgroundColor: colors.black, borderRadius: 22, padding: 18, flexDirection: 'row', alignItems: 'center' },
   bannerTitle: { color: colors.white, fontSize: 17, fontWeight: '700' },
-  bannerSub: { color: '#BDB6AC', fontSize: 13, marginTop: 4 },
+  bannerSub: { color: colors.mutedOnDark, fontSize: 13, marginTop: 4 },
   bannerPlay: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginLeft: 12, paddingLeft: 3 },
   group: { backgroundColor: colors.card, borderRadius: 18, overflow: 'hidden' },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 56 },
@@ -384,5 +398,5 @@ const styles = StyleSheet.create({
   hlText: { ...type.subhead, color: colors.text, marginTop: 1, lineHeight: 20 },
   ctaCard: { backgroundColor: colors.black },
   ctaTitle: { fontSize: 22, fontWeight: '800', color: colors.white },
-  ctaBody: { fontSize: 15, color: '#CFC8BE', marginTop: 6, lineHeight: 21 },
+  ctaBody: { fontSize: 15, color: colors.mutedOnDark, marginTop: 6, lineHeight: 21 },
 });

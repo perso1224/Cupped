@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { Icon } from './Icon';
 import { PressScale } from './motion';
 import { tr } from '../i18n/tr';
 import { photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
-import { colors } from '../theme';
+import { colors, type } from '../theme';
 import { placeLabel } from './ShareCard';
 import { Card } from './ui';
 
@@ -32,7 +33,7 @@ export function CupRow({ entry, timeOnly, showParts, plain }: { entry: CupEntry;
           <Image source={{ uri: photoUrl(entry.photoUri)! }} style={styles.thumb} />
         ) : (
           <View style={[styles.thumb, styles.thumbEmpty]}>
-            <Text style={{ fontSize: 26 }}>☕</Text>
+            <Icon name="cafe" size={26} color={colors.accent} />
           </View>
         )}
         <View style={{ flex: 1, marginLeft: 14 }}>
@@ -84,5 +85,5 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   chipNeg: { backgroundColor: colors.line, color: colors.muted },
-  rowScore: { fontSize: 30, fontWeight: '900', color: colors.text, marginLeft: 8 },
+  rowScore: { ...type.stat, minWidth: 44, textAlign: 'right', marginLeft: 8 },
 });

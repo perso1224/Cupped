@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors } from '../theme';
+import { reduceMotionNow, useReducedMotion } from './motion';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -29,15 +30,18 @@ export function ScoreRing({
   // Animated.Value bir kez oluşturulur (useState başlatıcısı; ref'i render'da okumamak için)
   const [progress] = useState(() => new Animated.Value(animate ? 0 : score));
   const [animShown, setAnimShown] = useState(0);
-  const shown = animate ? animShown : score;
+  const reduce = useReducedMotion();
+  const shown = animate && !reduce ? animShown : score;
   const onEnd = useRef(onAnimationEnd);
   useEffect(() => {
     onEnd.current = onAnimationEnd;
   });
 
   useEffect(() => {
-    if (!animate) {
+    if (!animate || reduceMotionNow()) {
+      // Hareketi azalt açıksa animasyonsuz: değeri koy ve "bitti" de (paylaşım kilitli kalmasın)
       progress.setValue(score);
+      if (animate) onEnd.current?.();
       return;
     }
     const id = progress.addListener(({ value }) => setAnimShown(Math.round(value)));

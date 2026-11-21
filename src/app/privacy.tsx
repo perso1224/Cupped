@@ -1,7 +1,6 @@
-import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { BackButton } from '../components/NavButtons';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '../components/Icon';
 import { tr } from '../i18n/tr';
 import { colors, type } from '../theme';
 
@@ -13,10 +12,7 @@ export default function Privacy() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: insets.bottom + 40 }}
     >
-      <Pressable onPress={() => router.back()} hitSlop={12} style={styles.back}>
-        <Icon name="chevron-back" size={24} color={colors.accent} />
-        <Text style={styles.backText}>{tr.settings.title}</Text>
-      </Pressable>
+      <BackButton label={tr.settings.title} />
       <Text style={styles.title}>{tr.privacy.title}</Text>
       {tr.privacy.items.map(([h, b]) => (
         <Text key={h} style={styles.p}>

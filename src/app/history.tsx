@@ -1,12 +1,13 @@
-import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Fragment } from 'react';
+import { BackButton } from '../components/NavButtons';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../components/CupRow';
 import { FadeIn } from '../components/motion';
-import { tr } from '../i18n/tr';
+import { tr, upper } from '../i18n/tr';
 import { useEntries } from '../lib/useEntries';
 import type { CupEntry } from '../lib/types';
-import { colors, type } from '../theme';
+import { colors, layout, radius, type } from '../theme';
 
 function groupByDay(list: CupEntry[]) {
   const groups: { label: string; items: CupEntry[] }[] = [];
@@ -27,33 +28,32 @@ export default function History() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 40 }}
+      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 40 }}
     >
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.back}>‹</Text>
-        </Pressable>
-        <Text style={styles.title}>{tr.history.title}</Text>
-      </View>
+      <BackButton label={tr.settings.back} />
+      <Text style={styles.title}>{tr.history.title}</Text>
       {entries && list.length === 0 ? <Text style={styles.empty}>{tr.history.empty}</Text> : null}
-      {groupByDay(list).map((g) => (
-        <View key={g.label}>
-          <Text style={styles.day}>{g.label}</Text>
-          {g.items.map((e, i) => (
-            <FadeIn key={e.id} index={i}>
-              <CupRow entry={e} timeOnly />
-            </FadeIn>
-          ))}
-        </View>
+      {groupByDay(list).map((g, gi) => (
+        <FadeIn key={g.label} index={gi}>
+          <Text style={styles.day}>{upper(g.label)}</Text>
+          <View style={styles.group}>
+            {g.items.map((e, i) => (
+              <Fragment key={e.id}>
+                {i > 0 ? <View style={styles.separator} /> : null}
+                <CupRow entry={e} timeOnly showParts plain />
+              </Fragment>
+            ))}
+          </View>
+        </FadeIn>
       ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  back: { fontSize: 40, fontWeight: '300', color: colors.text, marginRight: 12, marginTop: -6 },
   title: { ...type.largeTitle },
-  day: { fontSize: 14, fontWeight: '700', color: colors.muted, marginTop: 16, marginBottom: 8, textTransform: 'capitalize' },
-  empty: { fontSize: 15, color: colors.muted, marginTop: 16 },
+  day: { ...type.sectionHeader, marginTop: 22, marginBottom: 6, marginLeft: 4 },
+  group: { backgroundColor: colors.card, borderRadius: radius.group, overflow: 'hidden' },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 92 },
+  empty: { ...type.subhead, marginTop: 24, textAlign: 'center' },
 });

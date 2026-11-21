@@ -67,7 +67,7 @@ export function MetricTile({
       <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
-      <Text style={styles.tileLabel} numberOfLines={1}>
+      <Text style={styles.tileLabel} numberOfLines={2}>
         {label}
       </Text>
       <View style={{ alignItems: 'center', marginTop: 10 }}>
@@ -105,6 +105,7 @@ export function Pager({ pages, width }: { pages: ReactNode[]; width: number }) {
           </View>
         ))}
       </ScrollView>
+      {pages.length > 1 ? (
       <View style={styles.dots}>
         {pages.map((_, i) => {
           const w = x.interpolate({
@@ -120,6 +121,7 @@ export function Pager({ pages, width }: { pages: ReactNode[]; width: number }) {
           return <Animated.View key={i} style={[styles.dot, { width: w, opacity: o }]} />;
         })}
       </View>
+      ) : null}
     </View>
   );
 }

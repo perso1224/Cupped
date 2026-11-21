@@ -1,8 +1,7 @@
 import * as Brightness from 'expo-brightness';
 import { useKeepAwake } from 'expo-keep-awake';
-import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, AppState, StyleSheet, Text, useWindowDimensions, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CardHandle } from '../components/ShareCard';
 import { BRAND } from '../config/brand';
@@ -12,7 +11,10 @@ import { profileSummary } from '../lib/progress';
 import { shareViewAsImage } from '../lib/share';
 import { useEntries } from '../lib/useEntries';
 import { useProfile } from '../lib/useProfile';
-import { colors } from '../theme';
+import { Icon } from '../components/Icon';
+import { CloseButton } from '../components/NavButtons';
+import { PillButton } from '../components/ui';
+import { colors, tint, type } from '../theme';
 
 /** "Göster" modu: tam ekran Damak Kartı. Parlaklık artar, ekran kapanmaz. */
 export default function PalateCard() {
@@ -60,6 +62,7 @@ export default function PalateCard() {
   const frameW = Math.min(width, ((height - insets.top - insets.bottom - 64) * 9) / 16);
   const frameH = (frameW * 16) / 9;
   const cardWidth = frameW - 32;
+  const u = cardWidth / 100;
 
   async function share() {
     if (busy.current) return;
@@ -78,16 +81,12 @@ export default function PalateCard() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 12 }]}>
       <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.close}>
-          <Text style={styles.closeText}>✕</Text>
-        </Pressable>
+        <CloseButton />
         <Text style={styles.hint}>{tr.palateCard.hint}</Text>
-        {type ? (
-          <Pressable onPress={share} disabled={sharing} hitSlop={12}>
-            <Text style={styles.share}>{tr.palateCard.share}</Text>
-          </Pressable>
+        {type && s.cups > 0 ? (
+          <PillButton label={tr.palateCard.share} onPress={share} disabled={sharing} style={styles.shareBtn} />
         ) : (
-          <View style={{ width: 40 }} />
+          <View style={{ width: 36 }} />
         )}
       </View>
 
@@ -97,50 +96,63 @@ export default function PalateCard() {
           collapsable={false}
           style={{ width: frameW, height: frameH, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}
         >
-        <View style={[styles.card, { width: cardWidth, minHeight: Math.min(520, frameH - 32) }]}>
-          <Text style={styles.kicker}>{upper(s.palateTypeId ? tr.palateCard.title : tr.profile.starter)}</Text>
-          {profile?.nickname ? <Text style={styles.nick}>@{profile.nickname}</Text> : null}
-          {type ? (
-            <>
-              <Text style={[styles.typeName, { fontSize: cardWidth * 0.12 }]} adjustsFontSizeToFit numberOfLines={2}>
-                {type.name}
-              </Text>
-              <Text style={styles.tagline}>{type.tagline}</Text>
-
-              {s.cups === 0 ? (
-                <Text style={styles.starterNote}>{tr.palateCard.starterNote}</Text>
-              ) : (
+          {/* Ölçüler kart genişliğine göre (u = genişliğin %1'i): küçük ekranda taşmaz, görsel her telefonda aynı */}
+          <View style={[styles.card, { width: cardWidth, height: frameH - 32, padding: u * 7, borderRadius: u * 8 }]}>
+            <View>
+              <T style={[styles.kicker, { fontSize: u * 3.4 }]}>{upper(s.palateTypeId ? tr.palateCard.title : tr.profile.starter)}</T>
+              {profile?.nickname ? <T style={[styles.nick, { fontSize: u * 4.2 }]}>@{profile.nickname}</T> : null}
+              {type ? (
                 <>
-                  {s.streak > 0 ? <Text style={styles.streak}>🔥 {tr.palateCard.streakLine(s.streak)}</Text> : null}
-                  <View style={styles.grid}>
-                    <Stat value={s.cups} label={tr.palateCard.cups} big />
-                    <Stat value={s.avg} label={tr.palateCard.avg} big />
-                    <Stat value={s.places} label={tr.palateCard.places} />
-                    <Stat value={s.methods} label={tr.palateCard.methods} />
-                  </View>
+                  <T style={[styles.typeName, { fontSize: u * 11, lineHeight: u * 12, marginTop: u * 3 }]} adjustsFontSizeToFit numberOfLines={2}>
+                    {type.name}
+                  </T>
+                  <T style={[styles.tagline, { fontSize: u * 4.1, lineHeight: u * 5.8, marginTop: u * 2.5 }]} numberOfLines={3}>
+                    {type.tagline}
+                  </T>
+                  {s.cups === 0 ? (
+                    <T style={[styles.starterNote, { fontSize: u * 3.9, marginTop: u * 4 }]}>{tr.palateCard.starterNote}</T>
+                  ) : s.streak > 0 ? (
+                    <View style={[styles.streakRow, { marginTop: u * 4 }]}>
+                      <Icon name="flame" size={u * 4.5} color={tint.cherry} />
+                      <T style={[styles.streak, { fontSize: u * 4.1 }]}>{tr.palateCard.streakLine(s.streak)}</T>
+                    </View>
+                  ) : null}
                 </>
+              ) : (
+                <T style={[styles.empty, { fontSize: u * 4.6 }]}>{tr.palateCard.empty}</T>
               )}
-            </>
-          ) : (
-            <Text style={styles.empty}>{tr.palateCard.empty}</Text>
-          )}
+            </View>
 
-          <View style={styles.footer}>
-            <Text style={styles.question}>{tr.card.question}</Text>
-            <Text style={styles.brand}>{BRAND.name}</Text>
+            {type && s.cups > 0 ? (
+              <View style={styles.grid}>
+                <Stat u={u} value={s.cups} label={tr.palateCard.cups} big />
+                <Stat u={u} value={s.avg} label={tr.palateCard.avg} big />
+                <Stat u={u} value={s.places} label={tr.palateCard.places} />
+                <Stat u={u} value={s.methods} label={tr.palateCard.methods} />
+              </View>
+            ) : null}
+
+            <View style={styles.footer}>
+              <T style={[styles.question, { fontSize: u * 3.4 }]}>{tr.card.question}</T>
+              <T style={[styles.brand, { fontSize: u * 4.6 }]}>{BRAND.name}</T>
+            </View>
           </View>
-        </View>
         </View>
       </View>
     </View>
   );
 }
 
-function Stat({ value, label, big }: { value: number; label: string; big?: boolean }) {
+/** Kaydedilen görselde yazı boyutu telefonun yazı ayarından etkilenmesin. */
+function T(props: TextProps) {
+  return <Text allowFontScaling={false} {...props} />;
+}
+
+function Stat({ u, value, label, big }: { u: number; value: number; label: string; big?: boolean }) {
   return (
-    <View style={styles.stat}>
-      <Text style={[styles.statValue, big && { fontSize: 48 }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+    <View style={[styles.stat, { paddingVertical: u * 1.5 }]}>
+      <T style={[styles.statValue, { fontSize: big ? u * 11 : u * 7.5 }]}>{value}</T>
+      <T style={[styles.statLabel, { fontSize: u * 3.3 }]}>{label}</T>
     </View>
   );
 }
@@ -148,35 +160,23 @@ function Stat({ value, label, big }: { value: number; label: string; big?: boole
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
-  close: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontSize: 18, fontWeight: '700', color: colors.text },
-  hint: { fontSize: 14, fontWeight: '600', color: colors.muted },
-  share: { fontSize: 15, fontWeight: '800', color: colors.black, backgroundColor: colors.accent, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, overflow: 'hidden' },
+  hint: { ...type.footnote, fontWeight: '600' },
+  shareBtn: { height: 36, paddingHorizontal: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  card: { backgroundColor: colors.black, borderRadius: 32, padding: 28 },
-  kicker: { color: colors.accent, fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },
-  nick: { color: '#BDB6AC', fontSize: 16, fontWeight: '700', marginTop: 8 },
-  typeName: { color: colors.white, fontWeight: '900', marginTop: 14, letterSpacing: -1 },
-  tagline: { color: '#CFC8BE', fontSize: 16, lineHeight: 22, marginTop: 10 },
-  levelRow: { flexDirection: 'row', alignItems: 'center', marginTop: 18 },
-  levelPill: { backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
-  levelText: { color: colors.black, fontWeight: '800', fontSize: 14 },
-  streak: { color: colors.white, fontWeight: '800', fontSize: 16, marginTop: 18 },
-  starterNote: { color: '#BDB6AC', fontSize: 15, marginTop: 18, lineHeight: 21, marginBottom: 56 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 20, marginBottom: 56 },
-  stat: { width: '50%', paddingVertical: 8 },
-  statValue: { color: colors.white, fontSize: 32, fontWeight: '900' },
-  statLabel: { color: '#BDB6AC', fontSize: 13, marginTop: -2 },
-  empty: { color: colors.white, fontSize: 18, marginTop: 24, lineHeight: 26 },
-  footer: {
-    position: 'absolute',
-    left: 28,
-    right: 28,
-    bottom: 22,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  question: { fontSize: 13, fontWeight: '600', color: '#BDB6AC' },
-  brand: { fontSize: 18, fontWeight: '900', color: colors.white, letterSpacing: -0.5 },
+  card: { backgroundColor: colors.black, justifyContent: 'space-between' },
+  kicker: { color: colors.accent, fontWeight: '800', letterSpacing: 1.4 },
+  nick: { color: colors.mutedOnDark, fontWeight: '700', marginTop: 6 },
+  typeName: { color: colors.white, fontWeight: '800', letterSpacing: -1 },
+  tagline: { color: colors.mutedOnDark },
+  streakRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  streak: { color: colors.white, fontWeight: '700' },
+  starterNote: { color: colors.mutedOnDark, lineHeight: 21 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  stat: { width: '50%' },
+  statValue: { color: colors.white, fontWeight: '800' },
+  statLabel: { color: colors.mutedOnDark, marginTop: -2 },
+  empty: { color: colors.white, marginTop: 24, lineHeight: 26 },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  question: { fontWeight: '600', color: colors.mutedOnDark },
+  brand: { fontWeight: '800', color: colors.white, letterSpacing: -0.5 },
 });

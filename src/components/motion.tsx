@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { cachedSettings, loadSettings, subscribeSettings } from '../lib/storage';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
   Animated,
@@ -25,10 +25,15 @@ import {
 let systemReduce = false;
 let reduceMotion = false;
 let hapticsOn = true;
+const motionListeners = new Set<(v: boolean) => void>();
 const recompute = () => {
   const s = cachedSettings();
-  reduceMotion = systemReduce || s.reduceMotion;
+  const next = systemReduce || s.reduceMotion;
   hapticsOn = s.haptics;
+  if (next !== reduceMotion) {
+    reduceMotion = next;
+    motionListeners.forEach((fn) => fn(next));
+  }
 };
 AccessibilityInfo.isReduceMotionEnabled()
   .then((v) => {
@@ -43,18 +48,21 @@ AccessibilityInfo.addEventListener('reduceMotionChanged', (v) => {
 subscribeSettings(recompute);
 loadSettings().then(recompute).catch(() => {});
 
+/** Şu anki "hareketi azalt" durumu (animasyon başlatırken okunur). */
+export function reduceMotionNow(): boolean {
+  return reduceMotion;
+}
+
+/** Hareketi azalt değişince bileşeni günceller. */
+const subscribeMotion = (cb: () => void) => {
+  const fn = () => cb();
+  motionListeners.add(fn);
+  return () => {
+    motionListeners.delete(fn);
+  };
+};
 export function useReducedMotion(): boolean {
-  const [v, setV] = useState(reduceMotion);
-  useEffect(() => {
-    const update = () => setV(reduceMotion);
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', () => setTimeout(update, 0));
-    const unsub = subscribeSettings(() => setTimeout(update, 0));
-    return () => {
-      sub.remove();
-      unsub();
-    };
-  }, []);
-  return v;
+  return useSyncExternalStore(subscribeMotion, reduceMotionNow, reduceMotionNow);
 }
 
 /** Hafif dokunuş titreşimleri. */

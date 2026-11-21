@@ -16,7 +16,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
-import type { CardHandle } from '../components/ShareCard';
+import { PressScale, haptic, reduceMotionNow } from '../components/motion';
+import { Icon } from '../components/Icon';
+import { CloseButton } from '../components/NavButtons';
+import { placeLabel, type CardHandle } from '../components/ShareCard';
 import { BRAND } from '../config/brand';
 import { periodWord, tr, upper, type PeriodWord } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
@@ -29,7 +32,7 @@ import { buildWrapped, type WrappedSlide } from '../lib/wrapped';
 const SLIDE_MS = 5500;
 
 type Theme = { bg: string; fg: string; accent: string };
-const AMBER: Theme = { bg: '#D98B2B', fg: '#111111', accent: '#FAF8F5' };
+const AMBER: Theme = { bg: '#D98B2B', fg: '#111111', accent: '#2B1A12' }; // koyu vurgu: amber üstünde okunur
 const BLACK: Theme = { bg: '#111111', fg: '#FAF8F5', accent: '#D98B2B' };
 const LATTE: Theme = { bg: '#F1E3CF', fg: '#2B1A12', accent: '#B5402F' };
 const ESPRESSO: Theme = { bg: '#2B1A12', fg: '#F1E3CF', accent: '#D98B2B' };
@@ -109,6 +112,10 @@ export default function Wrapped() {
 
   // Giriş animasyonu
   useEffect(() => {
+    if (reduceMotionNow()) {
+      enter.setValue(1);
+      return;
+    }
     enter.setValue(0);
     Animated.timing(enter, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [index, slides.length, enter]);
@@ -118,7 +125,8 @@ export default function Wrapped() {
     if (!slides.length || paused) return;
     const anim = Animated.timing(progress, {
       toValue: 1,
-      duration: SLIDE_MS * (1 - progressValue.current),
+      // Hareketi azalt açıksa slaytlar daha yavaş ilerler (okumaya zaman kalsın)
+      duration: (reduceMotionNow() ? SLIDE_MS * 1.8 : SLIDE_MS) * (1 - progressValue.current),
       easing: Easing.linear,
       useNativeDriver: false,
     });
@@ -136,6 +144,7 @@ export default function Wrapped() {
   }, [index, paused, slides.length]);
 
   function go(i: number) {
+    if (i !== index && i >= 0 && i < slides.length) haptic.select();
     progressValue.current = 0;
     progress.setValue(0);
     setIndex(Math.max(0, Math.min(slides.length - 1, i)));
@@ -221,9 +230,10 @@ export default function Wrapped() {
             </View>
           ))}
         </View>
-        <Pressable onPress={close} hitSlop={16} style={[styles.close, { backgroundColor: hexA(theme.fg, 0.15) }]}>
-          <Text style={[styles.closeText, { color: theme.fg }]}>✕</Text>
-        </Pressable>
+        {/* Instagram hikayeleri gibi sağ üstte */}
+        <View style={styles.close}>
+          <CloseButton onPress={close} tint={theme.fg} dark={theme.bg !== '#F1E3CF'} />
+        </View>
       </Animated.View>
 
       {index === 0 ? (
@@ -232,17 +242,14 @@ export default function Wrapped() {
         </Text>
       ) : null}
       <View style={styles.bottomRow}>
-        <Pressable
-          onPress={close}
-          style={({ pressed }) => [styles.closeBtn, isLast && finished && styles.finishBtn, pressed && { opacity: 0.8 }]}
-        >
+        <PressScale onPress={close} scaleTo={0.95} style={[styles.closeBtn, isLast && finished && styles.finishBtn]}>
           <Text style={[styles.closeBtnText, isLast && finished && { color: '#111' }]}>
             {isLast && finished ? tr.wrapped.finish : tr.wrapped.close}
           </Text>
-        </Pressable>
-        <Pressable onPress={share} style={({ pressed }) => [styles.shareBtn, pressed && { opacity: 0.8 }]}>
+        </PressScale>
+        <PressScale onPress={share} scaleTo={0.95} style={styles.shareBtn}>
           <Text style={styles.shareText}>{tr.wrapped.share}</Text>
-        </Pressable>
+        </PressScale>
       </View>
     </View>
   );
@@ -363,7 +370,7 @@ function SlideView({
             {slide.kind === 'place' ? tr.wrapped.placeTitle : tr.wrapped.homeTitle}
           </Kicker>
           <Animated.Text style={[styles.huge, t, { fontSize: u * 15, lineHeight: u * 16 }, pop]} adjustsFontSizeToFit numberOfLines={3}>
-            {slide.kind === 'place' ? slide.name : '🏠 ' + tr.card.homeBrew}
+            {slide.kind === 'place' ? slide.name : tr.card.homeBrew}
           </Animated.Text>
           <Animated.Text style={[styles.sub, t, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.35)]}>
             {slide.kind === 'place' ? tr.wrapped.placeFact(slide.visits) : tr.wrapped.homeFact(slide.pct)}
@@ -403,7 +410,7 @@ function SlideView({
             <Image source={{ uri: photoUrl(slide.entry.photoUri)! }} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
             <View style={[StyleSheet.absoluteFill, { alignItems: 'center', paddingTop: H * 0.14 }]}>
-              <Text style={{ fontSize: u * 34 }}>☕</Text>
+              <Icon name="cafe" size={u * 30} color={theme.accent} />
             </View>
           )}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(17,17,17,0.35)' }]} />
@@ -411,7 +418,7 @@ function SlideView({
             <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.bestTitle(pw)}</Kicker>
             <Animated.Text style={[styles.mega, { color: '#FAF8F5', fontSize: u * 40, lineHeight: u * 42 }, pop]}>{slide.entry.score}</Animated.Text>
             <Animated.Text style={[styles.sub, { color: '#FAF8F5', fontSize: u * 5.5 }, rise(0.35)]}>
-              {tr.methods[slide.entry.method]} · {slide.entry.placeName ?? (slide.entry.venueKind === 'home' ? tr.card.homeBrew : tr.card.office)}
+              {tr.methods[slide.entry.method]} · {placeLabel(slide.entry)}
             </Animated.Text>
           </View>
         </View>
@@ -493,9 +500,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#000' },
   bars: { position: 'absolute', top: 12, left: 12, right: 12, flexDirection: 'row', gap: 4 },
   bar: { flex: 1, height: 3, borderRadius: 2, overflow: 'hidden' },
-  close: { position: 'absolute', top: 22, right: 12, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontSize: 18, fontWeight: '800' },
-  hint: { color: '#BDB6AC', fontSize: 12, textAlign: 'center', marginTop: 6 },
+  close: { position: 'absolute', top: 22, right: 12 },
+  hint: { color: '#CFC8BE', fontSize: 12, textAlign: 'center', marginTop: 6 },
   bottomRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 12, paddingHorizontal: 16 },
   closeBtn: {
     borderRadius: 999,

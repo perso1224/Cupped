@@ -185,8 +185,6 @@ export const CAFFEINE_MG: Record<Method, number> = {
   milk: 110, // latte/flat white (çoğunlukla çift shot)
   turkish: 60, // tek fincan
 };
-/** Yetişkinler için sık kullanılan günlük referans üst sınır (mg). */
-export const DAILY_CAFFEINE_REF = 400;
 
 /** Ana sayfadaki küçük halkaların tavan puanları (Emek / Keşif / Derinlik). */
 export const PART_MAX = { effort: 25, discovery: 25, depth: 10 } as const;

@@ -1,18 +1,18 @@
-import { Redirect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { Tabs } from 'expo-router/tabs';
 import { useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View, type ColorValue } from 'react-native';
+import { Animated, StyleSheet, View, type ColorValue } from 'react-native';
 import { Icon, type IconName } from '../../components/Icon';
-import { haptic } from '../../components/motion';
+import { PressScale, haptic, reduceMotionNow } from '../../components/motion';
 import { tr } from '../../i18n/tr';
-import { useProfile } from '../../lib/useProfile';
 import { colors } from '../../theme';
 
 /** Sekme simgesi (iOS gibi: seçiliyken dolu, değilken çizgi). Seçilince hafifçe büyüyüp yerine oturur. */
 function TabIcon({ name, color, focused }: { name: string; color: ColorValue; focused: boolean }) {
   const [s] = useState(() => new Animated.Value(focused ? 1.08 : 1));
   useEffect(() => {
-    Animated.spring(s, { toValue: focused ? 1.08 : 1, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
+    if (reduceMotionNow()) s.setValue(focused ? 1.08 : 1);
+    else Animated.spring(s, { toValue: focused ? 1.08 : 1, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
   }, [focused, s]);
   return (
     <Animated.View style={{ transform: [{ scale: s }] }}>
@@ -22,9 +22,6 @@ function TabIcon({ name, color, focused }: { name: string; color: ColorValue; fo
 }
 
 export default function TabsLayout() {
-  const profile = useProfile();
-  if (profile === undefined) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
-  if (profile === null) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs
@@ -52,16 +49,18 @@ export default function TabsLayout() {
           title: '',
           tabBarButton: () => (
             <View style={styles.plusSlot}>
-              <Pressable
-                accessibilityLabel="Fincan ekle"
+              <PressScale
+                accessibilityLabel={tr.home.ctaButton}
+                accessibilityRole="button"
                 onPress={() => {
                   haptic.medium();
                   router.push('/new');
                 }}
-                style={({ pressed }) => [styles.plus, pressed && { transform: [{ scale: 0.94 }] }]}
+                scaleTo={0.92}
+                style={styles.plus}
               >
                 <Icon name="add" size={34} color={colors.white} />
-              </Pressable>
+              </PressScale>
             </View>
           ),
         }}

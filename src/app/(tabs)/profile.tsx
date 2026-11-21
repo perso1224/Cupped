@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../../components/Icon';
 import { ListRow, ListSection } from '../../components/List';
@@ -14,7 +14,7 @@ import { updateMetrics } from '../../lib/storage';
 import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
-import { colors, tint, type } from '../../theme';
+import { colors, radius, tint, type } from '../../theme';
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
@@ -53,9 +53,9 @@ export default function Profile() {
     >
       <View style={styles.header}>
         <Text style={styles.largeTitle}>{tr.profile.title}</Text>
-        <Pressable onPress={() => router.push('/settings')} hitSlop={12} style={styles.gear} accessibilityLabel={tr.settings.title}>
+        <PressScale onPress={() => router.push('/settings')} hitSlop={12} scaleTo={0.9} style={styles.gear} accessibilityLabel={tr.settings.title}>
           <Icon name="settings-outline" size={22} color={colors.text} />
-        </Pressable>
+        </PressScale>
       </View>
 
       {/* Kimlik */}
@@ -72,7 +72,7 @@ export default function Profile() {
       <Card style={styles.statsCard}>
         <Stat value={entries.length} label={tr.profile.cups} />
         <View style={styles.vsep} />
-        <Stat value={avg} label={tr.profile.avg} />
+        <Stat value={avg} label={tr.progress.avg} />
         <View style={styles.vsep} />
         <Stat value={streak} label={tr.profile.streakDays} />
       </Card>
@@ -91,28 +91,25 @@ export default function Profile() {
 
       <ListSection title={tr.profile.collection}>
         <ListRow icon="ribbon" tint={tint.amber} title={tr.profile.badges} value={`${earned}/${badges.length}`} chevron onPress={() => router.push({ pathname: '/collection', params: { focus: 'badges' } })} />
-        <ListRow icon="location" tint={tint.cherry} title={tr.profile.places} value={String(places)} chevron onPress={() => router.push({ pathname: '/collection', params: { focus: 'places' } })} />
-        <ListRow icon="cafe" tint={tint.espresso} title={tr.profile.methods} value={`${methods}/5`} chevron onPress={() => router.push({ pathname: '/collection', params: { focus: 'methods' } })} />
+        <ListRow icon="location" tint={tint.cherry} title={tr.profile.placesPlural} value={String(places)} chevron onPress={() => router.push({ pathname: '/collection', params: { focus: 'places' } })} />
+        <ListRow icon="cafe" tint={tint.espresso} title={tr.profile.methodsPlural} value={`${methods}/5`} chevron onPress={() => router.push({ pathname: '/collection', params: { focus: 'methods' } })} />
         <ListRow icon="time" tint={tint.slate} title={tr.progress.history} chevron onPress={() => router.push('/history')} />
       </ListSection>
 
       {/* H6 sahte kapı: ödeme yok, sadece ilgi ölçülür */}
-      <PressScale onPress={metrics?.clubInterestAt ? undefined : joinClub} scaleTo={0.98} style={styles.club}>
-        <View style={styles.clubIcon}>
-          <Icon name="sparkles" size={20} color={colors.black} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.clubTitle}>{tr.profile.clubTitle}</Text>
-          <Text style={styles.clubBody}>{metrics?.clubInterestAt ? tr.profile.clubDone : tr.profile.clubBody}</Text>
-        </View>
-        {metrics?.clubInterestAt ? (
-          <Icon name="checkmark-circle" size={24} color={colors.accent} />
-        ) : (
-          <View style={styles.clubCta}>
-            <Text style={styles.clubCtaText}>{tr.profile.clubCtaShort}</Text>
+      <View style={styles.club}>
+        <View style={styles.clubHead}>
+          <View style={styles.clubIcon}>
+            <Icon name="sparkles" size={20} color={colors.black} />
           </View>
+          <Text style={[styles.clubTitle, { flex: 1 }]}>{tr.profile.clubTitle}</Text>
+          {metrics?.clubInterestAt ? <Icon name="checkmark-circle" size={24} color={colors.accent} /> : null}
+        </View>
+        <Text style={styles.clubBody}>{metrics?.clubInterestAt ? tr.profile.clubDone : tr.profile.clubBody}</Text>
+        {metrics?.clubInterestAt ? null : (
+          <PillButton label={tr.profile.clubCtaShort} variant="accent" onPress={joinClub} style={{ marginTop: 14, height: 46 }} />
         )}
-      </PressScale>
+      </View>
     </ScrollView>
   );
 }
@@ -146,8 +143,8 @@ const styles = StyleSheet.create({
   typeLine: { ...type.subhead, marginTop: 2 },
   statsCard: { flexDirection: 'row', marginTop: 20, paddingVertical: 16 },
   stat: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 26, fontWeight: '800', color: colors.text },
-  statLabel: { ...type.caption, marginTop: 2 },
+  statValue: { ...type.stat },
+  statLabel: { ...type.caption, marginTop: 2, textAlign: 'center' },
   vsep: { width: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginVertical: 4 },
   cardTitle: { ...type.footnote, fontWeight: '600' },
   typeName: { ...type.title2, marginTop: 2 },
@@ -155,10 +152,9 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   metaText: { ...type.footnote, fontWeight: '600' },
-  club: { marginTop: 24, backgroundColor: colors.black, borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  club: { marginTop: 24, backgroundColor: colors.black, borderRadius: radius.tile, padding: 16 },
+  clubHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   clubIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   clubTitle: { color: colors.white, fontSize: 16, fontWeight: '700' },
-  clubBody: { color: '#CFC8BE', fontSize: 13, marginTop: 3, lineHeight: 18 },
-  clubCta: { backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
-  clubCtaText: { color: colors.black, fontWeight: '700', fontSize: 13 },
+  clubBody: { color: colors.mutedOnDark, fontSize: 14, marginTop: 10, lineHeight: 20 },
 });

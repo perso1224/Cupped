@@ -3,7 +3,10 @@ export const colors = {
   bg: '#FAF8F5',
   card: '#FFFFFF',
   text: '#111111',
-  muted: '#7A746C',
+  muted: '#706A62', // zemin üstünde ≥4.5:1 kontrast
+  tertiary: '#C4BEB6', // ok (chevron), yer tutucu metin
+  mutedOnDark: '#CFC8BE', // koyu kart üstünde ikincil metin
+  accentText: '#9C5F17', // turuncu METİN (bağlantı, geri) — accent dolgu/simge içindir
   line: '#ECE7E0',
   accent: '#D98B2B',
   accentSoft: '#F6E6D1',
@@ -14,8 +17,13 @@ export const colors = {
 
 export const radius = {
   card: 22,
+  tile: 18,
+  group: 14,
   pill: 999,
 };
+
+/** Ekran kenar ve üst boşlukları (tüm ekranlarda aynı). */
+export const layout = { screenPad: 20, topPad: 8 };
 
 export const space = (n: number) => n * 4;
 
@@ -30,6 +38,8 @@ export const type = {
   footnote: { fontSize: 13, fontWeight: '400' as const, color: colors.muted },
   caption: { fontSize: 12, fontWeight: '500' as const, color: colors.muted },
   sectionHeader: { fontSize: 13, fontWeight: '600' as const, color: colors.muted, letterSpacing: 0.4 },
+  display: { fontSize: 48, fontWeight: '800' as const, letterSpacing: -1.5, color: colors.text },
+  stat: { fontSize: 28, fontWeight: '800' as const, color: colors.text },
 };
 
 /** iOS Ayarlar tarzı simge kutusu renkleri (marka paletinden). */
