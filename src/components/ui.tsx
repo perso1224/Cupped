@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, radius } from '../theme';
 
 export function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
@@ -43,7 +43,7 @@ export function PillButton({
   );
 }
 
-export function Card({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
+export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, style]}>{children}</View>;
 }
 

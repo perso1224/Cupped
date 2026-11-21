@@ -115,3 +115,35 @@ export const PALATE_RULES = {
   nomadWindow: 6,
   nomadDistinctPlaces: 4,
 } as const;
+
+/** Haftalık Damak Skoru: çeşitliliğe dayalı kişisel skor (kendi rekorunla kıyaslanır). */
+export const WEEKLY = {
+  perMethod: 12, // haftada denenen her farklı yöntem
+  perPlace: 10, // haftada gidilen her farklı mekan
+  perNote: 4, // haftada girilen her farklı tat notu
+  perCup: 3, // her fincan
+  maxCupsCounted: 7, // fincan puanı en fazla bu kadar fincan için
+  max: 100,
+  /** Kişisel hedef: bu hafta kaç yeni keşif (yeni mekan veya yöntem). */
+  discoveryGoal: 2,
+} as const;
+
+export type Badge = { id: string; name: string; description: string };
+
+/** Rozetler. Eşikler BADGE_RULES içinde. */
+export const BADGES: Badge[] = [
+  { id: 'routine', name: 'Rutine Saplandın', description: '5 gün üst üste aynı içecek. Yarın bir sürpriz?' },
+  { id: 'third_wave_refugee', name: 'Üçüncü Dalga Mülteci', description: '5 farklı bağımsız mekan gezdin.' },
+  { id: 'chain_loyal', name: 'Zincir Sadıkı', description: 'Aynı zincire art arda 3 kez gittin. Sadakat güzel şey.' },
+  { id: 'pourover_patience', name: 'Pour-over Sabrı', description: 'Evde 5 filtre kahve demledin.' },
+  { id: 'first_geisha', name: 'İlk Geisha', description: 'Geisha çekirdeğiyle tanıştın.' },
+  { id: 'five_new_month', name: 'Ayda 5 Yeni Mekan', description: 'Bir ayda 5 yeni mekan keşfettin.' },
+];
+
+export const BADGE_RULES = {
+  routineDays: 5,
+  independentPlaces: 5,
+  chainStreak: 3,
+  homeFilters: 5,
+  newPlacesInMonth: 5,
+} as const;

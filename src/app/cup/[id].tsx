@@ -1,12 +1,11 @@
-import * as Sharing from 'expo-sharing';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { captureRef } from 'react-native-view-shot';
 import { ShareCard, type CardHandle } from '../../components/ShareCard';
 import { PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
+import { shareViewAsImage } from '../../lib/share';
 import { bumpCounter, getEntry } from '../../lib/storage';
 import type { CupEntry, ScoreParts } from '../../lib/types';
 import { colors } from '../../theme';
@@ -32,9 +31,7 @@ export default function CupResult() {
     if (!cardRef.current || sharing) return;
     setSharing(true);
     try {
-      const uri = await captureRef(cardRef, { format: 'png', quality: 1, result: 'tmpfile' });
-      await bumpCounter('shares');
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png' });
+      await shareViewAsImage(cardRef);
     } catch {
       Alert.alert(tr.result.shareError);
     } finally {

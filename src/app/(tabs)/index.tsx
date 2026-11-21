@@ -1,42 +1,49 @@
 import { router } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { placeLabel } from '../../components/ShareCard';
+import { CupRow } from '../../components/CupRow';
 import { ScoreRing } from '../../components/ScoreRing';
+import { WeekStrip } from '../../components/WeekStrip';
 import { Card } from '../../components/ui';
 import { BRAND } from '../../config/brand';
+import { WEEKLY } from '../../config/scoring.config';
 import { tr } from '../../i18n/tr';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
+import { addDays, currentStreak, dayKey, discoveriesIn, startOfWeek, weekStrip } from '../../lib/progress';
 import { levelFor } from '../../lib/scoring';
 import { useEntries } from '../../lib/useEntries';
-import type { CupEntry } from '../../lib/types';
 import { colors } from '../../theme';
-
-function isToday(iso: string) {
-  const d = new Date(iso);
-  const now = new Date();
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-}
-
-function timeLabel(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) +
-    ' · ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-}
 
 export default function Home() {
   const insets = useSafeAreaInsets();
   const entries = useEntries();
   const list = entries ?? [];
-  const todays = list.filter((e) => isToday(e.createdAt));
+  const now = new Date();
+  const todayKey = dayKey(now);
+  const todays = list.filter((e) => dayKey(new Date(e.createdAt)) === todayKey);
   const todayScore = todays.length ? Math.max(...todays.map((e) => e.score)) : 0;
   const type = list.length ? getPalateType(computePalateTypeId(list)) : null;
+  const streak = currentStreak(list, now);
+  const ws = startOfWeek(now);
+  const disc = discoveriesIn(list, ws, addDays(ws, 7));
+  const discoveries = disc.places.length + disc.methods.length;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 40 }}>
-      <Text style={styles.brand}>{BRAND.name}</Text>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 40 }}
+    >
+      <View style={styles.header}>
+        <Text style={styles.brand}>{BRAND.name}</Text>
+        <View style={styles.streak}>
+          <Text style={{ fontSize: 16 }}>🔥</Text>
+          <Text style={styles.streakText}>{tr.home.streak(streak)}</Text>
+        </View>
+      </View>
 
-      <Card style={styles.todayCard}>
+      <WeekStrip days={weekStrip(list, now)} />
+
+      <Card style={[styles.todayCard, { marginTop: 20 }]}>
         <ScoreRing score={todayScore} size={150} caption={todays.length ? levelFor(todayScore) : undefined} />
         <View style={{ flex: 1, marginLeft: 16 }}>
           <Text style={styles.cardLabel}>{tr.home.todayScore}</Text>
@@ -50,54 +57,55 @@ export default function Home() {
         </View>
       </Card>
 
-      <Text style={styles.section}>{tr.home.recent}</Text>
+      <Card style={styles.goal}>
+        <Text style={styles.goalText}>
+          {discoveries >= WEEKLY.discoveryGoal ? tr.home.goalDone : tr.home.goal(discoveries, WEEKLY.discoveryGoal)}
+        </Text>
+        <View style={styles.goalBar}>
+          <View style={[styles.goalFill, { width: `${Math.min(1, discoveries / WEEKLY.discoveryGoal) * 100}%` }]} />
+        </View>
+      </Card>
+
+      <View style={styles.sectionRow}>
+        <Text style={styles.section}>{tr.home.recent}</Text>
+        {list.length > 5 ? (
+          <Pressable onPress={() => router.push('/history')} hitSlop={10}>
+            <Text style={styles.link}>{tr.home.seeAll}</Text>
+          </Pressable>
+        ) : null}
+      </View>
       {entries && list.length === 0 ? <Text style={styles.empty}>{tr.home.empty}</Text> : null}
-      {list.slice(0, 20).map((e) => (
+      {list.slice(0, 5).map((e) => (
         <CupRow key={e.id} entry={e} />
       ))}
     </ScrollView>
   );
 }
 
-function CupRow({ entry }: { entry: CupEntry }) {
-  return (
-    <Pressable onPress={() => router.push(`/cup/${entry.id}`)} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
-      <Card style={styles.row}>
-        {entry.photoUri ? (
-          <Image source={{ uri: entry.photoUri }} style={styles.thumb} />
-        ) : (
-          <View style={[styles.thumb, styles.thumbEmpty]}>
-            <Text style={{ fontSize: 26 }}>☕</Text>
-          </View>
-        )}
-        <View style={{ flex: 1, marginLeft: 14 }}>
-          <Text style={styles.rowTitle} numberOfLines={1}>
-            {tr.methods[entry.method]}
-          </Text>
-          <Text style={styles.rowSub} numberOfLines={1}>
-            {placeLabel(entry)}
-          </Text>
-          <Text style={styles.rowTime}>{timeLabel(entry.createdAt)}</Text>
-        </View>
-        <Text style={styles.rowScore}>{entry.score}</Text>
-      </Card>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  brand: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.5, marginBottom: 16 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  brand: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
+  streak: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  streakText: { marginLeft: 6, fontWeight: '700', color: colors.text },
   todayCard: { flexDirection: 'row', alignItems: 'center' },
   cardLabel: { fontSize: 13, fontWeight: '700', color: colors.muted },
   cardHint: { fontSize: 15, color: colors.text, marginTop: 4 },
   typeName: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 2 },
-  section: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 28, marginBottom: 12 },
+  goal: { marginTop: 12, paddingVertical: 16 },
+  goalText: { fontSize: 15, fontWeight: '700', color: colors.text },
+  goalBar: { height: 8, borderRadius: 4, backgroundColor: colors.line, marginTop: 10, overflow: 'hidden' },
+  goalFill: { height: 8, backgroundColor: colors.accent },
+  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 28, marginBottom: 12 },
+  section: { fontSize: 20, fontWeight: '800', color: colors.text },
+  link: { fontSize: 15, fontWeight: '700', color: colors.accent },
   empty: { fontSize: 15, color: colors.muted, lineHeight: 22 },
-  row: { flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 12 },
-  thumb: { width: 64, height: 64, borderRadius: 14 },
-  thumbEmpty: { backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  rowTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  rowSub: { fontSize: 14, color: colors.muted, marginTop: 2 },
-  rowTime: { fontSize: 12, color: colors.muted, marginTop: 4 },
-  rowScore: { fontSize: 30, fontWeight: '900', color: colors.text, marginLeft: 8 },
 });

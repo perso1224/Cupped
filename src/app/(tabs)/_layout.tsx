@@ -26,6 +26,10 @@ export default function TabsLayout() {
         options={{ title: tr.tabs.home, tabBarIcon: ({ color }) => <TabIcon glyph="⌂" color={color} /> }}
       />
       <Tabs.Screen
+        name="progress"
+        options={{ title: tr.tabs.progress, tabBarIcon: ({ color }) => <TabIcon glyph="▤" color={color} /> }}
+      />
+      <Tabs.Screen
         name="add"
         options={{
           title: '',
@@ -44,6 +48,10 @@ export default function TabsLayout() {
             </View>
           ),
         }}
+      />
+      <Tabs.Screen
+        name="passport"
+        options={{ title: tr.tabs.passport, tabBarIcon: ({ color }) => <TabIcon glyph="✦" color={color} /> }}
       />
       <Tabs.Screen
         name="profile"
