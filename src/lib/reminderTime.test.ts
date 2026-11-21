@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextReminder } from './reminderTime';
+import { nextReminder, reminderPlan, REMINDER_FOLLOWUPS } from './reminderTime';
 
 describe('hatırlatma zamanı', () => {
   const morning = new Date(2026, 10, 21, 9, 0);
@@ -18,5 +18,16 @@ describe('hatırlatma zamanı', () => {
   it('seri metni', () => {
     expect(nextReminder(new Set(), 4, morning).body).toContain('Serin 4 gün');
     expect(nextReminder(new Set(), 0, morning).body).toContain('Bugün hangi kahveyi');
+  });
+});
+
+describe('reminderPlan', () => {
+  it('ilk hatırlatmadan sonra her gün bir tane daha kurar', () => {
+    const plan = reminderPlan(new Set(['2026-11-21']), 3, new Date(2026, 10, 21, 9, 0));
+    expect(plan).toHaveLength(REMINDER_FOLLOWUPS + 1);
+    expect(plan[0].at).toEqual(new Date(2026, 10, 22, 20, 30));
+    expect(plan[1].at).toEqual(new Date(2026, 10, 23, 20, 30));
+    expect(plan[0].body).toContain('3 gün');
+    expect(plan[1].body).not.toContain('Serin');
   });
 });

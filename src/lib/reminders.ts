@@ -1,11 +1,12 @@
 import * as Notifications from 'expo-notifications';
 import { currentStreak, dayKey } from './progress';
-import { nextReminder } from './reminderTime';
+import { reminderPlan } from './reminderTime';
 import { loadEntries, loadMetrics, loadSettings, updateMetrics } from './storage';
 
 /**
  * Günlük hatırlatma: telefonun kendi (yerel) bildirimi, sunucu yok.
- * Her gün en fazla 1 kez, akşam 20:30'da; o gün fincan eklendiyse bir sonraki güne kayar.
+ * Her gün en fazla 1 kez, ayarlanan saatte; o gün fincan eklendiyse bir sonraki güne kayar.
+ * Uygulama açılmasa da hatırlatma kesilmesin diye sonraki 6 gün de kurulur (her açılışta yeniden hesaplanır).
  */
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -47,12 +48,14 @@ async function doRefresh(): Promise<void> {
     const entries = await loadEntries();
     const days = new Set(entries.map((e) => dayKey(new Date(e.createdAt))));
     const s = await loadSettings();
-    const r = nextReminder(days, currentStreak(entries), new Date(), s.reminderHour, s.reminderMinute);
-    await Notifications.scheduleNotificationAsync({
-      identifier: REMINDER_ID,
-      content: { title: r.title, body: r.body },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at },
-    });
+    const plan = reminderPlan(days, currentStreak(entries), new Date(), s.reminderHour, s.reminderMinute);
+    for (const [i, r] of plan.entries()) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: i === 0 ? REMINDER_ID : `${REMINDER_ID}-${i}`,
+        content: { title: r.title, body: r.body },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at },
+      });
+    }
   } catch {
     // bildirim kurulamazsa uygulama yine çalışır
   }

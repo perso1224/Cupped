@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import { parseEntries } from './entries';
+import { parseEntries, parseEntriesDetailed } from './entries';
 import { appLabel, normalizeMetrics, type Metrics, type ShareSource } from './metrics';
 import { normalizeSettings, type Settings } from './settings';
 import { normalizePlace } from './scoring';
@@ -29,17 +29,25 @@ function enqueue<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-/** Yazmadan önce okuma: hata olursa FIRLATIR, böylece bozuk/okunamayan verinin üzerine yazılmaz. */
+/**
+ * Yazmadan önce okuma: hata olursa FIRLATIR, böylece bozuk/okunamayan verinin üzerine yazılmaz.
+ * Sadece yazma kuyruğunun (enqueue) içinden çağrılır; onarım da burada yapılır.
+ */
 async function readEntriesStrict(): Promise<CupEntry[]> {
   const raw = await AsyncStorage.getItem(ENTRIES_KEY);
   try {
-    return parseEntries(raw);
+    const { entries, dropped } = parseEntriesDetailed(raw);
+    // Bazı kayıtlar okunamadıysa (ör. gelecekteki bir sürümün yeni alanı), üzerine yazmadan önce ham hali sakla.
+    if (dropped > 0 && raw) await AsyncStorage.setItem(`${ENTRIES_KEY}.corrupt.${Date.now()}`, raw);
+    return entries;
   } catch (err) {
-    // Ana veri bozuksa: bozuk hali ayrı bir yere kaydet, yedekten devam et. Yedek de bozuksa yazma iptal.
-    const backup = parseEntries(await AsyncStorage.getItem(ENTRIES_BACKUP_KEY)); // bozuksa fırlatır
+    // Ana veri bozuksa: bozuk hali ayrı bir yere kaydet, yedekten devam et.
+    // Yedek yoksa ya da o da bozuksa yazma iptal (boş listeyle üzerine yazıp veri kaybetme).
+    const backupRaw = await AsyncStorage.getItem(ENTRIES_BACKUP_KEY);
+    if (!backupRaw) throw err;
+    const backup = parseEntries(backupRaw); // bozuksa fırlatır
     if (raw) await AsyncStorage.setItem(`${ENTRIES_KEY}.corrupt.${Date.now()}`, raw);
     await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(backup));
-    void err;
     return backup;
   }
 }
@@ -52,8 +60,9 @@ async function writeEntries(list: CupEntry[]): Promise<void> {
 
 /** Ekranlar için okuma: hata olursa yedekten dener, o da olmazsa boş liste (ama hiçbir şey silinmez). */
 export async function loadEntries(): Promise<CupEntry[]> {
+  // Salt okunur: onarım yazmaları yalnızca kuyruktaki yazmalarda yapılır (yarış durumunda yeni kayıt ezilmesin).
   try {
-    return await readEntriesStrict();
+    return parseEntries(await AsyncStorage.getItem(ENTRIES_KEY));
   } catch {
     try {
       return parseEntries(await AsyncStorage.getItem(ENTRIES_BACKUP_KEY));
@@ -337,9 +346,9 @@ export function loadSettings(): Promise<Settings> {
 export function updateSettings(patch: Partial<Settings>): Promise<Settings> {
   return enqueue(async () => {
     const next = normalizeSettings({ ...(await loadSettings()), ...patch });
+    await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next)); // önce yaz, sonra ekranlara duyur
     settingsCache = next;
     settingsListeners.forEach((fn) => fn(next));
-    await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
     return next;
   });
 }
@@ -348,7 +357,7 @@ export function updateSettings(patch: Partial<Settings>): Promise<Settings> {
 
 /**
  * Dışa aktarılmış yedek dosyasını (JSON) okuyup fincanları birleştirir (aynı id'ler tekrar eklenmez).
- * Profil yoksa yedekteki profil kullanılır. Eklenen fincan sayısını döner.
+ * Profil, ölçümler ve fotoğraflar yedekte taşınmaz (yalnızca fincanlar ve ayarlar). Eklenen fincan sayısını döner.
  */
 export class InvalidBackupError extends Error {}
 
@@ -364,6 +373,7 @@ export function importBackup(json: string): Promise<number> {
     if (!data || data.app !== 'Cupped' || !Array.isArray(data.entries) || (typeof data.format === 'number' && data.format > 1)) {
       throw new InvalidBackupError('format');
     }
+    if (data.entries.length > 20000) throw new InvalidBackupError('size');
     const incoming = parseEntries(JSON.stringify(data.entries));
     const current = await readEntriesStrict();
     const ids = new Set(current.map((e) => e.id));
@@ -373,9 +383,9 @@ export function importBackup(json: string): Promise<number> {
     // Ayarlar: bu telefonda hâlâ varsayılanlar kullanılıyorsa yedekteki ayarları al (hatırlatma saati, kafein…)
     if (data.settings && JSON.stringify(await loadSettings()) === JSON.stringify(normalizeSettings(null))) {
       const next = normalizeSettings(data.settings);
+      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
       settingsCache = next;
       settingsListeners.forEach((fn) => fn(next));
-      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
     }
     return added.length;
   });

@@ -1,6 +1,6 @@
 import { BADGE_RULES, BADGES, WEEKLY, type Badge } from '../config/scoring.config';
 import { computePalateTypeId, mostCommon } from './palate';
-import { matchChain, normalizePlace } from './scoring';
+import { matchChain, normalizePlace, placeKey } from './scoring';
 import type { CupEntry, Method } from './types';
 
 // ---------- Tarih yardımcıları (telefonun yerel saatiyle) ----------
@@ -46,10 +46,8 @@ export function inRange(e: Pick<CupEntry, 'createdAt'>, start: Date, end: Date):
 
 const byDate = (a: CupEntry, b: CupEntry) => a.createdAt.localeCompare(b.createdAt);
 
-function placeKeyOf(e: CupEntry): string | null {
-  if (!e.placeName || e.venueKind === 'home' || e.venueKind === 'office') return null;
-  return normalizePlace(e.placeName);
-}
+/** Skorla aynı mekan kimliği: zincir şubeleri tek mekan, Latin dışı adlar da boş anahtar olmaz. */
+const placeKeyOf = (e: CupEntry): string | null => placeKey(e);
 
 /** Detay modu kullanılmış mı? (tat notu, menşei, tarif ya da not) */
 export function isDetailed(e: Pick<CupEntry, 'notes' | 'origin' | 'brew' | 'note'>): boolean {
@@ -205,7 +203,7 @@ export function passport(entries: CupEntry[]): Passport {
     if (!key) continue;
     const p = places.get(key);
     if (p) p.visits++;
-    else places.set(key, { name: e.placeName!, visits: 1, firstVisit: e.createdAt });
+    else places.set(key, { name: matchChain(e.placeName!) ?? e.placeName!, visits: 1, firstVisit: e.createdAt });
   }
   return {
     methods,

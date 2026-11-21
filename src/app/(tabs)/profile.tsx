@@ -41,7 +41,7 @@ export default function Profile() {
   async function joinClub() {
     await updateMetrics((m) => {
       if (!m.clubInterestAt) m.clubInterestAt = new Date().toISOString();
-    });
+    }).catch(() => {});
     reloadMetrics();
     Alert.alert(tr.profile.clubDone);
   }

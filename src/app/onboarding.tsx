@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Icon } from '../components/Icon';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Animated, Easing, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressScale, haptic, reduceMotionNow } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
@@ -50,7 +50,6 @@ export default function Onboarding() {
   }
 
   function toggleNote(n: TasteNote) {
-    
     setA((p) => {
       const cur = p.notes ?? [];
       if (cur.includes(n)) return { ...p, notes: cur.filter((x) => x !== n) };
@@ -74,7 +73,13 @@ export default function Onboarding() {
     if (finishing.current) return; // çift dokunuş
     finishing.current = true;
     // Profil kaydedilince gezinme kendiliğinden ana sayfaya geçer (_layout: Stack.Protected).
-    await saveProfile({ ...answers, starterTypeId, onboardedAt: new Date().toISOString() });
+    try {
+      await saveProfile({ ...answers, starterTypeId, onboardedAt: new Date().toISOString() });
+    } catch {
+      finishing.current = false; // tekrar denenebilsin
+      Alert.alert(tr.onboarding.saveError);
+      return;
+    }
     haptic.success();
     // Ana sayfa yerleştikten sonra ilk fincan ekranını aç
     setTimeout(() => router.push('/new'), 450);

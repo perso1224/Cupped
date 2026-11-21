@@ -60,8 +60,11 @@ export function classifyPlace(placeName: string): VenueKind {
   return matchChain(placeName) ? 'chain' : 'independent';
 }
 
-/** Keşif için mekan anahtarı. Zincirin şubeleri tek mekan sayılır ("Starbucks Moda" = "Starbucks Kadıköy"). */
-function placeKey(entry: Pick<CupEntry, 'placeName' | 'venueKind'>): string | null {
+/**
+ * Mekan kimliği (skor, hedefler, pasaport, rozetler hep bunu kullanır).
+ * Zincirin şubeleri tek mekan sayılır ("Starbucks Moda" = "Starbucks Kadıköy").
+ */
+export function placeKey(entry: Pick<CupEntry, 'placeName' | 'venueKind'>): string | null {
   if (entry.venueKind === 'home' || entry.venueKind === 'office' || !entry.placeName) return null;
   const chain = matchChain(entry.placeName);
   return chain ? `chain:${chain}` : normalizePlace(entry.placeName) || entry.placeName.trim().toLocaleLowerCase('tr-TR');

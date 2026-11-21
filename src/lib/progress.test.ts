@@ -228,3 +228,18 @@ describe('rozet ilerlemesi', () => {
     expect(p.every((x) => x.badge.howTo.length > 0)).toBe(true);
   });
 });
+
+describe('mekan kimliği (skorla tutarlı)', () => {
+  it('zincir şubeleri pasaportta tek mekan sayılır', () => {
+    const list = [
+      cup(at(2026, 10, 2), { placeName: 'Starbucks Moda', venueKind: 'chain' }),
+      cup(at(2026, 10, 3), { placeName: 'Starbucks Kadıköy', venueKind: 'chain' }),
+    ];
+    const p = passport(list);
+    expect(p.places).toHaveLength(1);
+    expect(p.places[0]).toMatchObject({ name: 'Starbucks', visits: 2 });
+  });
+  it('Latin dışı mekan adı yine bir mekan sayılır', () => {
+    expect(passport([cup(at(2026, 10, 2), { placeName: 'カフェ', venueKind: 'independent' })]).places).toHaveLength(1);
+  });
+});

@@ -77,7 +77,8 @@ export function appLabel(activityType: string | null | undefined): string {
 const DAY_MS = 86_400_000;
 function dayIndex(key: string): number {
   const [y, m, d] = key.split('-').map(Number);
-  return Math.round(new Date(y, m - 1, d).getTime() / DAY_MS);
+  // UTC gün numarası: saat dilimi/yaz saati farkından etkilenmez (UTC+12/+13'te yuvarlama hatası olmaz)
+  return Date.UTC(y, m - 1, d) / DAY_MS;
 }
 function keyOf(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

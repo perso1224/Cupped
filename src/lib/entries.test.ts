@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { upper } from '../i18n/tr';
-import { CorruptDataError, normalizeEntry, parseEntries, toRelativePhoto } from './entries';
+import { CorruptDataError, normalizeEntry, parseEntries, parseEntriesDetailed, toRelativePhoto } from './entries';
 
 const good = {
   id: 'a',
@@ -68,5 +68,24 @@ describe('Türkçe büyük harf', () => {
     expect(upper('Fincan skoru')).toBe('FİNCAN SKORU');
     expect(upper('Başlangıç damak tipin')).toBe('BAŞLANGIÇ DAMAK TİPİN');
     expect(upper('Dönemin fincanı')).toBe('DÖNEMİN FİNCANI');
+  });
+});
+
+describe('içe aktarma sertleştirme', () => {
+  const base = { id: 'z', createdAt: '2026-11-21T10:00:00+03:00', method: 'filter', venueKind: 'home', notes: [], parts: {}, score: 50 };
+  it('tarihi ISO-UTC biçimine çevirir', () => {
+    expect(normalizeEntry(base)!.createdAt).toBe('2026-11-21T07:00:00.000Z');
+  });
+  it('bilinmeyen tat notlarını ve geçersiz tarif değerlerini atar', () => {
+    const e = normalizeEntry({ ...base, notes: ['bold', 'xyz', 'fruity', 'floral'], brew: { doseG: 'abc', waterMl: '250', grind: 'huge' } })!;
+    expect(e.notes).toEqual(['bold', 'fruity']);
+    expect(e.brew).toEqual({ doseG: null, waterMl: 250, grind: null });
+    expect(normalizeEntry({ ...base, brew: { doseG: -1 } })!.brew).toBeNull();
+  });
+  it('aşırı uzun metinleri kırpar', () => {
+    expect(normalizeEntry({ ...base, note: 'a'.repeat(5000) })!.note).toHaveLength(500);
+  });
+  it('okunamayan kayıtları sayar', () => {
+    expect(parseEntriesDetailed(JSON.stringify([base, { id: 'q' }])).dropped).toBe(1);
   });
 });

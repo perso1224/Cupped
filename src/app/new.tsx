@@ -159,7 +159,13 @@ export default function NewCup() {
   }
 
   async function pickFromGallery() {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
+    let res: ImagePicker.ImagePickerResult;
+    try {
+      res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
+    } catch {
+      Alert.alert(tr.capture.galleryError);
+      return;
+    }
     if (!res.canceled && res.assets[0]?.uri) {
       setPhoto(res.assets[0].uri);
       setPhotoChanged(true);

@@ -90,8 +90,12 @@ export default function SettingsScreen() {
   function doDeleteAll() {
     confirm(tr.settings.deleteAllTitle, tr.settings.deleteAllBody, tr.settings.deleteAllOk, () =>
       confirm(tr.settings.deleteAllTitle2, tr.settings.deleteAllBody2, tr.settings.deleteAllOk, async () => {
-        await deleteAllData();
-        await cancelReminders(); // gezinme kendiliğinden tanıtıma geçer
+        try {
+          await deleteAllData();
+          await cancelReminders(); // gezinme kendiliğinden tanıtıma geçer
+        } catch {
+          Alert.alert(tr.settings.deleteAllError);
+        }
       }),
     );
   }

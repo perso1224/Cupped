@@ -20,3 +20,24 @@ export function nextReminder(
       : 'Bugün hangi kahveyi içtin? 5 saniyede ekle ☕';
   return { at, title: 'Cupped', body };
 }
+
+/** Uygulama hiç açılmasa bile hatırlatma birkaç gün daha gelsin: ilk hatırlatma + sonraki günler (saf, testli). */
+export const REMINDER_FOLLOWUPS = 6;
+export function reminderPlan(
+  cupDays: Set<string>,
+  streak: number,
+  now: Date,
+  hour: number = REMINDER_HOUR,
+  minute: number = REMINDER_MINUTE,
+) {
+  const first = nextReminder(cupDays, streak, now, hour, minute);
+  const plan = [first];
+  // Sonraki günlerde seri zaten bozulmuş olur: seri metni yerine genel metin
+  const generic = nextReminder(new Set(), 0, now, hour, minute).body;
+  for (let i = 1; i <= REMINDER_FOLLOWUPS; i++) {
+    const at = new Date(first.at);
+    at.setDate(at.getDate() + i);
+    plan.push({ at, title: first.title, body: generic });
+  }
+  return plan;
+}

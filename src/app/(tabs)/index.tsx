@@ -66,7 +66,7 @@ export default function Home() {
     } else {
       await updateMetrics((m) => {
         m.reminderEnabled = false;
-      });
+      }).catch(() => {});
     }
     reloadMetrics();
   }

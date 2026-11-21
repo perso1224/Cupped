@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 import { BackButton } from '../components/NavButtons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +24,7 @@ export default function History() {
   const insets = useSafeAreaInsets();
   const entries = useEntries();
   const list = entries ?? [];
+  const groups = useMemo(() => groupByDay(entries ?? []), [entries]);
 
   return (
     <ScrollView
@@ -33,7 +34,7 @@ export default function History() {
       <BackButton label={tr.settings.back} />
       <Text style={styles.title}>{tr.history.title}</Text>
       {entries && list.length === 0 ? <Text style={styles.empty}>{tr.history.empty}</Text> : null}
-      {groupByDay(list).map((g, gi) => (
+      {groups.map((g, gi) => (
         <FadeIn key={g.label} index={gi}>
           <Text style={styles.day}>{upper(g.label)}</Text>
           <View style={styles.group}>

@@ -97,6 +97,7 @@ export const tr = {
     cameraError: 'Fotoğraf çekilemedi. Tekrar dener misin?',
     saveError: 'Fincan kaydedilemedi. Lütfen tekrar dene.',
     editTitle: 'Fincanı düzenle',
+    galleryError: 'Galeri açılamadı. Ayarlar\'dan fotoğraf iznini kontrol et.',
     saveChanges: 'Değişiklikleri kaydet',
     discardEditTitle: 'Değişiklikler kaydedilmesin mi?',
     fromGallery: 'Galeriden seç',
@@ -293,6 +294,7 @@ export const tr = {
     empty: 'Bu dönemde henüz fincan yok. Özetin ilk fincanla başlar.',
   },
   onboarding: {
+    saveError: 'Kaydedilemedi. Lütfen tekrar dene.',
     welcomeTitle: 'Her fincan bir damak kimliği.',
     welcomeBody: 'Fincanını çek, 2 dokunuşta kaydet, skorunu ve damak tipini gör. Sonra arkadaşlarına sor: senin damak tipin ne?',
     start: 'Başlayalım',
@@ -321,6 +323,7 @@ export const tr = {
     finish: 'Hadi, ilk fincan',
   },
   settings: {
+    deleteAllError: 'Veriler silinemedi. Lütfen tekrar dene.',
     title: 'Ayarlar',
     back: 'Geri',
     cancel: 'Vazgeç',
