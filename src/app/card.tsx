@@ -1,0 +1,155 @@
+import * as Brightness from 'expo-brightness';
+import { useKeepAwake } from 'expo-keep-awake';
+import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { CardHandle } from '../components/ShareCard';
+import { BRAND } from '../config/brand';
+import { tr } from '../i18n/tr';
+import { getPalateType } from '../lib/palate';
+import { profileSummary } from '../lib/progress';
+import { levelFor } from '../lib/scoring';
+import { shareViewAsImage } from '../lib/share';
+import { useEntries } from '../lib/useEntries';
+import { colors } from '../theme';
+
+/** "Göster" modu: tam ekran Damak Kartı. Parlaklık artar, ekran kapanmaz. */
+export default function PalateCard() {
+  useKeepAwake();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const entries = useEntries();
+  const cardRef = useRef<CardHandle>(null);
+  const [sharing, setSharing] = useState(false);
+
+  // Parlaklığı en yükseğe çıkar, çıkarken eski haline getir.
+  useEffect(() => {
+    let previous: number | null = null;
+    (async () => {
+      try {
+        previous = await Brightness.getBrightnessAsync();
+        await Brightness.setBrightnessAsync(1);
+      } catch {
+        // Parlaklık ayarlanamazsa kart yine de gösterilir.
+      }
+    })();
+    return () => {
+      if (previous !== null) Brightness.setBrightnessAsync(previous).catch(() => {});
+    };
+  }, []);
+
+  const s = profileSummary(entries ?? []);
+  const type = s.palateTypeId ? getPalateType(s.palateTypeId) : null;
+  const cardWidth = Math.min(width - 32, 420);
+
+  async function share() {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      await shareViewAsImage(cardRef);
+    } catch {
+      Alert.alert(tr.result.shareError);
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  return (
+    <View style={[styles.screen, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 12 }]}>
+      <View style={styles.topBar}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.close}>
+          <Text style={styles.closeText}>✕</Text>
+        </Pressable>
+        <Text style={styles.hint}>{tr.palateCard.hint}</Text>
+        {type ? (
+          <Pressable onPress={share} disabled={sharing} hitSlop={12}>
+            <Text style={styles.share}>{tr.palateCard.share}</Text>
+          </Pressable>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
+      </View>
+
+      <View style={styles.center}>
+        <View ref={cardRef} collapsable={false} style={[styles.card, { width: cardWidth }]}>
+          <Text style={styles.kicker}>{tr.palateCard.title}</Text>
+          {type ? (
+            <>
+              <Text style={[styles.typeName, { fontSize: cardWidth * 0.12 }]} adjustsFontSizeToFit numberOfLines={2}>
+                {type.name}
+              </Text>
+              <Text style={styles.tagline}>{type.tagline}</Text>
+
+              <View style={styles.levelRow}>
+                <View style={styles.levelPill}>
+                  <Text style={styles.levelText}>
+                    {tr.palateCard.level}: {levelFor(s.avg)}
+                  </Text>
+                </View>
+                {s.streak > 0 ? <Text style={styles.streak}>🔥 {s.streak}</Text> : null}
+              </View>
+
+              <View style={styles.grid}>
+                <Stat value={s.avg} label={tr.palateCard.avg} big />
+                <Stat value={s.cups} label={tr.palateCard.cups} big />
+                <Stat value={s.places} label={tr.palateCard.places} />
+                <Stat value={s.methods} label={tr.palateCard.methods} />
+              </View>
+            </>
+          ) : (
+            <Text style={styles.empty}>{tr.palateCard.empty}</Text>
+          )}
+
+          <View style={styles.footer}>
+            <Text style={styles.question}>{tr.card.question}</Text>
+            <Text style={styles.brand}>{BRAND.name}</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function Stat({ value, label, big }: { value: number; label: string; big?: boolean }) {
+  return (
+    <View style={styles.stat}>
+      <Text style={[styles.statValue, big && { fontSize: 48 }]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
+  close: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
+  closeText: { fontSize: 18, fontWeight: '700', color: colors.text },
+  hint: { fontSize: 14, fontWeight: '600', color: colors.muted },
+  share: { fontSize: 15, fontWeight: '800', color: colors.accent },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  card: { backgroundColor: colors.black, borderRadius: 32, padding: 28, minHeight: 520 },
+  kicker: { color: colors.accent, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.4 },
+  typeName: { color: colors.white, fontWeight: '900', marginTop: 14, letterSpacing: -1 },
+  tagline: { color: '#CFC8BE', fontSize: 16, lineHeight: 22, marginTop: 10 },
+  levelRow: { flexDirection: 'row', alignItems: 'center', marginTop: 18 },
+  levelPill: { backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
+  levelText: { color: colors.black, fontWeight: '800', fontSize: 14 },
+  streak: { color: colors.white, fontWeight: '800', fontSize: 16, marginLeft: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 20, marginBottom: 56 },
+  stat: { width: '50%', paddingVertical: 8 },
+  statValue: { color: colors.white, fontSize: 32, fontWeight: '900' },
+  statLabel: { color: '#BDB6AC', fontSize: 13, marginTop: -2 },
+  empty: { color: colors.white, fontSize: 18, marginTop: 24, lineHeight: 26 },
+  footer: {
+    position: 'absolute',
+    left: 28,
+    right: 28,
+    bottom: 22,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  question: { fontSize: 13, fontWeight: '600', color: '#BDB6AC' },
+  brand: { fontSize: 18, fontWeight: '900', color: colors.white, letterSpacing: -0.5 },
+});

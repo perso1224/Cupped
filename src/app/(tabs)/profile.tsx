@@ -1,11 +1,12 @@
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Card } from '../../components/ui';
+import { Card, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
-import { computePalateTypeId, getPalateType } from '../../lib/palate';
-import { levelFor, normalizePlace } from '../../lib/scoring';
+import { getPalateType } from '../../lib/palate';
+import { profileSummary } from '../../lib/progress';
+import { levelFor } from '../../lib/scoring';
 import { loadCounters, type Counters } from '../../lib/storage';
 import { useEntries } from '../../lib/useEntries';
 import { colors } from '../../theme';
@@ -20,14 +21,14 @@ export default function Profile() {
     }, []),
   );
 
-  const avg = entries.length ? Math.round(entries.reduce((s, e) => s + e.score, 0) / entries.length) : 0;
-  const places = new Set(entries.filter((e) => e.placeName).map((e) => normalizePlace(e.placeName!))).size;
-  const methods = new Set(entries.map((e) => e.method)).size;
-  const type = entries.length ? getPalateType(computePalateTypeId(entries)) : null;
+  const { avg, places, methods, palateTypeId } = profileSummary(entries);
+  const type = palateTypeId ? getPalateType(palateTypeId) : null;
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 40 }}>
       <Text style={styles.title}>{tr.profile.title}</Text>
+
+      <PillButton label={tr.profile.showCard} onPress={() => router.push('/card')} style={{ marginBottom: 16 }} />
 
       {type ? (
         <Card style={{ marginBottom: 16 }}>
@@ -57,8 +58,6 @@ export default function Profile() {
           <Stat value={counters.shares} label={tr.profile.shares} />
         </View>
       </Card>
-
-      <Text style={styles.soon}>{tr.profile.soon}</Text>
     </ScrollView>
   );
 }
@@ -81,5 +80,4 @@ const styles = StyleSheet.create({
   stat: { width: '50%', paddingVertical: 10 },
   statValue: { fontSize: 32, fontWeight: '900', color: colors.text },
   statLabel: { fontSize: 13, color: colors.muted },
-  soon: { fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 24 },
 });

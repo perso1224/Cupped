@@ -11,7 +11,7 @@ Briften sonraki kararlar ve ileride yapılacak işler burada tutulur.
 | (c) Skor ve damak tipi (birim testli) | ✅ |
 | (d) Paylaşım kartı | ✅ |
 | (e) Geçmiş, Damak Pasaportu, haftalık/aylık rapor, seri | ✅ |
-| (f) Damak Kartı ("Göster" modu) | ⏳ |
+| (f) Damak Kartı ("Göster" modu) | ✅ |
 | (g) Onboarding | ⏳ |
 | (h) Detay modu (tat notları, menşei, gram/su/öğütme, not) | ⏳ |
 

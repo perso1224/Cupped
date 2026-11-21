@@ -247,3 +247,25 @@ export function earnedBadges(entries: CupEntry[]): Badge[] {
 
   return BADGES.filter((b) => earned.has(b.id));
 }
+
+// ---------- Profil / Damak Kartı özeti ----------
+
+export type ProfileSummary = {
+  cups: number;
+  avg: number;
+  places: number;
+  methods: number;
+  streak: number;
+  palateTypeId: string | null;
+};
+
+export function profileSummary(entries: CupEntry[], today: Date = new Date()): ProfileSummary {
+  return {
+    cups: entries.length,
+    avg: entries.length ? Math.round(entries.reduce((s, e) => s + e.score, 0) / entries.length) : 0,
+    places: new Set(entries.map(placeKeyOf).filter(Boolean)).size,
+    methods: new Set(entries.map((e) => e.method)).size,
+    streak: currentStreak(entries, today),
+    palateTypeId: entries.length ? computePalateTypeId(entries) : null,
+  };
+}

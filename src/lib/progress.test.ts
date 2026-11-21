@@ -5,6 +5,7 @@ import {
   earnedBadges,
   passport,
   periodReport,
+  profileSummary,
   startOfWeek,
   weekStrip,
   weeklyPalateScore,
@@ -156,5 +157,19 @@ describe('pasaport ve rozetler', () => {
     const indep = [1, 2, 3, 4, 5].map((d) => cup(at(2026, 10, d, 12), { venueKind: 'independent', placeName: `Yer ${d}` }));
     expect(ids(indep)).toEqual(expect.arrayContaining(['third_wave_refugee', 'five_new_month']));
     expect(ids([cup(at(2026, 10, 1), { origin: 'Panama Geisha' })])).toContain('first_geisha');
+  });
+});
+
+describe('profil özeti', () => {
+  it('ortalama, mekan, yöntem ve seri', () => {
+    const s = profileSummary(
+      [
+        cup(at(2026, 10, 17), { score: 40, venueKind: 'chain', placeName: 'Starbucks', method: 'milk' }),
+        cup(at(2026, 10, 18), { score: 61, venueKind: 'independent', placeName: 'starbucks' }),
+      ],
+      WED,
+    );
+    expect(s).toMatchObject({ cups: 2, avg: 51, places: 1, methods: 2, streak: 2 });
+    expect(profileSummary([], WED).palateTypeId).toBeNull();
   });
 });
