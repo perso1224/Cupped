@@ -114,6 +114,7 @@ export const tr = {
     shareError: 'Paylaşım açılamadı. Tekrar dener misin?',
     notFound: 'Fincan bulunamadı.',
     delete: 'Fincanı sil',
+    newBadge: 'YENİ ROZET',
     deleteTitle: 'Bu fincan silinsin mi?',
     deleteBody: 'Fincan ve fotoğrafı telefonundan silinir. Bu geri alınamaz.',
     deleteError: 'Silinemedi. Tekrar dener misin?',

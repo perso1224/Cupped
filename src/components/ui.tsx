@@ -1,16 +1,21 @@
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { haptic, PressScale } from './motion';
 import { colors, radius } from '../theme';
 
 export function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.chip, selected && styles.chipSelected, pressed && { opacity: 0.7 }]}
+    <PressScale
+      onPress={() => {
+        haptic.select();
+        onPress();
+      }}
+      scaleTo={0.93}
+      style={[styles.chip, selected && styles.chipSelected]}
     >
       <Text style={[styles.chipText, selected && styles.chipTextSelected]} numberOfLines={1}>
         {label}
       </Text>
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -25,23 +30,22 @@ export function PillButton({
   onPress: () => void;
   disabled?: boolean;
   variant?: 'dark' | 'light';
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }) {
   const dark = variant === 'dark';
   return (
-    <Pressable
+    <PressScale
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => [
+      style={[
         styles.pill,
         { backgroundColor: dark ? colors.black : colors.card, borderColor: dark ? colors.black : colors.line },
         disabled && { opacity: 0.35 },
-        pressed && { opacity: 0.8 },
         style,
       ]}
     >
       <Text style={[styles.pillText, { color: dark ? colors.white : colors.text }]}>{label}</Text>
-    </Pressable>
+    </PressScale>
   );
 }
 

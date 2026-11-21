@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../components/CupRow';
+import { FadeIn } from '../components/motion';
 import { tr } from '../i18n/tr';
 import { useEntries } from '../lib/useEntries';
 import type { CupEntry } from '../lib/types';
@@ -38,8 +39,10 @@ export default function History() {
       {groupByDay(list).map((g) => (
         <View key={g.label}>
           <Text style={styles.day}>{g.label}</Text>
-          {g.items.map((e) => (
-            <CupRow key={e.id} entry={e} timeOnly />
+          {g.items.map((e, i) => (
+            <FadeIn key={e.id} index={i}>
+              <CupRow entry={e} timeOnly />
+            </FadeIn>
           ))}
         </View>
       ))}

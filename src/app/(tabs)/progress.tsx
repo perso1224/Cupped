@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
+import { CountUp } from '../../components/motion';
 import { Card, Chip, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
@@ -44,7 +45,7 @@ export default function Progress() {
           <>
             {/* Haftalık Damak Skoru sadece haftalık anlamlı (çeşitlilik puanı ay boyunca hep 100'e dayanır) */}
             <Text style={styles.label}>{tr.progress.weeklyScore}</Text>
-            <Text style={styles.big}>{report.palateScore}</Text>
+            <CountUp value={report.palateScore} style={styles.big} />
             <Text style={[styles.label, isRecord && { color: colors.accent }]}>
               {isRecord ? tr.progress.newRecord : record > 0 ? tr.progress.record(record) : tr.progress.firstWeek}
             </Text>
@@ -105,7 +106,7 @@ export default function Progress() {
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
+      <CountUp value={value} style={styles.statValue} />
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );

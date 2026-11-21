@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
 import { ScoreRing } from '../../components/ScoreRing';
 import { WeekStrip } from '../../components/WeekStrip';
+import { FadeIn, Pop, PressScale, animateLayout } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { BRAND } from '../../config/brand';
 import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
@@ -31,6 +32,7 @@ export default function Home() {
   const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
 
   async function answerReminder(yes: boolean) {
+    animateLayout();
     if (yes) {
       const ok = await setReminderEnabled(true);
       if (!ok) Alert.alert(tr.profile.reminderDenied);
@@ -76,7 +78,9 @@ export default function Home() {
       <View style={styles.header}>
         <Text style={styles.brand}>{BRAND.name}</Text>
         <View style={styles.streak}>
-          <Text style={{ fontSize: 16 }}>🔥</Text>
+          <Pop trigger={streak}>
+            <Text style={{ fontSize: 16 }}>🔥</Text>
+          </Pop>
           <Text style={styles.streakText}>{tr.home.streak(streak)}</Text>
         </View>
       </View>
@@ -128,9 +132,10 @@ export default function Home() {
       ) : null}
 
       {banner ? (
-        <Pressable
+        <PressScale
           onPress={() => router.push({ pathname: '/wrapped', params: { period: 'month', offset: String(banner.offset) } })}
-          style={({ pressed }) => [styles.banner, pressed && { opacity: 0.85 }]}
+          scaleTo={0.97}
+          style={styles.banner}
         >
           <View style={{ flex: 1 }}>
             <Text style={styles.bannerTitle}>{banner.title}</Text>
@@ -139,7 +144,7 @@ export default function Home() {
           <View style={styles.bannerPlay}>
             <Text style={styles.bannerPlayText}>▶</Text>
           </View>
-        </Pressable>
+        </PressScale>
       ) : null}
 
       {list.length > 0 ? (
@@ -152,8 +157,10 @@ export default function Home() {
         ) : null}
       </View>
       ) : null}
-      {list.slice(0, 5).map((e) => (
-        <CupRow key={e.id} entry={e} />
+      {list.slice(0, 5).map((e, i) => (
+        <FadeIn key={e.id} index={i}>
+          <CupRow entry={e} />
+        </FadeIn>
       ))}
     </ScrollView>
   );

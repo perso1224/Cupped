@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Animated, Easing, KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PressScale } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { BRAND } from '../config/brand';
 import { tr, upper } from '../i18n/tr';
@@ -208,12 +209,9 @@ function Question({ title, hint, children }: { title: string; hint?: string; chi
 
 function Option({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.option, selected && styles.optionOn, pressed && { opacity: 0.8 }]}
-    >
+    <PressScale onPress={onPress} scaleTo={0.97} style={[styles.option, selected && styles.optionOn]}>
       <Text style={[styles.optionText, selected && { color: colors.white }]}>{label}</Text>
-    </Pressable>
+    </PressScale>
   );
 }
 

@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { PressScale } from './motion';
 import { tr } from '../i18n/tr';
 import { photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
@@ -19,7 +20,7 @@ export function timeLabel(iso: string) {
 /** timeOnly: gün başlığı altında listelenirken sadece saat (tarih tekrar etmesin). */
 export function CupRow({ entry, timeOnly }: { entry: CupEntry; timeOnly?: boolean }) {
   return (
-    <Pressable onPress={() => router.push(`/cup/${entry.id}`)} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
+    <PressScale onPress={() => router.push(`/cup/${entry.id}`)} scaleTo={0.97}>
       <Card style={styles.row}>
         {entry.photoUri ? (
           <Image source={{ uri: photoUrl(entry.photoUri)! }} style={styles.thumb} />
@@ -43,7 +44,7 @@ export function CupRow({ entry, timeOnly }: { entry: CupEntry; timeOnly?: boolea
         </View>
         <Text style={styles.rowScore}>{entry.score}</Text>
       </Card>
-    </Pressable>
+    </PressScale>
   );
 }
 

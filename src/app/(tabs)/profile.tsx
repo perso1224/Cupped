@@ -2,6 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CountUp } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
@@ -133,7 +134,7 @@ export default function Profile() {
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
+      <CountUp value={value} style={styles.statValue} />
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );

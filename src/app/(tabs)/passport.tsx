@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FadeIn } from '../../components/motion';
 import { Card } from '../../components/ui';
 import { PALATE_TYPES } from '../../config/scoring.config';
 import { tr } from '../../i18n/tr';
@@ -38,8 +39,9 @@ export default function Passport() {
       </View>
 
       <Text style={styles.section}>{tr.passport.badges}</Text>
-      {badgeProgress(entries).map(({ badge: b, current, target, earned }) => (
-        <Card key={b.id} style={styles.badge}>
+      {badgeProgress(entries).map(({ badge: b, current, target, earned }, i) => (
+        <FadeIn key={b.id} index={i}>
+        <Card style={styles.badge}>
           <Text style={[styles.badgeIcon, !earned && { opacity: 0.5 }]}>{earned ? '🏅' : '🔒'}</Text>
           <View style={{ flex: 1 }}>
             <Text style={[styles.badgeName, !earned && { color: colors.muted }]}>{b.name}</Text>
@@ -56,6 +58,7 @@ export default function Passport() {
             ) : null}
           </View>
         </Card>
+        </FadeIn>
       ))}
 
       <Text style={styles.section}>{tr.passport.places}</Text>

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Image,
   Linking,
   InputAccessoryView,
@@ -20,13 +21,14 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { animateLayout } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
 import { computePalateTypeId } from '../lib/palate';
 import { classifyPlace, normalizePlace, scoreCup } from '../lib/scoring';
 import { refreshReminder } from '../lib/reminders';
 import { knownPlaces, loadEntries, newId, persistPhoto, saveEntry, updateMetrics } from '../lib/storage';
-import { brewRatio } from '../lib/progress';
+import { brewRatio, earnedBadges } from '../lib/progress';
 import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from '../lib/types';
 import { colors } from '../theme';
 
@@ -59,6 +61,7 @@ export default function NewCup() {
   const savingRef = useRef(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [flash] = useState(() => new Animated.Value(0));
   // Detay modu
   const [showDetail, setShowDetail] = useState(false);
   const [notes, setNotes] = useState<TasteNote[]>([]);
@@ -87,6 +90,9 @@ export default function NewCup() {
   async function takePhoto() {
     if (!cameraReady || capturing) return;
     setCapturing(true);
+    // Deklanşör flaşı (iOS kamerasındaki gibi kısa beyaz parlama)
+    flash.setValue(0.85);
+    Animated.timing(flash, { toValue: 0, duration: 260, useNativeDriver: true }).start();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     try {
       const pic = await cameraRef.current?.takePictureAsync({ quality: 0.6 });
@@ -141,13 +147,20 @@ export default function NewCup() {
         }
       }
       const captureMs = Date.now() - openedAt.current;
-      await saveEntry({ id, createdAt, photoUri, ...input, brew, note: noteText, captureMs, score: total, parts, palateTypeId });
+      const newEntry: CupEntry = { id, createdAt, photoUri, ...input, brew, note: noteText, captureMs, score: total, parts, palateTypeId };
+      await saveEntry(newEntry);
+      // Bu fincanla yeni kazanılan rozetler (sonuç ekranında kutlanır)
+      const before = new Set(earnedBadges(history).map((b) => b.id));
+      const newBadges = earnedBadges([...history, newEntry])
+        .filter((b) => !before.has(b.id))
+        .map((b) => b.id)
+        .join(',');
       updateMetrics((m) => {
         m.newSaved += 1;
       }).catch(() => {});
       refreshReminder();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      router.replace({ pathname: '/cup/[id]', params: { id, fresh: '1' } });
+      router.replace({ pathname: '/cup/[id]', params: { id, fresh: '1', ...(newBadges ? { badges: newBadges } : {}) } });
     } catch {
       Alert.alert(tr.capture.saveError);
     } finally {
@@ -176,6 +189,7 @@ export default function NewCup() {
             )}
           </View>
         )}
+        <Animated.View pointerEvents="none" style={[styles.flash, { opacity: flash }]} />
         {capturing ? (
           <View style={styles.capturing} pointerEvents="none">
             <ActivityIndicator color="#fff" size="large" />
@@ -275,7 +289,14 @@ export default function NewCup() {
           />
         </View>
 
-        <Pressable onPress={() => setShowDetail((v) => !v)} hitSlop={8} style={styles.detailToggle}>
+        <Pressable
+          onPress={() => {
+            animateLayout();
+            setShowDetail((v) => !v);
+          }}
+          hitSlop={8}
+          style={styles.detailToggle}
+        >
           <Text style={styles.detailToggleText}>{showDetail ? tr.capture.hideDetail : tr.capture.addDetail}</Text>
         </Pressable>
 
@@ -373,6 +394,7 @@ export default function NewCup() {
 
 const styles = StyleSheet.create({
   cameraScreen: { flex: 1, backgroundColor: '#000' },
+  flash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#fff' },
   capturing: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)' },
   permission: { flex: 1, paddingHorizontal: 28 },
   permTitle: { color: colors.white, fontSize: 26, fontWeight: '800' },

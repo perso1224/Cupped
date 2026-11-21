@@ -1,13 +1,20 @@
 import { Redirect, router } from 'expo-router';
 import { Tabs } from 'expo-router/tabs';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
+import { haptic } from '../../components/motion';
 import { tr } from '../../i18n/tr';
 import { useProfile } from '../../lib/useProfile';
 import { colors } from '../../theme';
 
-function TabIcon({ glyph, color }: { glyph: string; color: ColorValue }) {
-  return <Text style={{ fontSize: 20, color }}>{glyph}</Text>;
+/** Sekme simgesi: seçilince hafifçe büyüyüp yerine oturur. */
+function TabIcon({ glyph, color, focused }: { glyph: string; color: ColorValue; focused: boolean }) {
+  const [s] = useState(() => new Animated.Value(focused ? 1.12 : 1));
+  useEffect(() => {
+    Animated.spring(s, { toValue: focused ? 1.12 : 1, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
+  }, [focused, s]);
+  return <Animated.Text style={{ fontSize: 20, color, transform: [{ scale: s }] }}>{glyph}</Animated.Text>;
 }
 
 export default function TabsLayout() {
@@ -25,14 +32,15 @@ export default function TabsLayout() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         sceneStyle: { backgroundColor: colors.bg },
       }}
+      screenListeners={{ tabPress: () => haptic.select() }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: tr.tabs.home, tabBarIcon: ({ color }) => <TabIcon glyph="⌂" color={color} /> }}
+        options={{ title: tr.tabs.home, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} glyph="⌂" color={color} /> }}
       />
       <Tabs.Screen
         name="progress"
-        options={{ title: tr.tabs.progress, tabBarIcon: ({ color }) => <TabIcon glyph="▤" color={color} /> }}
+        options={{ title: tr.tabs.progress, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} glyph="▤" color={color} /> }}
       />
       <Tabs.Screen
         name="add"
@@ -56,11 +64,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="passport"
-        options={{ title: tr.tabs.passport, tabBarIcon: ({ color }) => <TabIcon glyph="✦" color={color} /> }}
+        options={{ title: tr.tabs.passport, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} glyph="✦" color={color} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: tr.tabs.profile, tabBarIcon: ({ color }) => <TabIcon glyph="◉" color={color} /> }}
+        options={{ title: tr.tabs.profile, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} glyph="◉" color={color} /> }}
       />
     </Tabs>
   );

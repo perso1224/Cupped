@@ -4,6 +4,8 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDime
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShareCard, type CardHandle } from '../../components/ShareCard';
 import { PillButton } from '../../components/ui';
+import { Pop, haptic } from '../../components/motion';
+import { BADGES } from '../../config/scoring.config';
 import { tr } from '../../i18n/tr';
 import { brewRatio, isDetailed } from '../../lib/progress';
 import { shareViewAsImage } from '../../lib/share';
@@ -14,7 +16,11 @@ import { colors } from '../../theme';
 const PART_ORDER: (keyof ScoreParts)[] = ['base', 'effort', 'discovery', 'depth', 'selectivity'];
 
 export default function CupResult() {
-  const { id, fresh } = useLocalSearchParams<{ id: string; fresh?: string }>();
+  const { id, fresh, badges } = useLocalSearchParams<{ id: string; fresh?: string; badges?: string }>();
+  const newBadges = (badges ?? '')
+    .split(',')
+    .map((b) => BADGES.find((x) => x.id === b))
+    .filter((b): b is NonNullable<typeof b> => !!b);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const cardRef = useRef<CardHandle>(null);
@@ -37,6 +43,14 @@ export default function CupResult() {
     if (isFresh) bumpCounter('cardsGenerated').catch(() => {});
     return () => clearTimeout(t);
   }, [id, isFresh]);
+
+  // Yeni rozet: kart belirirken bir kez başarı titreşimi
+  const hasNewBadge = newBadges.length > 0;
+  useEffect(() => {
+    if (!hasNewBadge) return;
+    const t = setTimeout(() => haptic.success(), 1350);
+    return () => clearTimeout(t);
+  }, [hasNewBadge]);
 
   async function doDelete() {
     try {
@@ -92,6 +106,17 @@ export default function CupResult() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ paddingTop: 16, paddingBottom: 160, alignItems: 'center' }}>
+        {newBadges.map((b, i) => (
+          <Pop key={b.id} delay={1300 + i * 250} style={[styles.newBadge, { width: cardWidth }]}>
+            <Text style={styles.newBadgeIcon}>🏅</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.newBadgeKicker}>{tr.result.newBadge}</Text>
+              <Text style={styles.newBadgeName}>{b.name}</Text>
+              <Text style={styles.newBadgeDesc}>{b.description}</Text>
+            </View>
+          </Pop>
+        ))}
+
         <View style={[styles.parts, { marginTop: 0, marginBottom: 12 }]}>
           {PART_ORDER.filter((k) => entry.parts[k] !== 0).map((k) => (
             <View key={k} style={styles.part}>
@@ -174,6 +199,18 @@ function DetailLine({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  newBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.black,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+  },
+  newBadgeIcon: { fontSize: 34, marginRight: 12 },
+  newBadgeKicker: { color: colors.accent, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
+  newBadgeName: { color: colors.white, fontSize: 18, fontWeight: '900', marginTop: 2 },
+  newBadgeDesc: { color: '#CFC8BE', fontSize: 13, marginTop: 2 },
   deleteText: { fontSize: 15, fontWeight: '700', color: colors.danger },
   details: { backgroundColor: colors.card, borderRadius: 20, padding: 18, marginTop: 16 },
   detailsHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
