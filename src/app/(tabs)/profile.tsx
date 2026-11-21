@@ -90,9 +90,9 @@ export default function Profile() {
       ) : null}
 
       <ListSection title={tr.profile.collection}>
-        <ListRow icon="ribbon" tint={tint.amber} title={tr.profile.badges} value={`${earned}/${badges.length}`} chevron onPress={() => router.push('/passport')} />
-        <ListRow icon="location" tint={tint.cherry} title={tr.profile.places} value={String(places)} chevron onPress={() => router.push('/passport')} />
-        <ListRow icon="cafe" tint={tint.espresso} title={tr.profile.methods} value={`${methods}/5`} chevron onPress={() => router.push('/passport')} />
+        <ListRow icon="ribbon" tint={tint.amber} title={tr.profile.badges} value={`${earned}/${badges.length}`} chevron onPress={() => router.push({ pathname: '/collection', params: { focus: 'badges' } })} />
+        <ListRow icon="location" tint={tint.cherry} title={tr.profile.places} value={String(places)} chevron onPress={() => router.push({ pathname: '/collection', params: { focus: 'places' } })} />
+        <ListRow icon="cafe" tint={tint.espresso} title={tr.profile.methods} value={`${methods}/5`} chevron onPress={() => router.push({ pathname: '/collection', params: { focus: 'methods' } })} />
         <ListRow icon="time" tint={tint.slate} title={tr.progress.history} chevron onPress={() => router.push('/history')} />
       </ListSection>
 
