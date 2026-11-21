@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr } from '../i18n/tr';
+import { photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
 import { colors } from '../theme';
 import { placeLabel } from './ShareCard';
@@ -20,7 +21,7 @@ export function CupRow({ entry }: { entry: CupEntry }) {
     <Pressable onPress={() => router.push(`/cup/${entry.id}`)} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
       <Card style={styles.row}>
         {entry.photoUri ? (
-          <Image source={{ uri: entry.photoUri }} style={styles.thumb} />
+          <Image source={{ uri: photoUrl(entry.photoUri)! }} style={styles.thumb} />
         ) : (
           <View style={[styles.thumb, styles.thumbEmpty]}>
             <Text style={{ fontSize: 26 }}>☕</Text>

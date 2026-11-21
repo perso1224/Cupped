@@ -9,7 +9,7 @@ import { BRAND } from '../../config/brand';
 import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
 import { tr } from '../../i18n/tr';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
-import { addDays, currentStreak, dayKey, discoveriesIn, inRange, startOfMonth, startOfWeek, weekStrip } from '../../lib/progress';
+import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekStrip } from '../../lib/progress';
 import { levelFor } from '../../lib/scoring';
 import { useEntries } from '../../lib/useEntries';
 import { useProfile } from '../../lib/useProfile';
@@ -34,10 +34,22 @@ export default function Home() {
   const ws = startOfWeek(now);
   const disc = discoveriesIn(list, ws, addDays(ws, 7));
   const discoveries = disc.places.length + disc.methods.length;
-  const ms = startOfMonth(now);
-  const monthCups = list.filter((e) => inRange(e, ms, new Date(now.getFullYear(), now.getMonth() + 1, 1))).length;
-  const monthName = ms.toLocaleDateString('tr-TR', { month: 'long' });
-  const monthLabel = monthName.charAt(0).toLocaleUpperCase('tr-TR') + monthName.slice(1);
+  // Damak Özeti afişi: ayın ilk 7 gününde geçen ayın özeti (asıl "Wrapped anı"), sonra bu ayın özeti.
+  const banner = (() => {
+    const label = (d: Date) => {
+      const m = d.toLocaleDateString('tr-TR', { month: 'long' });
+      return m.charAt(0).toLocaleUpperCase('tr-TR') + m.slice(1);
+    };
+    const prev = periodRange('month', -1, now);
+    if (now.getDate() <= 7 && list.some((e) => inRange(e, prev.start, prev.end))) {
+      return { offset: -1, title: tr.wrapped.bannerMonth(label(prev.start)) };
+    }
+    const cur = periodRange('month', 0, now);
+    if (list.filter((e) => inRange(e, cur.start, cur.end)).length >= WRAPPED_RULES.minCupsForBanner) {
+      return { offset: 0, title: tr.wrapped.bannerMonthSoFar(label(cur.start)) };
+    }
+    return null;
+  })();
 
   return (
     <ScrollView
@@ -77,13 +89,13 @@ export default function Home() {
         </View>
       </Card>
 
-      {monthCups >= WRAPPED_RULES.minCupsForBanner ? (
+      {banner ? (
         <Pressable
-          onPress={() => router.push({ pathname: '/wrapped', params: { period: 'month' } })}
+          onPress={() => router.push({ pathname: '/wrapped', params: { period: 'month', offset: String(banner.offset) } })}
           style={({ pressed }) => [styles.banner, pressed && { opacity: 0.85 }]}
         >
           <View style={{ flex: 1 }}>
-            <Text style={styles.bannerTitle}>{tr.wrapped.bannerMonth(monthLabel)}</Text>
+            <Text style={styles.bannerTitle}>{banner.title}</Text>
             <Text style={styles.bannerSub}>{tr.wrapped.bannerSub}</Text>
           </View>
           <View style={styles.bannerPlay}>

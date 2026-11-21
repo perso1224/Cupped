@@ -6,7 +6,7 @@ import { CupRow } from '../../components/CupRow';
 import { Card, Chip, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
-import { addDays, periodReport, startOfMonth, startOfWeek, weeklyRecordBefore } from '../../lib/progress';
+import { addDays, inRange, periodRange, periodReport, startOfMonth, startOfWeek, weeklyRecordBefore } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
 import { colors } from '../../theme';
 
@@ -25,6 +25,8 @@ export default function Progress() {
   const record = weeklyRecordBefore(entries, ws);
   const isRecord = kind === 'week' && report.palateScore > record && record > 0;
   const type = report.palateTypeId ? getPalateType(report.palateTypeId) : null;
+  const prev = periodRange(kind, -1, now);
+  const hasPrev = entries.some((e) => inRange(e, prev.start, prev.end));
 
   return (
     <ScrollView
@@ -38,18 +40,23 @@ export default function Progress() {
       </View>
 
       <Card style={{ marginTop: 8 }}>
-        <Text style={styles.label}>{tr.progress.weeklyScore}</Text>
-        <Text style={styles.big}>{report.palateScore}</Text>
         {kind === 'week' ? (
-          <Text style={[styles.label, isRecord && { color: colors.accent }]}>
-            {isRecord ? tr.progress.newRecord : tr.progress.record(record)}
-          </Text>
-        ) : null}
+          <>
+            {/* Haftalık Damak Skoru sadece haftalık anlamlı (çeşitlilik puanı ay boyunca hep 100'e dayanır) */}
+            <Text style={styles.label}>{tr.progress.weeklyScore}</Text>
+            <Text style={styles.big}>{report.palateScore}</Text>
+            <Text style={[styles.label, isRecord && { color: colors.accent }]}>
+              {isRecord ? tr.progress.newRecord : record > 0 ? tr.progress.record(record) : tr.progress.firstWeek}
+            </Text>
+          </>
+        ) : (
+          <Text style={styles.label}>{tr.progress.monthSummary}</Text>
+        )}
         <View style={styles.grid}>
           <Stat value={report.cups} label={tr.progress.cups} />
           <Stat value={report.avg} label={tr.progress.avg} />
           <Stat value={report.places} label={tr.progress.places} />
-          <Stat value={report.methods} label={tr.progress.methods} />
+          {kind === 'month' ? <Stat value={report.newPlaces} label={tr.progress.newPlaces} /> : <Stat value={report.methods} label={tr.progress.methods} />}
         </View>
         {type ? (
           <>
@@ -71,8 +78,17 @@ export default function Progress() {
       {report.cups > 0 ? (
         <PillButton
           label={`▶  ${kind === 'week' ? tr.wrapped.weekTitle : tr.wrapped.monthTitle}`}
-          onPress={() => router.push({ pathname: '/wrapped', params: { period: kind } })}
+          onPress={() => router.push({ pathname: '/wrapped', params: { period: kind, offset: '0' } })}
           style={{ marginTop: 20, backgroundColor: colors.accent, borderColor: colors.accent }}
+        />
+      ) : null}
+
+      {hasPrev ? (
+        <PillButton
+          label={`▶  ${kind === 'week' ? tr.wrapped.lastWeek : tr.wrapped.lastMonth}`}
+          variant="light"
+          onPress={() => router.push({ pathname: '/wrapped', params: { period: kind, offset: '-1' } })}
+          style={{ marginTop: 12 }}
         />
       ) : null}
 

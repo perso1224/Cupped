@@ -7,6 +7,7 @@ import {
   isDetailed,
   passport,
   periodReport,
+  periodRange,
   profileSummary,
   startOfWeek,
   weekStrip,
@@ -198,5 +199,16 @@ describe('detay modu', () => {
     const four = [1, 2, 3, 4].map((d) => cup(at(2026, 10, d), { origin: 'Etiyopya' }));
     expect(ids(four)).not.toContain('depth');
     expect(ids([...four, cup(at(2026, 10, 5), { notes: ['bold'] })])).toContain('depth');
+  });
+});
+
+describe('dönem aralığı', () => {
+  it('bu ay / geçen ay (yıl geçişi dahil)', () => {
+    expect(periodRange('month', 0, WED)).toEqual({ start: new Date(2026, 10, 1), end: new Date(2026, 11, 1) });
+    expect(periodRange('month', -1, new Date(2026, 0, 3))).toEqual({ start: new Date(2025, 11, 1), end: new Date(2026, 0, 1) });
+  });
+  it('bu hafta / geçen hafta', () => {
+    expect(periodRange('week', 0, WED)).toEqual({ start: new Date(2026, 10, 16), end: new Date(2026, 10, 23) });
+    expect(periodRange('week', -1, WED)).toEqual({ start: new Date(2026, 10, 9), end: new Date(2026, 10, 16) });
   });
 });

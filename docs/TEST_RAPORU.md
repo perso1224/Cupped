@@ -113,6 +113,16 @@ Aynı sorunu bulan ajanlar tek maddede birleştirildi. Köşeli parantez, sorunu
 2. **Paylaşım kartında seviye.** "Çaylak" gibi seviyeler kartta görünsün mü, yoksa sadece uygulama içinde mi kalsın?
 3. **Günlük hatırlatma.** Telefonun kendi bildirimi; ücretsiz, sunucu gerekmez, Expo Go'da çalışır. Örneğin "Bugün de ekle, serin 5 olsun". Eklensin mi?
 
+## Durum
+
+**Paket 1 tamamlandı (21 Kas):**
+- **Kritik:** K1 veri koruma (sıralı yazma, okunamayan verinin üzerine yazmama, yedek), K2 göreli fotoğraf yolu ve eski kayıt geçişi, K3 parlaklık geri alma (arka plan dahil), K4 Türkçe büyük harf, K5 fincan silme.
+- **Yüksek:** Y2 zincir tanıma (tam kelime ve takma adlar), Y3 geçen ay/haftanın özeti (afiş ve İlerleme), Y4 animasyon ve fotoğraf yüklenmeden paylaşmama, Y6 kamera izni ("Ayarlar'ı aç", deklanşör geri bildirimi), Y7 kart güvenli alanları ve açıklama satırı, Y11 ay sekmesi, Y12 kayıt anında taze geçmiş.
+- **Metinler:** yüzde ekleri, Oat Milk cümlesi, barista şakası, dönem kelimeleri.
+- **Kurucu kararı:** kartlarda seviye gizlendi.
+
+Kalanlar Paket 2 ve 3'te.
+
 ## Önerilen düzeltme sırası
 
 - **Paket 1: Veri güvenliği ve herkesin göreceği hatalar.** K1, K2, K3, K4, K5, Y2, Y3, Y4, Y6 ve Türkçe metin hataları.

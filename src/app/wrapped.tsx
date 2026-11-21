@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -17,10 +18,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import type { CardHandle } from '../components/ShareCard';
 import { BRAND } from '../config/brand';
-import { tr } from '../i18n/tr';
+import { periodWord, tr, upper, type PeriodWord } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
-import { addDays, startOfMonth, startOfWeek } from '../lib/progress';
+import { addDays, dayKey, periodRange } from '../lib/progress';
 import { shareViewAsImage } from '../lib/share';
+import { photoUrl } from '../lib/storage';
 import { useEntries } from '../lib/useEntries';
 import { buildWrapped, type WrappedSlide } from '../lib/wrapped';
 
@@ -51,21 +53,22 @@ function capitalize(s: string) {
 }
 
 export default function Wrapped() {
-  const { period } = useLocalSearchParams<{ period?: string }>();
+  const { period, offset: offsetParam } = useLocalSearchParams<{ period?: string; offset?: string }>();
   const kind = period === 'week' ? 'week' : 'month';
+  const offset = offsetParam === '-1' ? -1 : 0;
+  const pw = periodWord(kind, offset);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const entries = useEntries();
 
   const now = new Date();
-  const start = kind === 'week' ? startOfWeek(now) : startOfMonth(now);
-  const end = kind === 'week' ? addDays(start, 7) : new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const { start, end } = periodRange(kind, offset, now);
   const periodLabel =
     kind === 'week'
       ? `${start.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} – ${addDays(end, -1).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}`
       : capitalize(start.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }));
 
-  const slides = useMemo(() => (entries ? buildWrapped(entries, start, end) : []), [entries]);
+  const slides = useMemo(() => (entries ? buildWrapped(entries, start, end) : []), [entries, dayKey(start), kind]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const progress = useRef(new Animated.Value(0)).current;
@@ -94,7 +97,7 @@ export default function Wrapped() {
   ).current;
 
   // Slayt alanı: tam 9:16, ekrana sığan en büyük boyut.
-  const availH = height - insets.top - insets.bottom - 76;
+  const availH = height - insets.top - insets.bottom - 96;
   const W = Math.min(width, (availH * 9) / 16);
   const H = (W * 16) / 9;
 
@@ -136,13 +139,21 @@ export default function Wrapped() {
     else close(); // son slayta dokununca çık
   }
 
+  const sharingRef = useRef(false);
   async function share() {
+    if (sharingRef.current) return;
+    sharingRef.current = true;
     setPaused(true);
     try {
+      // Giriş animasyonu yarıdaysa bitir; bir kare bekle ki görsel tam yakalansın.
+      enter.stopAnimation();
+      enter.setValue(1);
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
       await shareViewAsImage(slideRef);
     } catch {
       Alert.alert(tr.result.shareError);
     } finally {
+      sharingRef.current = false;
       setPaused(false);
     }
   }
@@ -165,6 +176,7 @@ export default function Wrapped() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 8 }]} {...pan.panHandlers}>
+      <StatusBar style="light" />
       <Animated.View
         style={{
           width: W,
@@ -177,7 +189,7 @@ export default function Wrapped() {
       >
         {/* Sadece bu görünüm kaydedilir (köşeler kare, 9:16). */}
         <View ref={slideRef} collapsable={false} style={{ width: W, height: H, backgroundColor: theme.bg }}>
-          <SlideView slide={slide} theme={theme} W={W} H={H} enter={enter} periodLabel={periodLabel} kind={kind} index={index} />
+          <SlideView slide={slide} theme={theme} W={W} H={H} enter={enter} periodLabel={periodLabel} kind={kind} index={index} pw={pw} />
         </View>
 
         <Pressable style={StyleSheet.absoluteFill} onPress={onTap} onLongPress={() => setPaused(true)} onPressOut={() => paused && setPaused(false)} />
@@ -206,6 +218,11 @@ export default function Wrapped() {
         </Pressable>
       </Animated.View>
 
+      {index === 0 ? (
+        <Text style={styles.hint} pointerEvents="none">
+          {tr.wrapped.tapHint}
+        </Text>
+      ) : null}
       <View style={styles.bottomRow}>
         <Pressable
           onPress={close}
@@ -221,6 +238,12 @@ export default function Wrapped() {
       </View>
     </View>
   );
+}
+
+/** Türkçe büyük harfli başlık (textTransform:'uppercase' "İ"yi bozar). */
+function Kicker({ style, children }: { style: any; children: React.ReactNode }) {
+  const up = (c: React.ReactNode): React.ReactNode => (typeof c === 'string' ? upper(c) : Array.isArray(c) ? c.map(up) : c);
+  return <Animated.Text style={style}>{up(children)}</Animated.Text>;
 }
 
 function hexA(hex: string, a: number) {
@@ -249,6 +272,7 @@ function SlideView({
   periodLabel,
   kind,
   index,
+  pw,
 }: {
   slide: WrappedSlide;
   theme: Theme;
@@ -258,6 +282,7 @@ function SlideView({
   periodLabel: string;
   kind: 'week' | 'month';
   index: number;
+  pw: PeriodWord;
 }) {
   const u = W / 100; // 1 birim = genişliğin %1'i
   const rise = (delay: number) => ({
@@ -278,7 +303,7 @@ function SlideView({
   ][index % 3];
 
   const footer = (
-    <View style={[styles.footer, { paddingHorizontal: u * 7, paddingBottom: u * 6 }]}>
+    <View style={[styles.footer, { paddingHorizontal: u * 7, paddingBottom: H * 0.16 }]}>
       <Text style={[styles.footerBrand, t, { fontSize: u * 5.5 }]}>{BRAND.name}</Text>
       <Text style={[styles.footerQ, { color: hexA(theme.fg, 0.7), fontSize: u * 3.4 }]}>{tr.card.question}</Text>
     </View>
@@ -291,9 +316,9 @@ function SlideView({
     case 'intro':
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
-          <Animated.Text style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
+          <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
             {kind === 'week' ? tr.wrapped.weekTitle : tr.wrapped.monthTitle}
-          </Animated.Text>
+          </Kicker>
           <Animated.Text style={[styles.huge, t, { fontSize: u * 15, lineHeight: u * 16 }, rise(0.15)]}>{periodLabel}</Animated.Text>
           <Animated.Text style={[styles.sub, t, { fontSize: u * 5, marginTop: u * 4 }, rise(0.35)]}>{tr.wrapped.introSub}</Animated.Text>
         </View>
@@ -302,7 +327,7 @@ function SlideView({
     case 'cups':
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
-          <Animated.Text style={[styles.sub, t, { fontSize: u * 6 }, rise(0)]}>{tr.wrapped.cupsTitle}</Animated.Text>
+          <Animated.Text style={[styles.sub, t, { fontSize: u * 6 }, rise(0)]}>{tr.wrapped.cupsTitle(pw)}</Animated.Text>
           <Animated.Text style={[styles.mega, t, { fontSize: u * 48, lineHeight: u * 50 }, pop]}>{slide.cups}</Animated.Text>
           <Animated.Text style={[styles.huge, t, { fontSize: u * 11 }, rise(0.2)]}>{tr.wrapped.cupsUnit}</Animated.Text>
           <Animated.Text style={[styles.sub, a, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.45)]}>{tr.wrapped.cupsFact(slide.ml)}</Animated.Text>
@@ -312,7 +337,7 @@ function SlideView({
     case 'method':
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
-          <Animated.Text style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.methodTitle}</Animated.Text>
+          <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.methodTitle}</Kicker>
           <Animated.Text style={[styles.huge, t, { fontSize: u * 17, lineHeight: u * 18 }, pop]} adjustsFontSizeToFit numberOfLines={2}>
             {tr.methods[slide.method]}
           </Animated.Text>
@@ -326,9 +351,9 @@ function SlideView({
     case 'home':
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
-          <Animated.Text style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
+          <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
             {slide.kind === 'place' ? tr.wrapped.placeTitle : tr.wrapped.homeTitle}
-          </Animated.Text>
+          </Kicker>
           <Animated.Text style={[styles.huge, t, { fontSize: u * 15, lineHeight: u * 16 }, pop]} adjustsFontSizeToFit numberOfLines={3}>
             {slide.kind === 'place' ? slide.name : '🏠 ' + tr.card.homeBrew}
           </Animated.Text>
@@ -341,19 +366,23 @@ function SlideView({
     case 'discover':
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
-          <Animated.Text style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.discoverTitle}</Animated.Text>
+          <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.discoverTitle}</Kicker>
           {slide.places + slide.methods === 0 ? (
             <Animated.Text style={[styles.huge, t, { fontSize: u * 9, lineHeight: u * 11 }, rise(0.15)]}>{tr.wrapped.discoverNone}</Animated.Text>
           ) : (
             <>
+              {slide.places > 0 ? (
               <Animated.View style={[styles.row, pop]}>
                 <Text style={[styles.mega, t, { fontSize: u * 30, lineHeight: u * 32 }]}>{slide.places}</Text>
                 <Text style={[styles.sub, t, { fontSize: u * 6.5, marginLeft: u * 3 }]}>{tr.wrapped.discoverPlaces}</Text>
               </Animated.View>
+              ) : null}
+              {slide.methods > 0 ? (
               <Animated.View style={[styles.row, rise(0.3)]}>
                 <Text style={[styles.mega, t, { fontSize: u * 30, lineHeight: u * 32 }]}>{slide.methods}</Text>
                 <Text style={[styles.sub, t, { fontSize: u * 6.5, marginLeft: u * 3 }]}>{tr.wrapped.discoverMethods}</Text>
               </Animated.View>
+              ) : null}
             </>
           )}
         </View>
@@ -363,7 +392,7 @@ function SlideView({
       body = (
         <View style={{ flex: 1 }}>
           {slide.entry.photoUri ? (
-            <Image source={{ uri: slide.entry.photoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            <Image source={{ uri: photoUrl(slide.entry.photoUri)! }} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
             <View style={[StyleSheet.absoluteFill, { alignItems: 'center', paddingTop: H * 0.14 }]}>
               <Text style={{ fontSize: u * 34 }}>☕</Text>
@@ -371,7 +400,7 @@ function SlideView({
           )}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(17,17,17,0.35)' }]} />
           <View style={[pad, { flex: 1, justifyContent: 'flex-end', paddingBottom: u * 22 }]}>
-            <Animated.Text style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.bestTitle}</Animated.Text>
+            <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.bestTitle(pw)}</Kicker>
             <Animated.Text style={[styles.mega, { color: '#FAF8F5', fontSize: u * 40, lineHeight: u * 42 }, pop]}>{slide.entry.score}</Animated.Text>
             <Animated.Text style={[styles.sub, { color: '#FAF8F5', fontSize: u * 5.5 }, rise(0.35)]}>
               {tr.methods[slide.entry.method]} · {slide.entry.placeName ?? (slide.entry.venueKind === 'home' ? tr.card.homeBrew : tr.card.office)}
@@ -383,11 +412,8 @@ function SlideView({
     case 'score':
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
-          <Animated.Text style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.scoreTitle}</Animated.Text>
+          <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.scoreTitle}</Kicker>
           <Animated.Text style={[styles.mega, t, { fontSize: u * 48, lineHeight: u * 50 }, pop]}>{slide.avg}</Animated.Text>
-          <Animated.View style={[styles.pill, { backgroundColor: theme.fg, paddingHorizontal: u * 5, paddingVertical: u * 2 }, rise(0.35)]}>
-            <Text style={[styles.pillText, { color: theme.bg, fontSize: u * 5.5 }]}>{slide.level}</Text>
-          </Animated.View>
         </View>
       );
       break;
@@ -395,7 +421,7 @@ function SlideView({
       const type = getPalateType(slide.typeId);
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
-          <Animated.Text style={[styles.sub, t, { fontSize: u * 6 }, rise(0)]}>{tr.wrapped.typeTitle}</Animated.Text>
+          <Animated.Text style={[styles.sub, t, { fontSize: u * 6 }, rise(0)]}>{tr.wrapped.typeTitle(pw)}</Animated.Text>
           <Animated.Text style={[styles.huge, t, { fontSize: u * 17, lineHeight: u * 18, marginTop: u * 3 }, pop]} adjustsFontSizeToFit numberOfLines={3}>
             {type.name}
           </Animated.Text>
@@ -412,9 +438,9 @@ function SlideView({
       ];
       body = (
         <View style={[pad, { flex: 1, paddingTop: u * 20 }]}>
-          <Animated.Text style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
+          <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
             {tr.wrapped.summaryTitle} · {periodLabel}
-          </Animated.Text>
+          </Kicker>
           <Animated.Text style={[styles.huge, t, { fontSize: u * 12, lineHeight: u * 13, marginTop: u * 3 }, rise(0.1)]} adjustsFontSizeToFit numberOfLines={2}>
             {type.name}
           </Animated.Text>
@@ -461,6 +487,7 @@ const styles = StyleSheet.create({
   bar: { flex: 1, height: 3, borderRadius: 2, overflow: 'hidden' },
   close: { position: 'absolute', top: 22, right: 12, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   closeText: { fontSize: 18, fontWeight: '800' },
+  hint: { color: '#BDB6AC', fontSize: 12, textAlign: 'center', marginTop: 6 },
   bottomRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 12, paddingHorizontal: 16 },
   closeBtn: {
     borderRadius: 999,
@@ -473,7 +500,7 @@ const styles = StyleSheet.create({
   },
   finishBtn: { backgroundColor: '#D98B2B', borderColor: '#D98B2B' },
   closeBtnText: { fontSize: 16, fontWeight: '800', color: '#FAF8F5' },
-  kicker: { fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 8 },
+  kicker: { fontWeight: '800', letterSpacing: 1.4, marginBottom: 8 },
   huge: { fontWeight: '900', letterSpacing: -1 },
   mega: { fontWeight: '900', letterSpacing: -4 },
   sub: { fontWeight: '600', lineHeight: undefined },

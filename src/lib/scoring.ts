@@ -16,13 +16,41 @@ export function normalizePlace(name: string): string {
     .replace(/[^a-z0-9]/g, '');
 }
 
-/** Mekan adı zincir listesinde geçiyorsa zincirin adını döner, yoksa null. */
-export function matchChain(placeName: string, chains: string[] = CHAINS): string | null {
-  const key = normalizePlace(placeName);
-  if (!key) return null;
-  for (const chain of chains) {
-    const chainKey = normalizePlace(chain);
-    if (key === chainKey || key.startsWith(chainKey) || key.includes(chainKey)) return chain;
+/** Kelimeleri koruyarak sadeleştirir: "Starbucks, Kadıköy!" → "starbucks kadikoy". */
+function words(name: string): string {
+  return name
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ı/g, 'i')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+const CHAIN_KEYS = CHAINS.map((c) => ({ name: c.name, keys: [c.name, ...(c.aliases ?? [])].map(words) }));
+
+/**
+ * Mekan adı bir zincire aitse zincirin adını döner, yoksa null.
+ * Tam kelime eşleşmesi: "Starbucks Kadıköy" ✓, "Armado Coffee" ✗ (Mado değil).
+ */
+export function matchChain(placeName: string): string | null {
+  const w = words(placeName);
+  if (!w) return null;
+  const padded = ` ${w} `;
+  const compact = w.replace(/ /g, '');
+  for (const c of CHAIN_KEYS) {
+    for (const k of c.keys) {
+      if (padded.includes(` ${k} `)) return c.name;
+      // Boşluksuz yazım ("kahvedunyasikadikoy"): sadece uzun adlarda, başta eşleşirse
+      const kc = k.replace(/ /g, '');
+      if (kc.length >= 6 && compact.startsWith(kc)) return c.name;
+    }
   }
   return null;
 }

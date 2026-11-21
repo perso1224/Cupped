@@ -1,5 +1,27 @@
 import type { Method, TasteNote } from '../lib/types';
 
+/**
+ * Türkçe büyük harf: "i" → "İ", "ı" → "I".
+ * (CSS/RN textTransform:'uppercase' Türkçeyi bilmez, "FINCAN" yazar.)
+ */
+export function upper(s: string): string {
+  return s.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase();
+}
+
+/** Dönem kelimeleri: "Bu ay tam 12 fincan", "Ayın fincanı" … */
+export type PeriodWord = { this: string; thisLower: string; best: string };
+export function periodWord(kind: 'week' | 'month', offset: number): PeriodWord {
+  const past = offset < 0;
+  if (kind === 'week') {
+    return past
+      ? { this: 'Geçen hafta', thisLower: 'geçen hafta', best: 'Geçen haftanın fincanı' }
+      : { this: 'Bu hafta', thisLower: 'bu hafta', best: 'Haftanın fincanı' };
+  }
+  return past
+    ? { this: 'Geçen ay', thisLower: 'geçen ay', best: 'Geçen ayın fincanı' }
+    : { this: 'Bu ay', thisLower: 'bu ay', best: 'Ayın fincanı' };
+}
+
 /** Arayüzdeki tüm Türkçe metinler. */
 export const tr = {
   tabs: {
@@ -32,7 +54,7 @@ export const tr = {
     recent: 'Son fincanlar',
     empty: 'İlk fincanını eklemek için aşağıdaki + düğmesine dokun.',
     palateType: 'Damak tipin',
-    streak: (n: number) => (n > 0 ? `${n} günlük seri` : 'Seri başlat'),
+    streak: (n: number) => (n > 0 ? `${n} günlük seri` : 'Seriye başla'),
     goal: (done: number, goal: number) => `Bu hafta ${Math.min(done, goal)}/${goal} yeni keşif`,
     goalDone: 'Haftalık keşif hedefi tamam!',
     seeAll: 'Tümünü gör',
@@ -41,6 +63,10 @@ export const tr = {
     permissionTitle: 'Fincanının fotoğrafını çekelim',
     permissionBody: 'Kamera izni sadece fincan fotoğrafı için kullanılır. Fotoğraflar yalnızca telefonunda kalır.',
     allow: 'Kameraya izin ver',
+    permissionDenied: 'Kamera izni kapalı. Ayarlar\'dan açabilir ya da galeriden seçebilir veya fotoğrafsız devam edebilirsin.',
+    openSettings: 'Ayarlar\'ı aç',
+    cameraError: 'Fotoğraf çekilemedi. Tekrar dener misin?',
+    saveError: 'Fincan kaydedilemedi. Lütfen tekrar dene.',
     fromGallery: 'Galeriden seç',
     skipPhoto: 'Fotoğrafsız devam et',
     retake: 'Yeniden çek',
@@ -52,7 +78,7 @@ export const tr = {
     add: 'Ekle',
     save: 'Skoru gör',
     chooseMethod: 'Önce nasıl içtiğini seç',
-    addDetail: '＋ Detay ekle (isteğe bağlı)',
+    addDetail: '+ Detay ekle (isteğe bağlı)',
     hideDetail: '− Detayı gizle',
     detailHint: 'Basit kayıt da tamamen yeterli. Detay, damak tipini daha isabetli yapar ve Derinlik rozetine sayılır.',
     notesLabel: 'Tat notları (en fazla 2)',
@@ -76,12 +102,17 @@ export const tr = {
       effort: 'Emek',
       depth: 'Derinlik',
       discovery: 'Keşif',
-      selectivity: 'Seçicilik',
+      selectivity: 'Rutin',
     },
     yourType: 'Damak tipin',
     level: 'Seviye',
     shareError: 'Paylaşım açılamadı. Tekrar dener misin?',
     notFound: 'Fincan bulunamadı.',
+    delete: 'Fincanı sil',
+    deleteTitle: 'Bu fincan silinsin mi?',
+    deleteBody: 'Fincan ve fotoğrafı telefonundan silinir. Bu geri alınamaz.',
+    deleteError: 'Silinemedi. Tekrar dener misin?',
+    cancel: 'Vazgeç',
     details: 'Detaylar',
     depthChip: 'Derinlik',
     origin: 'Menşei',
@@ -93,6 +124,7 @@ export const tr = {
     homeBrew: 'Ev yapımı',
     office: 'Ofis kahvesi',
     question: 'Senin damak tipin ne?',
+    explainer: 'Kahveni çek, damak tipini öğren',
   },
   profile: {
     title: 'Profil',
@@ -121,6 +153,8 @@ export const tr = {
     hint: 'Telefonu uzat, göster.',
     empty: 'Damak Kartın ilk fincandan sonra oluşur.',
     level: 'Seviye',
+    streakLine: (n: number) => `${n} günlük seri`,
+    starterNote: 'Tahmin · ilk fincandan sonra netleşir.',
   },
   progress: {
     title: 'İlerleme',
@@ -128,6 +162,8 @@ export const tr = {
     month: 'Bu ay',
     weeklyScore: 'Haftalık Damak Skoru',
     record: (n: number) => `Rekorun: ${n}`,
+    firstWeek: 'İlk haftan: rekoru sen belirliyorsun.',
+    monthSummary: 'Bu ayın özeti',
     newRecord: 'Yeni rekor!',
     cups: 'Fincan',
     avg: 'Ortalama',
@@ -161,25 +197,29 @@ export const tr = {
     weekTitle: 'Haftalık Damak Özeti',
     open: 'Özetini izle',
     bannerMonth: (month: string) => `${month} Damak Özetin hazır`,
-    bannerSub: 'Hikayeni izle, story\'ne at.',
+    bannerMonthSoFar: (month: string) => `${month} özetin şimdiden hazır`,
+    bannerSub: 'İzle, en sevdiğin slaytı story\'ne at.',
+    lastWeek: 'Geçen haftanın özeti',
+    lastMonth: 'Geçen ayın özeti',
     intro: (period: string) => `${period}`,
     introSub: 'Damağın neler yaşadı, bir bakalım.',
-    cupsTitle: 'Bu dönem tam',
+    cupsTitle: (p: PeriodWord) => `${p.this} tam`,
     cupsUnit: 'fincan',
     cupsFact: (ml: number) => (ml >= 1000 ? `≈ ${(ml / 1000).toFixed(1).replace('.', ',')} litre kahve.` : `≈ ${ml} ml kahve.`),
     methodTitle: 'En sadık olduğun yöntem',
-    methodFact: (count: number, pct: number) => `${count} fincan · içtiklerinin %${pct}'i`,
+    methodFact: (count: number, pct: number) => `${count} fincan · payı %${pct}`,
     placeTitle: 'En çok uğradığın yer',
-    placeFact: (n: number) => `${n} ziyaret. Barista seni tanıyor olabilir.`,
-    homeTitle: 'Evin en iyi kafen',
-    homeFact: (pct: number) => `Fincanlarının %${pct}'ini kendin yaptın.`,
+    placeFact: (n: number) =>
+      n >= 3 ? `${n} ziyaret. Barista seni tanıyor olabilir.` : n === 2 ? '2 ziyaret. Burada bir şey var.' : 'Bir kez uğradın; ilk izlenim önemli.',
+    homeTitle: 'En iyi kafen: kendi mutfağın',
+    homeFact: (pct: number) => `Ev yapımı oranı: %${pct}`,
     discoverTitle: 'Keşif modu',
     discoverPlaces: 'yeni mekan',
     discoverMethods: 'yeni yöntem',
-    discoverNone: 'Bu dönem rotan sabitti. Bir sonraki özete sürpriz bırak.',
-    bestTitle: 'Dönemin fincanı',
+    discoverNone: 'Rotan sabitti. Bir sonraki özete sürpriz bırak.',
+    bestTitle: (p: PeriodWord) => p.best,
     scoreTitle: 'Ortalama Fincan Skorun',
-    typeTitle: 'Ve bu dönemki damak tipin…',
+    typeTitle: (p: PeriodWord) => `Ve ${p.thisLower}ki damak tipin…`,
     summaryTitle: 'Damak Özetim',
     summaryCups: 'Fincan',
     summaryAvg: 'Ortalama',
@@ -218,7 +258,7 @@ export const tr = {
     nickPlaceholder: 'Takma ad',
     revealKicker: 'Başlangıç damak tipin',
     revealNote: 'Bu bir tahmin. Gerçek damak tipin fincan ekledikçe ortaya çıkacak.',
-    finish: 'İlk fincanımı ekleyeceğim',
+    finish: 'Hadi, ilk fincan',
   },
   history: {
     title: 'Tüm fincanlar',

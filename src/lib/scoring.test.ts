@@ -35,6 +35,21 @@ describe('zincir eşleştirme', () => {
     expect(matchChain('STARBUCKS Kadıköy')).toBe('Starbucks');
     expect(matchChain('Gloria Jeans')).toBe("Gloria Jean's");
   });
+  it('kelimenin içinde geçen kısa zincir adı eşleşmez', () => {
+    expect(matchChain('Armado Coffee')).toBeNull();
+    expect(matchChain('Madonna Cafe')).toBeNull();
+    expect(matchChain('Acostambre')).toBeNull();
+  });
+  it('farklı yazımlar ve şubeler tanınır', () => {
+    expect(matchChain('Cafe Nero')).toBe('Caffè Nero');
+    expect(matchChain('Nero Kahve')).toBe('Caffè Nero');
+    expect(matchChain('Gloria')).toBe("Gloria Jean's");
+    expect(matchChain('Espresso Lab Moda')).toBe('Espressolab');
+    expect(matchChain('Starbucks Reserve')).toBe('Starbucks');
+    expect(matchChain('Mado Kadıköy')).toBe('Mado');
+    expect(matchChain('kahvedunyasikadikoy')).toBe('Kahve Dünyası');
+    expect(matchChain('  ')).toBeNull();
+  });
   it('listede olmayan mekan bağımsızdır', () => {
     expect(classifyPlace('Mahalle Kavurucusu')).toBe('independent');
     expect(classifyPlace('Starbucks')).toBe('chain');

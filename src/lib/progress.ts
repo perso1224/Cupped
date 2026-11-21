@@ -29,6 +29,16 @@ export function startOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
+/** Dönem aralığı. offset 0 = bu hafta/ay, -1 = geçen hafta/ay. */
+export function periodRange(kind: 'week' | 'month', offset: number, now: Date = new Date()): { start: Date; end: Date } {
+  if (kind === 'week') {
+    const start = addDays(startOfWeek(now), 7 * offset);
+    return { start, end: addDays(start, 7) };
+  }
+  const start = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+  return { start, end: new Date(start.getFullYear(), start.getMonth() + 1, 1) };
+}
+
 export function inRange(e: Pick<CupEntry, 'createdAt'>, start: Date, end: Date): boolean {
   const t = new Date(e.createdAt).getTime();
   return t >= start.getTime() && t < end.getTime();

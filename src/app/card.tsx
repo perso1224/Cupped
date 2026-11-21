@@ -2,14 +2,13 @@ import * as Brightness from 'expo-brightness';
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, AppState, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CardHandle } from '../components/ShareCard';
 import { BRAND } from '../config/brand';
-import { tr } from '../i18n/tr';
+import { tr, upper } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
 import { profileSummary } from '../lib/progress';
-import { levelFor } from '../lib/scoring';
 import { shareViewAsImage } from '../lib/share';
 import { useEntries } from '../lib/useEntries';
 import { useProfile } from '../lib/useProfile';
@@ -23,20 +22,33 @@ export default function PalateCard() {
   const entries = useEntries();
   const cardRef = useRef<CardHandle>(null);
   const [sharing, setSharing] = useState(false);
+  const busy = useRef(false);
 
-  // Parlaklığı en yükseğe çıkar, çıkarken eski haline getir.
+  // Parlaklığı en yükseğe çıkar; çıkarken ve uygulama arka plana geçerken eski haline getir.
+  // (iOS, uygulamanın ayarladığı parlaklığı uygulama kapansa da korur; bu yüzden geri almak şart.)
+  const original = useRef<number | null>(null);
   useEffect(() => {
-    let previous: number | null = null;
-    (async () => {
+    let cancelled = false;
+    const raise = async () => {
       try {
-        previous = await Brightness.getBrightnessAsync();
-        await Brightness.setBrightnessAsync(1);
+        if (original.current === null) original.current = await Brightness.getBrightnessAsync();
+        if (!cancelled) await Brightness.setBrightnessAsync(1);
       } catch {
         // Parlaklık ayarlanamazsa kart yine de gösterilir.
       }
-    })();
+    };
+    const restore = () => {
+      if (original.current !== null) Brightness.setBrightnessAsync(original.current).catch(() => {});
+    };
+    raise();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') raise();
+      else restore();
+    });
     return () => {
-      if (previous !== null) Brightness.setBrightnessAsync(previous).catch(() => {});
+      cancelled = true;
+      sub.remove();
+      restore();
     };
   }, []);
 
@@ -50,13 +62,15 @@ export default function PalateCard() {
   const cardWidth = frameW - 32;
 
   async function share() {
-    if (sharing) return;
+    if (busy.current) return;
+    busy.current = true;
     setSharing(true);
     try {
       await shareViewAsImage(cardRef);
     } catch {
       Alert.alert(tr.result.shareError);
     } finally {
+      busy.current = false;
       setSharing(false);
     }
   }
@@ -84,7 +98,7 @@ export default function PalateCard() {
           style={{ width: frameW, height: frameH, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}
         >
         <View style={[styles.card, { width: cardWidth, minHeight: Math.min(520, frameH - 32) }]}>
-          <Text style={styles.kicker}>{s.palateTypeId ? tr.palateCard.title : tr.profile.starter}</Text>
+          <Text style={styles.kicker}>{upper(s.palateTypeId ? tr.palateCard.title : tr.profile.starter)}</Text>
           {profile?.nickname ? <Text style={styles.nick}>@{profile.nickname}</Text> : null}
           {type ? (
             <>
@@ -93,21 +107,19 @@ export default function PalateCard() {
               </Text>
               <Text style={styles.tagline}>{type.tagline}</Text>
 
-              <View style={styles.levelRow}>
-                <View style={styles.levelPill}>
-                  <Text style={styles.levelText}>
-                    {tr.palateCard.level}: {levelFor(s.avg)}
-                  </Text>
-                </View>
-                {s.streak > 0 ? <Text style={styles.streak}>🔥 {s.streak}</Text> : null}
-              </View>
-
-              <View style={styles.grid}>
-                <Stat value={s.avg} label={tr.palateCard.avg} big />
-                <Stat value={s.cups} label={tr.palateCard.cups} big />
-                <Stat value={s.places} label={tr.palateCard.places} />
-                <Stat value={s.methods} label={tr.palateCard.methods} />
-              </View>
+              {s.cups === 0 ? (
+                <Text style={styles.starterNote}>{tr.palateCard.starterNote}</Text>
+              ) : (
+                <>
+                  {s.streak > 0 ? <Text style={styles.streak}>🔥 {tr.palateCard.streakLine(s.streak)}</Text> : null}
+                  <View style={styles.grid}>
+                    <Stat value={s.cups} label={tr.palateCard.cups} big />
+                    <Stat value={s.avg} label={tr.palateCard.avg} big />
+                    <Stat value={s.places} label={tr.palateCard.places} />
+                    <Stat value={s.methods} label={tr.palateCard.methods} />
+                  </View>
+                </>
+              )}
             </>
           ) : (
             <Text style={styles.empty}>{tr.palateCard.empty}</Text>
@@ -142,14 +154,15 @@ const styles = StyleSheet.create({
   share: { fontSize: 15, fontWeight: '800', color: colors.accent },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { backgroundColor: colors.black, borderRadius: 32, padding: 28 },
-  kicker: { color: colors.accent, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.4 },
+  kicker: { color: colors.accent, fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },
   nick: { color: '#BDB6AC', fontSize: 16, fontWeight: '700', marginTop: 8 },
   typeName: { color: colors.white, fontWeight: '900', marginTop: 14, letterSpacing: -1 },
   tagline: { color: '#CFC8BE', fontSize: 16, lineHeight: 22, marginTop: 10 },
   levelRow: { flexDirection: 'row', alignItems: 'center', marginTop: 18 },
   levelPill: { backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6 },
   levelText: { color: colors.black, fontWeight: '800', fontSize: 14 },
-  streak: { color: colors.white, fontWeight: '800', fontSize: 16, marginLeft: 12 },
+  streak: { color: colors.white, fontWeight: '800', fontSize: 16, marginTop: 18 },
+  starterNote: { color: '#BDB6AC', fontSize: 15, marginTop: 18, lineHeight: 21, marginBottom: 56 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 20, marginBottom: 56 },
   stat: { width: '50%', paddingVertical: 8 },
   statValue: { color: colors.white, fontSize: 32, fontWeight: '900' },

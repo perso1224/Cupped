@@ -1,13 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShareCard, type CardHandle } from '../../components/ShareCard';
 import { PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { brewRatio, isDetailed } from '../../lib/progress';
 import { shareViewAsImage } from '../../lib/share';
-import { bumpCounter, getEntry } from '../../lib/storage';
+import { bumpCounter, deleteEntry, getEntry } from '../../lib/storage';
 import type { CupEntry, ScoreParts } from '../../lib/types';
 import { colors } from '../../theme';
 
@@ -20,22 +20,59 @@ export default function CupResult() {
   const cardRef = useRef<CardHandle>(null);
   const [entry, setEntry] = useState<CupEntry | null | undefined>(undefined);
   const [sharing, setSharing] = useState(false);
+  const busy = useRef(false);
   const isFresh = fresh === '1';
+  // Paylaşım, skor animasyonu bitmeden ve fotoğraf yüklenmeden yapılmasın (yoksa kartta yarım skor çıkar).
+  const [animDone, setAnimDone] = useState(!isFresh);
+  const [imageDone, setImageDone] = useState(false);
 
   useEffect(() => {
-    getEntry(String(id)).then((e) => setEntry(e ?? null));
+    getEntry(String(id)).then((e) => {
+      setEntry(e ?? null);
+      if (!e?.photoUri) setImageDone(true);
+    });
+    // Fotoğraf hiç yüklenmezse bile paylaşım sonsuza kadar kilitli kalmasın.
+    const t = setTimeout(() => setImageDone(true), 2500);
     // H2 ölçümü: yeni kayıt sonrası üretilen kart sayısı
     if (isFresh) bumpCounter('cardsGenerated').catch(() => {});
+    return () => clearTimeout(t);
   }, [id]);
 
+  async function doDelete() {
+    try {
+      await deleteEntry(String(id));
+      router.back();
+    } catch {
+      Alert.alert(tr.result.deleteError);
+    }
+  }
+
+  function confirmDelete() {
+    if (Platform.OS === 'web') {
+      // Tarayıcıda Alert düğmeleri çalışmaz (sadece test için)
+      if (globalThis.confirm?.(`${tr.result.deleteTitle}\n${tr.result.deleteBody}`)) doDelete();
+      return;
+    }
+    Alert.alert(tr.result.deleteTitle, tr.result.deleteBody, [
+      { text: tr.result.cancel, style: 'cancel' },
+      {
+        text: tr.result.delete,
+        style: 'destructive',
+        onPress: doDelete,
+      },
+    ]);
+  }
+
   async function share() {
-    if (!cardRef.current || sharing) return;
+    if (!cardRef.current || busy.current) return;
+    busy.current = true;
     setSharing(true);
     try {
       await shareViewAsImage(cardRef);
     } catch {
       Alert.alert(tr.result.shareError);
     } finally {
+      busy.current = false;
       setSharing(false);
     }
   }
@@ -54,10 +91,8 @@ export default function CupResult() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 160, alignItems: 'center' }}>
-        <ShareCard ref={cardRef} entry={entry} width={cardWidth} animate={isFresh} />
-
-        <View style={styles.parts}>
+      <ScrollView contentContainerStyle={{ paddingTop: 16, paddingBottom: 160, alignItems: 'center' }}>
+        <View style={[styles.parts, { marginTop: 0, marginBottom: 12 }]}>
           {PART_ORDER.filter((k) => entry.parts[k] !== 0).map((k) => (
             <View key={k} style={styles.part}>
               <Text style={styles.partValue}>
@@ -69,12 +104,25 @@ export default function CupResult() {
           ))}
         </View>
 
+        <ShareCard
+          ref={cardRef}
+          entry={entry}
+          width={cardWidth}
+          animate={isFresh}
+          onAnimationEnd={() => setAnimDone(true)}
+          onImageLoaded={() => setImageDone(true)}
+        />
+
         {isDetailed(entry) ? <Details entry={entry} width={cardWidth} /> : null}
+
+        <Pressable onPress={confirmDelete} hitSlop={10} style={{ marginTop: 24 }}>
+          <Text style={styles.deleteText}>{tr.result.delete}</Text>
+        </Pressable>
       </ScrollView>
 
       <View style={[styles.bar, { paddingBottom: insets.bottom + 12 }]}>
         <PillButton label={tr.result.done} variant="light" onPress={() => router.back()} style={{ flex: 1, marginRight: 10 }} />
-        <PillButton label={tr.result.share} onPress={share} disabled={sharing} style={{ flex: 2 }} />
+        <PillButton label={tr.result.share} onPress={share} disabled={sharing || !animDone || !imageDone} style={{ flex: 2 }} />
       </View>
     </View>
   );
@@ -126,6 +174,7 @@ function DetailLine({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  deleteText: { fontSize: 15, fontWeight: '700', color: colors.danger },
   details: { backgroundColor: colors.card, borderRadius: 20, padding: 18, marginTop: 16 },
   detailsHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   detailsTitle: { fontSize: 18, fontWeight: '900', color: colors.text },

@@ -29,20 +29,23 @@ export const SCORING = {
   min: 0,
 } as const;
 
-/** Cihazdaki küçük zincir listesi. Listede olmayan mekan bağımsız sayılır. */
-export const CHAINS: string[] = [
-  'Starbucks',
-  "Gloria Jean's",
-  'Kahve Dünyası',
-  'Caribou',
-  'Espressolab',
-  'Tchibo',
-  'Simit Sarayı',
-  'Costa',
-  'Caffè Nero',
-  'Dunkin',
-  'Mado',
-  'Big Chefs',
+/**
+ * Cihazdaki küçük zincir listesi. Listede olmayan mekan bağımsız sayılır.
+ * Eşleşme tam kelime bazlıdır ("Armado Kahve" Mado sayılmaz). Farklı yazımlar `aliases` içine.
+ */
+export const CHAINS: { name: string; aliases?: string[] }[] = [
+  { name: 'Starbucks', aliases: ['starbuck'] },
+  { name: "Gloria Jean's", aliases: ['gloria jeans', 'gloria'] },
+  { name: 'Kahve Dünyası', aliases: ['kahvedunyasi'] },
+  { name: 'Caribou', aliases: ['caribou coffee'] },
+  { name: 'Espressolab', aliases: ['espresso lab'] },
+  { name: 'Tchibo' },
+  { name: 'Simit Sarayı', aliases: ['simitsarayi'] },
+  { name: 'Costa', aliases: ['costa coffee'] },
+  { name: 'Caffè Nero', aliases: ['nero', 'cafe nero', 'caffe nero'] },
+  { name: 'Dunkin', aliases: ["dunkin donuts", 'dunkin coffee'] },
+  { name: 'Mado' },
+  { name: 'Big Chefs', aliases: ['bigchefs'] },
 ];
 
 export const LEVELS: { min: number; label: string }[] = [
@@ -67,7 +70,7 @@ export const PALATE_TYPES: PalateType[] = [
   { id: 'sweet_balancer', name: 'Tatlı Dengeci', tagline: 'Hayat yeterince acı, fincanın en azından tatlı olsun.' },
   { id: 'night_shift', name: 'Gece Vardiyası', tagline: 'Kahven gece kadar koyu, verimin de öyle (iddia).' },
   { id: 'acid_romantic', name: 'Asit Romantiği', tagline: 'Herkes "ekşi" der, sen "canlı asidite" dersin.' },
-  { id: 'oat_milk_diplomat', name: 'Oat Milk Diplomatı', tagline: 'Sert sözlerden de sert kahveden de kaçınır, her masada barışı korursun.' },
+  { id: 'oat_milk_diplomat', name: 'Oat Milk Diplomatı', tagline: 'Sert sözlerden de sert kahveden de kaçınırsın; her masada barışı sen korursun.' },
   { id: 'pure_intensity', name: 'Saf Yoğunluk', tagline: 'Lafı uzatmazsın: tek shot, net karar.' },
   { id: 'foam_guardian', name: 'Köpük Muhafızı', tagline: 'Köpüksüz Türk kahvesi senin için küçük bir skandal.' },
   { id: 'cool_head', name: 'Soğuk Kafalı', tagline: 'Mevsim fark etmez, sen her koşulda serin kalırsın.' },

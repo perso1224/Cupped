@@ -5,7 +5,7 @@ import { Animated, Easing, KeyboardAvoidingView, Pressable, StyleSheet, Text, Te
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip, PillButton } from '../components/ui';
 import { BRAND } from '../config/brand';
-import { tr } from '../i18n/tr';
+import { tr, upper } from '../i18n/tr';
 import {
   starterPalateTypeId,
   type CupsPerDay,
@@ -159,7 +159,7 @@ export default function Onboarding() {
     content = (
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <View style={styles.revealCard}>
-          <Text style={styles.revealKicker}>{tr.onboarding.revealKicker}</Text>
+          <Text style={styles.revealKicker}>{upper(tr.onboarding.revealKicker)}</Text>
           {answers.nickname ? <Text style={styles.revealNick}>@{answers.nickname}</Text> : null}
           <Text style={styles.revealName}>{type.name}</Text>
           <Text style={styles.revealTagline}>{type.tagline}</Text>
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   revealCard: { backgroundColor: colors.black, borderRadius: 28, padding: 28 },
-  revealKicker: { color: colors.accent, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.4 },
+  revealKicker: { color: colors.accent, fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },
   revealNick: { color: '#BDB6AC', fontSize: 16, fontWeight: '700', marginTop: 10 },
   revealName: { color: colors.white, fontSize: 40, fontWeight: '900', letterSpacing: -1, marginTop: 8, lineHeight: 44 },
   revealTagline: { color: '#CFC8BE', fontSize: 17, lineHeight: 24, marginTop: 12 },

@@ -2,9 +2,13 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
+  Linking,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -46,6 +50,9 @@ export default function NewCup() {
   const [typed, setTyped] = useState('');
   const [history, setHistory] = useState<CupEntry[]>([]);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   // Detay modu
   const [showDetail, setShowDetail] = useState(false);
   const [notes, setNotes] = useState<TasteNote[]>([]);
@@ -66,15 +73,19 @@ export default function NewCup() {
   const places = knownPlaces(history).slice(0, 6);
 
   async function takePhoto() {
+    if (!cameraReady || capturing) return;
+    setCapturing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     try {
       const pic = await cameraRef.current?.takePictureAsync({ quality: 0.6 });
       if (pic?.uri) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         setPhoto(pic.uri);
         setStep('details');
       }
     } catch {
-      // Kamera hata verirse kullanıcı galeriden seçebilir.
+      Alert.alert(tr.capture.cameraError);
+    } finally {
+      setCapturing(false);
     }
   }
 
@@ -92,9 +103,12 @@ export default function NewCup() {
   }
 
   async function save() {
-    if (!method || !where || saving) return;
+    if (!method || !where || savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
+      // Geçmişi kaydetme anında taze oku: ekran açılır açılmaz kaydedilirse yanlış "keşif" puanı verilmesin.
+      const history = await loadEntries();
       const id = newId();
       const venueKind: VenueKind = where.kind === 'place' ? classifyPlace(where.name) : where.kind;
       const placeName = where.kind === 'place' ? where.name : null;
@@ -111,13 +125,16 @@ export default function NewCup() {
         try {
           photoUri = await persistPhoto(photo, id);
         } catch {
-          photoUri = photo; // kopyalanamazsa geçici adresi kullan
+          photoUri = null; // geçici dosya iOS tarafından silinir; adresini saklamak boş fotoğraf demek
         }
       }
       await saveEntry({ id, createdAt, photoUri, ...input, brew, note: noteText, score: total, parts, palateTypeId });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       router.replace({ pathname: '/cup/[id]', params: { id, fresh: '1' } });
+    } catch {
+      Alert.alert(tr.capture.saveError);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -126,17 +143,27 @@ export default function NewCup() {
   if (step === 'photo') {
     return (
       <View style={styles.cameraScreen}>
-        {permission?.granted ? (
-          <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+        <StatusBar style="light" />
+        {permission == null ? null : permission.granted ? (
+          <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" onCameraReady={() => setCameraReady(true)} />
         ) : (
           <View style={[styles.permission, { paddingTop: insets.top + 60 }]}>
             <Text style={styles.permTitle}>{tr.capture.permissionTitle}</Text>
-            <Text style={styles.permBody}>{tr.capture.permissionBody}</Text>
-            {permission?.canAskAgain !== false ? (
+            <Text style={styles.permBody}>
+              {permission.canAskAgain ? tr.capture.permissionBody : tr.capture.permissionDenied}
+            </Text>
+            {permission.canAskAgain ? (
               <PillButton label={tr.capture.allow} onPress={requestPermission} style={{ marginTop: 24, alignSelf: 'stretch' }} variant="light" />
-            ) : null}
+            ) : (
+              <PillButton label={tr.capture.openSettings} onPress={() => Linking.openSettings()} style={{ marginTop: 24, alignSelf: 'stretch' }} variant="light" />
+            )}
           </View>
         )}
+        {capturing ? (
+          <View style={styles.capturing} pointerEvents="none">
+            <ActivityIndicator color="#fff" size="large" />
+          </View>
+        ) : null}
 
         <Pressable onPress={() => router.back()} style={[styles.close, { top: insets.top + 8 }]} hitSlop={12}>
           <Text style={styles.closeText}>✕</Text>
@@ -148,8 +175,12 @@ export default function NewCup() {
           </Pressable>
           <Pressable
             onPress={takePhoto}
-            disabled={!permission?.granted}
-            style={({ pressed }) => [styles.shutter, !permission?.granted && { opacity: 0.3 }, pressed && { transform: [{ scale: 0.92 }] }]}
+            disabled={!permission?.granted || !cameraReady || capturing}
+            style={({ pressed }) => [
+              styles.shutter,
+              (!permission?.granted || !cameraReady || capturing) && { opacity: 0.3 },
+              pressed && { transform: [{ scale: 0.92 }] },
+            ]}
           >
             <View style={styles.shutterInner} />
           </Pressable>
@@ -187,14 +218,23 @@ export default function NewCup() {
 
         <Text style={styles.q}>{tr.capture.where}</Text>
         <View style={styles.chips}>
-          <Chip label={tr.capture.home} selected={where?.kind === 'home'} onPress={() => setWhere({ kind: 'home' })} />
-          <Chip label={tr.capture.office} selected={where?.kind === 'office'} onPress={() => setWhere({ kind: 'office' })} />
+          <Chip label={tr.capture.home} selected={where?.kind === 'home'} onPress={() => {
+              setTyped('');
+              setWhere({ kind: 'home' });
+            }} />
+          <Chip label={tr.capture.office} selected={where?.kind === 'office'} onPress={() => {
+              setTyped('');
+              setWhere({ kind: 'office' });
+            }} />
           {places.map((p) => (
             <Chip
               key={p}
               label={p}
               selected={where?.kind === 'place' && normalizePlace(where.name) === normalizePlace(p)}
-              onPress={() => setWhere({ kind: 'place', name: p })}
+              onPress={() => {
+                setTyped('');
+                setWhere({ kind: 'place', name: p });
+              }}
             />
           ))}
         </View>
@@ -294,6 +334,7 @@ export default function NewCup() {
 
 const styles = StyleSheet.create({
   cameraScreen: { flex: 1, backgroundColor: '#000' },
+  capturing: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)' },
   permission: { flex: 1, paddingHorizontal: 28 },
   permTitle: { color: colors.white, fontSize: 26, fontWeight: '800' },
   permBody: { color: '#CFCAC3', fontSize: 16, marginTop: 10, lineHeight: 22 },
