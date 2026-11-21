@@ -27,7 +27,7 @@ import { tr } from '../i18n/tr';
 import { computePalateTypeId } from '../lib/palate';
 import { classifyPlace, normalizePlace, scoreCup } from '../lib/scoring';
 import { refreshReminder } from '../lib/reminders';
-import { getEntry, knownPlaces, loadEntries, newId, persistPhoto, photoUrl, saveEntry, updateEntry, updateMetrics } from '../lib/storage';
+import { discardPhoto, getEntry, knownPlaces, loadEntries, newId, persistPhoto, photoUrl, saveEntry, updateEntry, updateMetrics } from '../lib/storage';
 import { brewRatio, earnedBadges } from '../lib/progress';
 import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from '../lib/types';
 import { colors, type } from '../theme';
@@ -131,6 +131,8 @@ export default function NewCup() {
 
   /** Kapat: bir şey seçildiyse önce sor (tam ekran modalda kaydırarak kapatma yok, tek çıkış burası). */
   function closeNew() {
+    // Düzenlemede fotoğraf adımına yanlışlıkla geçildiyse kapat = forma dön
+    if (original && step === 'photo') return setStep('details');
     const dirty = original
       ? photoChanged ||
         method !== original.method ||
@@ -272,7 +274,12 @@ export default function NewCup() {
           photoUri = orig.photoUri;
         }
       }
-      await updateEntry({ ...orig, ...input, photoUri, brew, note: note.trim() || null, score: total, parts, palateTypeId });
+      try {
+        await updateEntry({ ...orig, ...input, photoUri, brew, note: note.trim() || null, score: total, parts, palateTypeId });
+      } catch (err) {
+        if (photoUri && photoUri !== orig.photoUri) discardPhoto(photoUri); // yarım kalan yeni fotoğraf dosyası kalmasın
+        throw err;
+      }
       haptic.success();
       goBack();
     } catch {
@@ -409,6 +416,7 @@ export default function NewCup() {
             }}
             onSubmitEditing={selectTyped}
             placeholder={tr.capture.placePlaceholder}
+            maxLength={80}
             placeholderTextColor={colors.muted}
             returnKeyType="done"
             style={styles.input}
@@ -446,6 +454,7 @@ export default function NewCup() {
               value={origin}
               onChangeText={setOrigin}
               placeholder={tr.capture.originPlaceholder}
+              maxLength={80}
               placeholderTextColor={colors.muted}
               style={styles.input}
             />
@@ -492,6 +501,7 @@ export default function NewCup() {
               value={note}
               onChangeText={setNote}
               placeholder={tr.capture.notePlaceholder}
+              maxLength={500}
               placeholderTextColor={colors.muted}
               multiline
               style={[styles.input, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]}

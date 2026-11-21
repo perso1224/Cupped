@@ -31,6 +31,8 @@ Yukarıdaki tüm maddeler düzeltildi. Ayrıntılar:
 - **Erişilebilirlik:** `PressScale` varsayılan `button` rolü + `disabled` durumu; çip/seçenek `selected`; anahtarlar ve deklanşör etiketli.
 - **Küçük ekran:** liste satırında kısa değerler hiç kısalmaz; fincan detayında skor parçaları tek satır.
 
+- **Bağımsız kod incelemesi (gecenin değişiklikleri):** 6 bulgu → hepsi düzeltildi: metin kutularına uzunluk sınırı (kaydettiğin not sonradan kırpılmasın); bilinmeyen tat notu atılırsa ham veri saklanır; düzenlemede yeni fotoğraf yüklenene kadar Paylaş kilitli, değişmeyen kart yeniden çizilmez; yedek yokken bozuk veri durumunda kullanıcı kilitlenmez (bozuk veri ayrı saklanır, boş listeyle devam); kaydedilemeyen düzenlemenin yeni fotoğrafı silinir; düzenlemede fotoğraf adımında Kapat → forma döner.
+
 ## 4. Geliştirilen özellikler
 1. **Fincanı düzenle** — Fincan detayı → "Düzenle". Kayıt ekranı dolu açılır; fotoğraf değiştirilebilir. Skor, **fincanın kendi tarihindeki** geçmişe göre yeniden hesaplanır; kimlik, tarih ve listedeki sıra korunur. Fotoğraf değişirse eskisi silinir. Kaydedilmemiş değişiklikle kapatılırsa sorulur.
 2. **Aynısından bir tane daha** — Fincan detayı → yöntem, mekan, menşei ve tarif dolu gelir; sadece fotoğraf çekip kaydetmek yeter. (Brifteki H3 "hızlı kayıt" hipotezine doğrudan katkı.)
@@ -46,7 +48,7 @@ SE'de liste satırları, skor parçaları; boş durumda gereksiz "Tüm fincanlar
 
 ## 7. Yapılan testler
 - `tsc --noEmit`: temiz · `expo lint`: temiz · Vitest: **92 test geçti** (84 → 92; yeni: içe aktarma sertleştirme, hatırlatma planı, mekan kimliği, filtre).
-- Web (Playwright, iPhone 14 ve SE): düzenleme akışı (skor 55 → 70 doğru yeniden hesaplandı, sıra korundu, detay yenilendi), "aynısından" akışı, pasaport → filtreli liste, tüm ana ekranların SE görüntüleri, boş durum ekranları. Konsol hatası yok.
+- Web (Playwright, iPhone 14 ve SE; inceleme düzeltmelerinden sonra tekrar çalıştırıldı): düzenleme akışı (skor 55 → 70 doğru yeniden hesaplandı, sıra korundu, detay yenilendi), "aynısından" akışı, pasaport → filtreli liste, tüm ana ekranların SE görüntüleri, boş durum ekranları. Konsol hatası yok.
 - EAS yayın iş akışı (GitHub Actions): gece gönderilen sürümler başarılı.
 
 ## 8. Başarısız testler

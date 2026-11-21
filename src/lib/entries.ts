@@ -89,8 +89,12 @@ export function parseEntriesDetailed(raw: string | null): { entries: CupEntry[];
   let dropped = 0;
   for (const item of data) {
     const e = normalizeEntry(item);
-    if (!e) dropped++;
-    else if (!seen.has(e.id)) {
+    // Kayıt okunamadıysa ya da bilinmeyen tat notu atıldıysa (ör. daha yeni bir sürümden) "kayıplı" say
+    const lossyNotes =
+      !!e && Array.isArray((item as { notes?: unknown }).notes) && (item as { notes: unknown[] }).notes.some((n) => !NOTES.includes(n as TasteNote));
+    if (!e || lossyNotes) dropped++;
+    if (!e) continue;
+    if (!seen.has(e.id)) {
       seen.add(e.id);
       out.push(e);
     }

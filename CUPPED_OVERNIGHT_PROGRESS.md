@@ -22,3 +22,4 @@
 - [x] Dışa aktarma: eski yedek dosyaları önbellekte birikmez
 - [x] İlerleme: hiç fincan yokken "Tüm fincanlar" düğmesi gizli
 - [x] Yeni: "Aynısından bir tane daha" (fincan detayı): yöntem, mekan, menşei, tarif dolu gelir → H3 kayıt hızı (web'de test edildi)
+- [x] Gece değişikliklerinin bağımsız kod incelemesi: 6 bulgu, hepsi düzeltildi (giriş uzunluk sınırları, bilinmeyen tat notunda ham veri saklama, düzenlemede yeni fotoğraf yüklenene kadar paylaşım kilidi + kart animasyonu gereksiz yere baştan başlamıyor, yedek yokken kullanıcı kilitlenmiyor, başarısız düzenlemede yeni fotoğraf siliniyor, düzenlemede fotoğraf adımından forma dönüş)

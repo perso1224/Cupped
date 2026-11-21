@@ -42,10 +42,11 @@ async function readEntriesStrict(): Promise<CupEntry[]> {
     return entries;
   } catch (err) {
     // Ana veri bozuksa: bozuk hali ayrı bir yere kaydet, yedekten devam et.
-    // Yedek yoksa ya da o da bozuksa yazma iptal (boş listeyle üzerine yazıp veri kaybetme).
+    // Bozuk ham veri HER ZAMAN önce ayrı anahtara saklanır (kaybolmaz). Yedek yoksa boş listeyle devam
+    // (yoksa kullanıcı hiç fincan ekleyemez); yedek de bozuksa yazma iptal.
+    void err;
     const backupRaw = await AsyncStorage.getItem(ENTRIES_BACKUP_KEY);
-    if (!backupRaw) throw err;
-    const backup = parseEntries(backupRaw); // bozuksa fırlatır
+    const backup = backupRaw ? parseEntries(backupRaw) : []; // bozuksa fırlatır
     if (raw) await AsyncStorage.setItem(`${ENTRIES_KEY}.corrupt.${Date.now()}`, raw);
     await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(backup));
     return backup;
@@ -179,6 +180,11 @@ export function photoUrl(stored: string | null | undefined): string | null {
   } catch {
     return null; // dosya sistemi kullanılamıyorsa fotoğrafsız göster, ekran çökmesin
   }
+}
+
+/** Kayda bağlanmamış fotoğraf dosyasını siler (ör. düzenleme kaydedilemediyse). */
+export function discardPhoto(stored: string) {
+  deletePhoto(stored);
 }
 
 function deletePhoto(stored: string) {

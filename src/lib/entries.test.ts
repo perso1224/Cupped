@@ -87,5 +87,9 @@ describe('içe aktarma sertleştirme', () => {
   });
   it('okunamayan kayıtları sayar', () => {
     expect(parseEntriesDetailed(JSON.stringify([base, { id: 'q' }])).dropped).toBe(1);
+    // Bilinmeyen tat notu (ör. yeni sürümden) atılırsa da kayıplı sayılır → ham veri saklanır
+    const r = parseEntriesDetailed(JSON.stringify([{ ...base, notes: ['bold', 'smoky'] }]));
+    expect(r.entries).toHaveLength(1);
+    expect(r.dropped).toBe(1);
   });
 });

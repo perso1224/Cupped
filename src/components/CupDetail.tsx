@@ -40,27 +40,36 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
   const [animDone, setAnimDone] = useState(!isFresh);
   const [imageDone, setImageDone] = useState(false);
 
-  // Düzenleme ekranından dönünce güncel hali göster
+  // Düzenleme ekranından dönünce güncel hali göster.
+  // Kayıt değişmediyse kartı yeniden çizme (skor animasyonu baştan başlamasın);
+  // fotoğraf değiştiyse yeni fotoğraf yüklenene kadar paylaşımı kilitle.
+  const shown = useRef<string | null>(null);
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       getEntry(String(id)).then((e) => {
         if (!alive) return;
+        const json = e ? JSON.stringify(e) : 'null';
+        if (json === shown.current) return;
+        const prevPhoto = shown.current && shown.current !== 'null' ? (JSON.parse(shown.current) as CupEntry).photoUri : undefined;
+        shown.current = json;
         setEntry(e ?? null);
         if (!e?.photoUri) setImageDone(true);
+        else if (e.photoUri !== prevPhoto) {
+          setImageDone(false);
+          // Fotoğraf hiç yüklenmezse bile paylaşım sonsuza kadar kilitli kalmasın.
+          setTimeout(() => setImageDone(true), 2500);
+        }
       });
       return () => {
-        alive = false;
+        alive = false; // fallback zamanlayıcısı bilerek iptal edilmez: ekrandan kısa süre ayrılınca paylaşım kilitli kalmasın
       };
     }, [id, setImageDone]),
   );
 
   useEffect(() => {
-    // Fotoğraf hiç yüklenmezse bile paylaşım sonsuza kadar kilitli kalmasın.
-    const t = setTimeout(() => setImageDone(true), 2500);
     // H2 ölçümü: yeni kayıt sonrası üretilen kart sayısı
     if (isFresh) bumpCounter('cardsGenerated').catch(() => {});
-    return () => clearTimeout(t);
   }, [id, isFresh]);
 
   // Yeni rozet: kart belirirken bir kez başarı titreşimi
