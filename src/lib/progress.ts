@@ -1,5 +1,5 @@
 import { BADGE_RULES, BADGES, WEEKLY, type Badge } from '../config/scoring.config';
-import { computePalateTypeId } from './palate';
+import { computePalateTypeId, mostCommon } from './palate';
 import { matchChain, normalizePlace } from './scoring';
 import type { CupEntry, Method } from './types';
 
@@ -169,7 +169,7 @@ export function periodReport(entries: CupEntry[], start: Date, end: Date): Perio
   const list = entries.filter((e) => inRange(e, start, end)).sort(byDate);
   const counts = new Map<Method, number>();
   for (const e of list) counts.set(e.method, (counts.get(e.method) ?? 0) + 1);
-  const topMethod = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const topMethod = list.length ? mostCommon(list.map((e) => e.method))[0] : null;
   return {
     start,
     end,
@@ -180,7 +180,7 @@ export function periodReport(entries: CupEntry[], start: Date, end: Date): Perio
     methods: counts.size,
     newPlaces: discoveriesIn(entries, start, end).places.length,
     topMethod,
-    palateTypeId: list.length ? computePalateTypeId(list) : null,
+    palateTypeId: list.length ? computePalateTypeId(list, { wholePeriod: true }) : null,
     palateScore: weeklyPalateScore(list),
   };
 }

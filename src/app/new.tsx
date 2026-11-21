@@ -117,8 +117,8 @@ export default function NewCup() {
       const waterMl = parseNum(water);
       const brew = doseG || waterMl || grind ? { doseG, waterMl, grind } : null;
       const noteText = note.trim() || null;
-      const { total, parts } = scoreCup(input, history);
       const createdAt = new Date().toISOString();
+      const { total, parts } = scoreCup(input, history, createdAt);
       const palateTypeId = computePalateTypeId([...history, { ...input, createdAt }]);
       let photoUri: string | null = null;
       if (photo) {

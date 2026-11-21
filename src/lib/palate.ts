@@ -11,7 +11,7 @@ import type { CupEntry, Method, TasteNote } from './types';
 
 type PalateSource = Pick<CupEntry, 'method' | 'venueKind' | 'placeName' | 'notes' | 'createdAt'>;
 
-function mostCommon<T extends string>(items: T[]): T[] {
+export function mostCommon<T extends string>(items: T[]): T[] {
   const counts = new Map<T, number>();
   for (const item of items) counts.set(item, (counts.get(item) ?? 0) + 1);
   // En sık olan önce; eşitlikte en son görülen önce gelsin (güncel zevk ağır basar).
@@ -23,15 +23,16 @@ function mostCommon<T extends string>(items: T[]): T[] {
  * Damak tipini son fincanlardan hesaplar.
  * Tat notu varsa (detay modu) notlardan, yoksa yöntem + mekan türünden.
  */
-export function computePalateTypeId(entries: PalateSource[]): string {
-  const recent = [...entries]
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-    .slice(-PALATE_RULES.window);
+export function computePalateTypeId(entries: PalateSource[], opts: { wholePeriod?: boolean } = {}): string {
+  const sorted = [...entries].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  // Profil için son N fincan; dönem raporları (Özet) için dönemin tamamı (en çok yöntemle çelişmesin).
+  const recent = opts.wholePeriod ? sorted : sorted.slice(-PALATE_RULES.window);
   if (recent.length === 0) return METHOD_TYPES.filter.out;
 
-  // 1) Tat notları
+  // 1) Tat notları: sadece fincanların yeterli kısmında not varsa (tek bir detaylı fincan tipi değiştirmesin)
   const notes: TasteNote[] = recent.flatMap((e) => e.notes);
-  if (notes.length > 0) {
+  const withNotes = recent.filter((e) => e.notes.length > 0).length;
+  if (notes.length > 0 && withNotes / recent.length >= PALATE_RULES.notesShare) {
     const ranked = mostCommon(notes);
     if (ranked.length >= 2) {
       const [a, b] = ranked;

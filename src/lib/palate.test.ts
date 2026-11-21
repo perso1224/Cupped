@@ -55,3 +55,20 @@ describe('Damak Tipi', () => {
     expect(ids.length).toBeLessThanOrEqual(16);
   });
 });
+
+describe('Damak Tipi kararlılığı', () => {
+  it('tek bir detaylı fincan tipi değiştirmez', () => {
+    const cups = Array.from({ length: 9 }, () => cup({ method: 'milk', venueKind: 'chain', placeName: 'Starbucks' }));
+    cups.push(cup({ method: 'milk', venueKind: 'chain', placeName: 'Starbucks', notes: ['fruity'] }));
+    expect(computePalateTypeId(cups)).toBe('oat_milk_diplomat');
+  });
+
+  it('dönemin tamamına bakınca en sık yöntemle çelişmez', () => {
+    const cups = [
+      ...Array.from({ length: 20 }, () => cup({ method: 'milk', venueKind: 'chain', placeName: 'Starbucks' })),
+      ...Array.from({ length: 10 }, () => cup({ method: 'filter', venueKind: 'home' })),
+    ];
+    expect(computePalateTypeId(cups)).toBe('pourover_philosopher'); // profil: son 10 fincan
+    expect(computePalateTypeId(cups, { wholePeriod: true })).toBe('oat_milk_diplomat'); // Özet: tüm dönem
+  });
+});

@@ -59,8 +59,8 @@ describe('zincir eşleştirme', () => {
 describe('Fincan Skoru', () => {
   it('ilk kayıt: taban + emek + yeni yöntem', () => {
     const r = scoreCup(input({ method: 'filter', venueKind: 'home' }), []);
-    expect(r.parts).toEqual({ base: 30, effort: 25, depth: 0, discovery: 10, selectivity: 0 });
-    expect(r.total).toBe(65);
+    expect(r.parts).toEqual({ base: 40, effort: 25, depth: 0, discovery: 10, selectivity: 0 });
+    expect(r.total).toBe(75);
   });
 
   it('yeni bağımsız mekan keşif puanı alır, aynı mekana tekrar gidince almaz', () => {
@@ -69,12 +69,12 @@ describe('Fincan Skoru', () => {
     const history = [entry({ venueKind: 'independent', placeName: 'mahalle kavurucusu' })];
     const again = scoreCup(input({ venueKind: 'independent', placeName: 'Mahalle Kavurucusu' }), history);
     expect(again.parts.discovery).toBe(0);
-    expect(again.total).toBe(45);
+    expect(again.total).toBe(55);
   });
 
   it('ofis kahvesi en düşük emektir', () => {
     const history = [entry({ method: 'espresso' })];
-    expect(scoreCup(input({ venueKind: 'office' }), history).total).toBe(30);
+    expect(scoreCup(input({ venueKind: 'office' }), history).total).toBe(45);
   });
 
   it('aynı zincire art arda 3. ziyarette -5', () => {
@@ -95,13 +95,36 @@ describe('Fincan Skoru', () => {
       input({ method: 'filter', venueKind: 'home', notes: ['fruity', 'bright'], origin: 'Etiyopya' }),
       [],
     );
-    expect(r.parts.depth).toBe(20);
+    expect(r.parts.depth).toBe(10);
     expect(r.total).toBe(85);
     const big = scoreCup(
       input({ method: 'filter', venueKind: 'independent', placeName: 'Yeni Yer', notes: ['fruity', 'bright'], origin: 'Kenya' }),
       [],
     );
     expect(big.total).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('keşif sınırları', () => {
+  // 16 Kasım 2026 Pazartesi
+  const mon = (d: number, h = 10) => new Date(2026, 10, d, h).toISOString();
+  const indep = (name: string, createdAt: string) => entry({ venueKind: 'independent', placeName: name, createdAt });
+
+  it('yeni mekan puanı haftada en fazla 2 kez', () => {
+    const week = [indep('A', mon(16)), indep('B', mon(17))];
+    const third = scoreCup(input({ venueKind: 'independent', placeName: 'C' }), week, mon(18));
+    expect(third.parts.discovery).toBe(0); // yöntem de yeni değil (espresso)
+    const nextWeek = scoreCup(input({ venueKind: 'independent', placeName: 'C' }), week, mon(23));
+    expect(nextWeek.parts.discovery).toBe(15);
+  });
+
+  it('zincirin başka şubesi yeni mekan sayılmaz', () => {
+    const h = [entry({ venueKind: 'chain', placeName: 'Starbucks Kadıköy', createdAt: mon(16) })];
+    expect(scoreCup(input({ venueKind: 'chain', placeName: 'Starbucks Moda' }), h, mon(17)).parts.discovery).toBe(0);
+  });
+
+  it('aynı tat notu iki kez sayılmaz', () => {
+    expect(scoreCup(input({ notes: ['bold', 'bold'] }), [entry({})]).parts.depth).toBe(0);
   });
 });
 

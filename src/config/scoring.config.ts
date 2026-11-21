@@ -4,21 +4,23 @@ import type { Method, TasteNote, VenueKind } from '../lib/types';
  * Skor ve damak tipi ayarlarının TAMAMI burada.
  * Sayıları değiştirmek için sadece bu dosyayı düzenlemek yeterli.
  * Hedef: ortalama ~60, 90+ nadir.
+ * Test raporu sonrası ayar (21 Kas): 100 sanal kullanıcı simülasyonunda eski ayarla ortalama 47 çıkıyordu.
  */
 export const SCORING = {
-  base: 30,
+  base: 40,
   effort: {
     home: 25, // Evde manuel demleme
     independent: 15, // Bağımsız / üçüncü dalga mekan
     chain: 5, // Zincir mekan
-    office: 0, // Ofis makinesi / hazır
+    office: 5, // Ofis makinesi / hazır
   } satisfies Record<VenueKind, number>,
   depth: {
-    twoNotes: 10, // 2 tat notu girildi (detay modu)
-    origin: 10, // Menşei girildi (detay modu)
+    twoNotes: 5, // 2 tat notu girildi (detay modu) — brif: "küçük bonus", basit kullanan cezalandırılmaz
+    origin: 5, // Menşei girildi (detay modu)
   },
   discovery: {
     newPlace: 15, // İlk kez gidilen mekan
+    newPlacePerWeek: 2, // Yeni mekan puanı haftada en fazla bu kadar (uydurma mekan adıyla puan kasılmasın)
     newMethod: 10, // İlk kez denenen yöntem
   },
   selectivity: {
@@ -117,6 +119,8 @@ export const PALATE_RULES = {
   /** Kafe Göçebesi: son `nomadWindow` fincanda en az `nomadDistinctPlaces` farklı mekan. */
   nomadWindow: 6,
   nomadDistinctPlaces: 4,
+  /** Tat notlarından tip: penceredeki fincanların en az bu oranında not olmalı. */
+  notesShare: 0.4,
 } as const;
 
 /** Haftalık Damak Skoru: çeşitliliğe dayalı kişisel skor (kendi rekorunla kıyaslanır). */

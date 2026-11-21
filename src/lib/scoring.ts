@@ -60,29 +60,51 @@ export function classifyPlace(placeName: string): VenueKind {
   return matchChain(placeName) ? 'chain' : 'independent';
 }
 
+/** Keşif için mekan anahtarı. Zincirin şubeleri tek mekan sayılır ("Starbucks Moda" = "Starbucks Kadıköy"). */
 function placeKey(entry: Pick<CupEntry, 'placeName' | 'venueKind'>): string | null {
   if (entry.venueKind === 'home' || entry.venueKind === 'office' || !entry.placeName) return null;
-  return normalizePlace(entry.placeName);
+  const chain = matchChain(entry.placeName);
+  return chain ? `chain:${chain}` : normalizePlace(entry.placeName) || entry.placeName.trim().toLocaleLowerCase('tr-TR');
+}
+
+/** Yerel saatle haftanın (Pazartesi) anahtarı. */
+function weekKey(iso: string): string {
+  const d = new Date(iso);
+  const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+  return `${monday.getFullYear()}-${monday.getMonth()}-${monday.getDate()}`;
 }
 
 /**
  * Fincan Skoru (0-100, mutlak).
  * @param input  yeni fincan
  * @param history  daha önceki kayıtlar (sıra önemsiz; tarihe göre sıralanır)
+ * @param at  fincanın zamanı (haftalık keşif sınırı için)
  */
-export function scoreCup(input: CupInput, history: CupEntry[]): ScoreResult {
+export function scoreCup(input: CupInput, history: CupEntry[], at: string = new Date().toISOString()): ScoreResult {
   const past = [...history].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   const base = SCORING.base;
   const effort = SCORING.effort[input.venueKind];
 
   let depth = 0;
-  if (input.notes.length >= 2) depth += SCORING.depth.twoNotes;
+  if (new Set(input.notes).size >= 2) depth += SCORING.depth.twoNotes;
   if (input.origin && input.origin.trim()) depth += SCORING.depth.origin;
 
   let discovery = 0;
   const key = placeKey(input);
-  if (key && !past.some((e) => placeKey(e) === key)) discovery += SCORING.discovery.newPlace;
+  if (key) {
+    // Geçmişte ilk kez gidilen mekanlar; bu hafta kaç tane oldu?
+    const seen = new Set<string>();
+    let newThisWeek = 0;
+    const wk = weekKey(at);
+    for (const e of past) {
+      const k = placeKey(e);
+      if (!k || seen.has(k)) continue;
+      seen.add(k);
+      if (weekKey(e.createdAt) === wk) newThisWeek++;
+    }
+    if (!seen.has(key) && newThisWeek < SCORING.discovery.newPlacePerWeek) discovery += SCORING.discovery.newPlace;
+  }
   if (!past.some((e) => e.method === input.method)) discovery += SCORING.discovery.newMethod;
 
   let selectivity = 0;

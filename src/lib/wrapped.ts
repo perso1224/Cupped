@@ -1,5 +1,5 @@
 import { CUP_VOLUME_ML, WRAPPED_RULES } from '../config/scoring.config';
-import { computePalateTypeId } from './palate';
+import { computePalateTypeId, mostCommon } from './palate';
 import { discoveriesIn, inRange } from './progress';
 import { levelFor, normalizePlace } from './scoring';
 import type { CupEntry, Method } from './types';
@@ -46,14 +46,16 @@ export function buildWrapped(entries: CupEntry[], start: Date, end: Date): Wrapp
 
   const cups = list.length;
   const ml = list.reduce((s, e) => s + CUP_VOLUME_ML[e.method], 0);
-  const method = topBy(list, (e) => e.method)!;
+  // En sık yöntem: damak tipiyle aynı eşitlik kuralı (eşitlikte en son içilen)
+  const topMethod = mostCommon(list.map((e) => e.method))[0];
+  const method = { item: { method: topMethod }, count: list.filter((e) => e.method === topMethod).length };
   const outside = list.filter((e) => e.placeName && (e.venueKind === 'chain' || e.venueKind === 'independent'));
   const place = topBy(outside, (e) => normalizePlace(e.placeName!));
   const homeCount = list.filter((e) => e.venueKind === 'home').length;
   const disc = discoveriesIn(entries, start, end);
   const best = list.reduce((b, e) => (e.score > b.score ? e : b));
   const avg = Math.round(list.reduce((s, e) => s + e.score, 0) / cups);
-  const typeId = computePalateTypeId(list);
+  const typeId = computePalateTypeId(list, { wholePeriod: true });
 
   const slides: WrappedSlide[] = [
     { kind: 'intro' },
