@@ -222,7 +222,7 @@ function Question({ title, hint, children }: { title: string; hint?: string; chi
 
 function Option({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   return (
-    <PressScale onPress={onPress} scaleTo={0.97} style={[styles.option, selected && styles.optionOn]}>
+    <PressScale onPress={onPress} scaleTo={0.97} accessibilityState={{ selected }} style={[styles.option, selected && styles.optionOn]}>
       <Text style={[styles.optionText, selected && { color: colors.white }]}>{label}</Text>
     </PressScale>
   );

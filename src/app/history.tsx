@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router';
 import { Fragment, useMemo } from 'react';
 import { BackButton } from '../components/NavButtons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -6,7 +7,8 @@ import { CupRow } from '../components/CupRow';
 import { FadeIn } from '../components/motion';
 import { tr, upper } from '../i18n/tr';
 import { useEntries } from '../lib/useEntries';
-import type { CupEntry } from '../lib/types';
+import { filterEntries } from '../lib/progress';
+import type { CupEntry, Method } from '../lib/types';
 import { colors, layout, radius, type } from '../theme';
 
 function groupByDay(list: CupEntry[]) {
@@ -22,9 +24,15 @@ function groupByDay(list: CupEntry[]) {
 
 export default function History() {
   const insets = useSafeAreaInsets();
-  const entries = useEntries();
+  // ?place=<mekan anahtarı>&title=<ad> ya da ?method=<yöntem>: Pasaport'tan gelen filtre
+  const { place, method, title } = useLocalSearchParams<{ place?: string; method?: Method; title?: string }>();
+  const all = useEntries();
+  const filtered = !!(place || method);
+  const entries = useMemo(() => (all && filtered ? filterEntries(all, { place, method }) : all), [all, filtered, place, method]);
   const list = entries ?? [];
   const groups = useMemo(() => groupByDay(entries ?? []), [entries]);
+  const heading = place ? (title ?? tr.history.title) : method ? (tr.methods[method] ?? tr.history.title) : tr.history.title;
+  const avg = list.length ? Math.round(list.reduce((s, e) => s + e.score, 0) / list.length) : 0;
 
   return (
     <ScrollView
@@ -32,7 +40,8 @@ export default function History() {
       contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 40 }}
     >
       <BackButton label={tr.settings.back} />
-      <Text style={styles.title}>{tr.history.title}</Text>
+      <Text style={styles.title}>{heading}</Text>
+      {filtered && list.length ? <Text style={styles.summary}>{tr.history.filterSummary(list.length, avg)}</Text> : null}
       {entries && list.length === 0 ? <Text style={styles.empty}>{tr.history.empty}</Text> : null}
       {groups.map((g, gi) => (
         <FadeIn key={g.label} index={gi}>
@@ -57,4 +66,5 @@ const styles = StyleSheet.create({
   group: { backgroundColor: colors.card, borderRadius: radius.group, overflow: 'hidden' },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 92 },
   empty: { ...type.subhead, marginTop: 24, textAlign: 'center' },
+  summary: { ...type.headline, color: colors.accentText, marginTop: 4 },
 });

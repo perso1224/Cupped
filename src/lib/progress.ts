@@ -185,7 +185,7 @@ export function periodReport(entries: CupEntry[], start: Date, end: Date): Perio
 
 // ---------- Damak Pasaportu ----------
 
-export type PassportPlace = { name: string; visits: number; firstVisit: string };
+export type PassportPlace = { key: string; name: string; visits: number; firstVisit: string };
 
 export type Passport = {
   methods: Method[];
@@ -203,7 +203,7 @@ export function passport(entries: CupEntry[]): Passport {
     if (!key) continue;
     const p = places.get(key);
     if (p) p.visits++;
-    else places.set(key, { name: matchChain(e.placeName!) ?? e.placeName!, visits: 1, firstVisit: e.createdAt });
+    else places.set(key, { key, name: matchChain(e.placeName!) ?? e.placeName!, visits: 1, firstVisit: e.createdAt });
   }
   return {
     methods,
@@ -316,4 +316,9 @@ export function profileSummary(entries: CupEntry[], today: Date = new Date()): P
     streak: currentStreak(entries, today),
     palateTypeId: entries.length ? computePalateTypeId(entries) : null,
   };
+}
+
+/** "Tüm fincanlar" filtresi: bir mekan (placeKey) ya da yöntem. */
+export function filterEntries(entries: CupEntry[], f: { place?: string; method?: Method }): CupEntry[] {
+  return entries.filter((e) => (!f.place || placeKeyOf(e) === f.place) && (!f.method || e.method === f.method));
 }

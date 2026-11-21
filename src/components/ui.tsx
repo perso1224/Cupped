@@ -11,6 +11,7 @@ export function Chip({ label, selected, onPress }: { label: string; selected: bo
         onPress();
       }}
       scaleTo={0.93}
+      accessibilityState={{ selected }}
       style={[styles.chip, selected && styles.chipSelected]}
     >
       <Text style={[styles.chipText, selected && styles.chipTextSelected]} numberOfLines={1}>

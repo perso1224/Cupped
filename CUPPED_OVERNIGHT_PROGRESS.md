@@ -14,3 +14,7 @@
 - [x] Mekan kimliği tek fonksiyon: skor, hedef, pasaport, rozet tutarlı; zincir şubeleri tek mekan; Latin dışı adlar sayılır (test eklendi)
 - [x] dayIndex saat dilimi düzeltmesi (UTC+12/13)
 - 91 test geçiyor, tsc + lint temiz
+- [x] Erişilebilirlik: tüm dokunulabilir öğeler VoiceOver'da "düğme"; seçili durumlar (çip, seçenek) okunur; deklanşör ve anahtarlar etiketli
+- [x] Liste satırları: kısa değerler (saat, sayı) artık kesilmiyor (SE'de "20:30" → "20..." sorunu); taşan uzun başlık düzeltildi
+- [x] Fincan detayı: skor parçaları tek satırda (SE'de 3+1 kırılma yoktu)
+- [x] Yeni: Pasaport'ta mekana/yönteme dokun → o mekanın/yöntemin fincanları + ortalama skor (web'de test edildi)

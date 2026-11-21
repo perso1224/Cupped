@@ -57,22 +57,22 @@ export function ListRow({
           <Icon name={icon} size={17} color="#fff" />
         </View>
       ) : null}
-      {/* Başlık her zaman tam görünür; sağdaki değer gerekirse kısalır */}
-      <View style={subtitle ? { flex: 1 } : { flexShrink: 0 }}>
+      {/* Kısa değerler (saat, sayı) hep tam görünür; uzun değer başlıktan önce kısalır. Dar ekranda başlık da kısalabilir. */}
+      <View style={subtitle ? { flex: 1 } : { flexGrow: 1, flexShrink: 1, minWidth: '45%' }}>
         <Text style={[styles.title, destructive && { color: colors.danger }]} numberOfLines={1}>
           {title}
         </Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </View>
-      {subtitle ? null : <View style={{ flex: 1 }} />}
       {value ? (
-        <Text style={styles.value} numberOfLines={1}>
+        <Text style={[styles.value, { flexShrink: value.length <= 8 ? 0 : 1 }]} numberOfLines={1}>
           {value}
         </Text>
       ) : null}
       {right ? <View style={{ flexShrink: 1, minWidth: 80 }}>{right}</View> : null}
       {toggle !== undefined ? (
         <Switch
+          accessibilityLabel={title}
           value={toggle}
           onValueChange={(v) => {
             onToggle?.(v);

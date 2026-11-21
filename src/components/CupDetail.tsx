@@ -146,14 +146,16 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
           </Pop>
         ))}
 
-        <View style={[styles.parts, { marginTop: 0, marginBottom: 12 }]}>
+        <View style={[styles.parts, { width: cardWidth, marginTop: 0, marginBottom: 12 }]}>
           {PART_ORDER.filter((k) => entry.parts[k] !== 0).map((k) => (
             <View key={k} style={styles.part}>
               <Text style={styles.partValue}>
                 {entry.parts[k] > 0 ? '+' : ''}
                 {entry.parts[k]}
               </Text>
-              <Text style={styles.partLabel}>{tr.result.breakdown[k]}</Text>
+              <Text style={styles.partLabel} numberOfLines={1} adjustsFontSizeToFit>
+                {tr.result.breakdown[k]}
+              </Text>
             </View>
           ))}
         </View>
@@ -263,15 +265,17 @@ const styles = StyleSheet.create({
   detailValue: { fontSize: 15, color: colors.text, marginTop: 2, lineHeight: 21 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg, padding: 24 },
   muted: { color: colors.muted, fontSize: 16 },
-  parts: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 20, paddingHorizontal: 20 },
+  // Skor parçaları tek satırda (SE'de de 4-5 parça sığar)
+  parts: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 20 },
   part: {
+    flex: 1,
+    maxWidth: 90,
+    minWidth: 0,
     backgroundColor: colors.card,
     borderRadius: 16,
     paddingVertical: 10,
-    paddingHorizontal: 14,
-    margin: 4,
+    paddingHorizontal: 6,
     alignItems: 'center',
-    minWidth: 76,
   },
   partValue: { fontSize: 20, fontWeight: '900', color: colors.text },
   partLabel: { fontSize: 12, color: colors.muted, marginTop: 2 },

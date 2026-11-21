@@ -300,6 +300,7 @@ export default function NewCup() {
           </PressScale>
           <PressScale
             onPress={takePhoto}
+            accessibilityLabel={tr.capture.shutter}
             disabled={!permission?.granted || !cameraReady || capturing}
             scaleTo={0.9}
             style={[styles.shutter, (!permission?.granted || !cameraReady || capturing) && { opacity: 0.3 }]}

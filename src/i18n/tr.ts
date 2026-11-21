@@ -97,6 +97,7 @@ export const tr = {
     cameraError: 'Fotoğraf çekilemedi. Tekrar dener misin?',
     saveError: 'Fincan kaydedilemedi. Lütfen tekrar dene.',
     editTitle: 'Fincanı düzenle',
+    shutter: 'Fotoğraf çek',
     galleryError: 'Galeri açılamadı. Ayarlar\'dan fotoğraf iznini kontrol et.',
     saveChanges: 'Değişiklikleri kaydet',
     discardEditTitle: 'Değişiklikler kaydedilmesin mi?',
@@ -407,6 +408,7 @@ export const tr = {
   history: {
     title: 'Tüm fincanlar',
     empty: 'Henüz fincan yok.',
+    filterSummary: (n: number, avg: number) => `${n} fincan · ortalama ${avg}`,
   },
   venue: {
     home: 'Ev yapımı',

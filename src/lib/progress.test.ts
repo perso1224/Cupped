@@ -4,6 +4,7 @@ import {
   brewRatio,
   currentStreak,
   discoveriesIn,
+  filterEntries,
   earnedBadges,
   isDetailed,
   passport,
@@ -132,7 +133,7 @@ describe('pasaport ve rozetler', () => {
       cup(at(2026, 10, 2), { venueKind: 'independent', placeName: 'KAVURUCU' }),
       cup(at(2026, 10, 3), { venueKind: 'chain', placeName: 'Starbucks', method: 'milk', palateTypeId: 'oat_milk_diplomat' }),
     ]);
-    expect(p.places).toEqual([
+    expect(p.places).toMatchObject([
       { name: 'Kavurucu', visits: 2, firstVisit: at(2026, 10, 1) },
       { name: 'Starbucks', visits: 1, firstVisit: at(2026, 10, 3) },
     ]);
@@ -241,5 +242,19 @@ describe('mekan kimliği (skorla tutarlı)', () => {
   });
   it('Latin dışı mekan adı yine bir mekan sayılır', () => {
     expect(passport([cup(at(2026, 10, 2), { placeName: 'カフェ', venueKind: 'independent' })]).places).toHaveLength(1);
+  });
+});
+
+describe('filterEntries', () => {
+  it('mekan anahtarına (zincir dahil) ve yönteme göre süzer', () => {
+    const list = [
+      cup(at(2026, 10, 2), { placeName: 'Starbucks Moda', venueKind: 'chain', method: 'milk' }),
+      cup(at(2026, 10, 3), { placeName: 'Starbucks Kadıköy', venueKind: 'chain', method: 'espresso' }),
+      cup(at(2026, 10, 4), { placeName: 'Kör Nokta', venueKind: 'independent', method: 'espresso' }),
+    ];
+    const key = passport(list).places.find((p) => p.name === 'Starbucks')!.key;
+    expect(filterEntries(list, { place: key })).toHaveLength(2);
+    expect(filterEntries(list, { method: 'espresso' })).toHaveLength(2);
+    expect(filterEntries(list, { place: key, method: 'espresso' })).toHaveLength(1);
   });
 });

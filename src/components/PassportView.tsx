@@ -1,8 +1,9 @@
 import { useRef, type ComponentRef, type ReactNode } from 'react';
+import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon';
-import { FadeIn } from './motion';
+import { FadeIn, PressScale } from './motion';
 import { Card } from './ui';
 import { PALATE_TYPES } from '../config/scoring.config';
 import { tr } from '../i18n/tr';
@@ -44,7 +45,12 @@ export function PassportView({ header, focus }: { header: ReactNode; focus?: Pas
       <Text style={styles.section} onLayout={(e) => handleSectionLayout('methods', e.nativeEvent.layout.y)}>{tr.passport.methods}</Text>
       <View style={styles.stamps}>
         {ALL_METHODS.map((m) => (
-          <Stamp key={m} label={tr.methods[m]} earned={p.methods.includes(m)} />
+          <Stamp
+            key={m}
+            label={tr.methods[m]}
+            earned={p.methods.includes(m)}
+            onPress={p.methods.includes(m) ? () => router.push({ pathname: '/history', params: { method: m } }) : undefined}
+          />
         ))}
       </View>
 
@@ -84,8 +90,12 @@ export function PassportView({ header, focus }: { header: ReactNode; focus?: Pas
       {p.places.length === 0 ? <Text style={styles.empty}>{tr.passport.noPlaces}</Text> : null}
       <View style={styles.stamps}>
         {p.places.map((pl, i) => (
-          <FadeIn key={pl.name} index={i} style={styles.placeWrap}>
-          <View style={styles.placeStamp}>
+          <FadeIn key={pl.key} index={i} style={styles.placeWrap}>
+          <PressScale
+            style={styles.placeStamp}
+            scaleTo={0.96}
+            onPress={() => router.push({ pathname: '/history', params: { place: pl.key, title: pl.name } })}
+          >
             <Text style={styles.placeName} numberOfLines={2}>
               {pl.name}
             </Text>
@@ -93,7 +103,7 @@ export function PassportView({ header, focus }: { header: ReactNode; focus?: Pas
             <Text style={styles.placeMeta}>
               {new Date(pl.firstVisit).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
             </Text>
-          </View>
+          </PressScale>
           </FadeIn>
         ))}
       </View>
@@ -101,13 +111,18 @@ export function PassportView({ header, focus }: { header: ReactNode; focus?: Pas
   );
 }
 
-function Stamp({ label, earned }: { label: string; earned: boolean }) {
+function Stamp({ label, earned, onPress }: { label: string; earned: boolean; onPress?: () => void }) {
+  const style = [styles.stamp, earned ? styles.stampOn : styles.stampOff];
+  const text = (
+    <Text style={[styles.stampText, earned && { color: colors.white }]} numberOfLines={2}>
+      {label}
+    </Text>
+  );
+  if (!onPress) return <View style={style}>{text}</View>;
   return (
-    <View style={[styles.stamp, earned ? styles.stampOn : styles.stampOff]}>
-      <Text style={[styles.stampText, earned && { color: colors.white }]} numberOfLines={2}>
-        {label}
-      </Text>
-    </View>
+    <PressScale style={style} scaleTo={0.95} onPress={onPress}>
+      {text}
+    </PressScale>
   );
 }
 
