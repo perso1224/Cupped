@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -27,7 +27,7 @@ import { tr } from '../i18n/tr';
 import { computePalateTypeId } from '../lib/palate';
 import { classifyPlace, normalizePlace, scoreCup } from '../lib/scoring';
 import { refreshReminder } from '../lib/reminders';
-import { knownPlaces, loadEntries, newId, persistPhoto, saveEntry, updateMetrics } from '../lib/storage';
+import { getEntry, knownPlaces, loadEntries, newId, persistPhoto, photoUrl, saveEntry, updateEntry, updateMetrics } from '../lib/storage';
 import { brewRatio, earnedBadges } from '../lib/progress';
 import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from '../lib/types';
 import { colors, type } from '../theme';
@@ -49,10 +49,15 @@ type Where = { kind: 'home' } | { kind: 'office' } | { kind: 'place'; name: stri
 
 export default function NewCup() {
   const insets = useSafeAreaInsets();
+  // ?edit=<id>: var olan fincanı düzenle (fotoğraf adımı atlanır, alanlar dolu gelir)
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  const editId = typeof edit === 'string' && edit ? edit : null;
+  const [original, setOriginal] = useState<CupEntry | null>(null);
+  const [photoChanged, setPhotoChanged] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [photo, setPhoto] = useState<string | null>(null);
-  const [step, setStep] = useState<'photo' | 'details'>('photo');
+  const [step, setStep] = useState<'photo' | 'details'>(editId ? 'details' : 'photo');
   const [method, setMethod] = useState<Method | null>(null);
   const [where, setWhere] = useState<Where | null>(null);
   const [typed, setTyped] = useState('');
@@ -80,22 +85,51 @@ export default function NewCup() {
   useEffect(() => {
     openedAt.current = Date.now();
     loadEntries().then(setHistory);
+    if (editId) {
+      getEntry(editId).then((e) => {
+        if (!e) return goBack();
+        setOriginal(e);
+        setPhoto(photoUrl(e.photoUri));
+        setMethod(e.method);
+        setWhere(e.venueKind === 'home' || e.venueKind === 'office' ? { kind: e.venueKind } : { kind: 'place', name: e.placeName ?? '' });
+        if (e.placeName && e.venueKind !== 'home' && e.venueKind !== 'office') setTyped(e.placeName);
+        setNotes(e.notes ?? []);
+        setOrigin(e.origin ?? '');
+        setDose(e.brew?.doseG ? String(e.brew.doseG) : '');
+        setWater(e.brew?.waterMl ? String(e.brew.waterMl) : '');
+        setGrind(e.brew?.grind ?? null);
+        setNote(e.note ?? '');
+        setShowDetail(!!(e.notes?.length || e.origin || e.brew || e.note));
+      });
+      return;
+    }
     updateMetrics((m) => {
       m.newOpened += 1;
     }).catch(() => {});
-  }, []);
+  }, [editId]);
 
   const places = knownPlaces(history).slice(0, 6);
 
   /** Kapat: bir şey seçildiyse önce sor (tam ekran modalda kaydırarak kapatma yok, tek çıkış burası). */
   function closeNew() {
-    const dirty = !!(photo || method || where || typed.trim() || notes.length || origin.trim() || dose || water || grind || note.trim());
+    const dirty = original
+      ? photoChanged ||
+        method !== original.method ||
+        JSON.stringify(where) !==
+          JSON.stringify(original.venueKind === 'home' || original.venueKind === 'office' ? { kind: original.venueKind } : { kind: 'place', name: original.placeName ?? '' }) ||
+        notes.join() !== (original.notes ?? []).join() ||
+        origin.trim() !== (original.origin ?? '') ||
+        note.trim() !== (original.note ?? '') ||
+        dose !== (original.brew?.doseG ? String(original.brew.doseG) : '') ||
+        water !== (original.brew?.waterMl ? String(original.brew.waterMl) : '') ||
+        grind !== (original.brew?.grind ?? null)
+      : !!(photo || method || where || typed.trim() || notes.length || origin.trim() || dose || water || grind || note.trim());
     if (!dirty) return goBack();
     if (Platform.OS === 'web') {
-      if (globalThis.confirm?.(tr.capture.discardTitle)) goBack();
+      if (globalThis.confirm?.(original ? tr.capture.discardEditTitle : tr.capture.discardTitle)) goBack();
       return;
     }
-    Alert.alert(tr.capture.discardTitle, tr.capture.discardBody, [
+    Alert.alert(original ? tr.capture.discardEditTitle : tr.capture.discardTitle, original ? undefined : tr.capture.discardBody, [
       { text: tr.capture.keepEditing, style: 'cancel' },
       { text: tr.capture.discard, style: 'destructive', onPress: goBack },
     ]);
@@ -114,6 +148,7 @@ export default function NewCup() {
       const pic = await cameraRef.current?.takePictureAsync({ quality: 0.6 });
       if (pic?.uri) {
         setPhoto(pic.uri);
+        setPhotoChanged(true);
         setStep('details');
       }
     } catch {
@@ -127,6 +162,7 @@ export default function NewCup() {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
     if (!res.canceled && res.assets[0]?.uri) {
       setPhoto(res.assets[0].uri);
+      setPhotoChanged(true);
       setStep('details');
     }
   }
@@ -177,6 +213,41 @@ export default function NewCup() {
       refreshReminder();
       haptic.success();
       router.replace({ pathname: '/result/[id]', params: { id, fresh: '1', ...(newBadges ? { badges: newBadges } : {}) } });
+    } catch {
+      Alert.alert(tr.capture.saveError);
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+
+  /** Düzenleme: skor, fincanın kendi tarihindeki geçmişe göre yeniden hesaplanır; kimlik ve tarih korunur. */
+  async function saveEdit(orig: CupEntry) {
+    if (!method || !where || savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      const all = await loadEntries();
+      const before = all.filter((e) => e.id !== orig.id && e.createdAt < orig.createdAt);
+      const venueKind: VenueKind = where.kind === 'place' ? classifyPlace(where.name) : where.kind;
+      const placeName = where.kind === 'place' ? where.name : null;
+      const input: CupInput = { method, placeName, venueKind, notes, origin: origin.trim() || null };
+      const doseG = parseNum(dose);
+      const waterMl = parseNum(water);
+      const brew = doseG || waterMl || grind ? { doseG, waterMl, grind } : null;
+      const { total, parts } = scoreCup(input, before, orig.createdAt);
+      const palateTypeId = computePalateTypeId([...before, { ...input, createdAt: orig.createdAt }]);
+      let photoUri = orig.photoUri;
+      if (photoChanged && photo) {
+        try {
+          photoUri = await persistPhoto(photo, orig.id, Date.now().toString(36));
+        } catch {
+          photoUri = orig.photoUri;
+        }
+      }
+      await updateEntry({ ...orig, ...input, photoUri, brew, note: note.trim() || null, score: total, parts, palateTypeId });
+      haptic.success();
+      goBack();
     } catch {
       Alert.alert(tr.capture.saveError);
     } finally {
@@ -269,6 +340,7 @@ export default function NewCup() {
           </PressScale>
         </View>
 
+        {original ? <Text style={[type.largeTitle, { marginTop: 16 }]}>{tr.capture.editTitle}</Text> : null}
         <Text style={styles.q}>{tr.capture.how}</Text>
         <View style={styles.chips}>
           {METHODS.map((m) => (
@@ -402,8 +474,8 @@ export default function NewCup() {
 
       <View style={[styles.saveBar, { paddingBottom: insets.bottom + 12 }]}>
         <PillButton
-          label={!method ? tr.capture.chooseMethod : !where ? tr.capture.choosePlace : tr.capture.save}
-          onPress={save}
+          label={!method ? tr.capture.chooseMethod : !where ? tr.capture.choosePlace : original ? tr.capture.saveChanges : tr.capture.save}
+          onPress={original ? () => saveEdit(original) : save}
           disabled={!method || !where || saving}
         />
       </View>

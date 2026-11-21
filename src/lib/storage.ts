@@ -70,6 +70,20 @@ export function saveEntry(entry: CupEntry): Promise<void> {
   });
 }
 
+/**
+ * Var olan kaydı yerinde günceller (liste sırası korunur).
+ * Fotoğraf değiştiyse eskisi silinir.
+ */
+export function updateEntry(entry: CupEntry): Promise<void> {
+  return enqueue(async () => {
+    const list = await readEntriesStrict();
+    const old = list.find((e) => e.id === entry.id);
+    if (!old) throw new Error('entry not found');
+    await writeEntries(list.map((e) => (e.id === entry.id ? entry : e)));
+    if (old.photoUri && old.photoUri !== entry.photoUri) deletePhoto(old.photoUri);
+  });
+}
+
 export function deleteEntry(id: string): Promise<void> {
   return enqueue(async () => {
     const list = await readEntriesStrict();
@@ -106,10 +120,12 @@ export function bumpCounter(name: keyof Counters): Promise<void> {
  * Kameradan/galeriden gelen geçici fotoğrafı kalıcı klasöre kopyalar.
  * Göreli yol döner ("cups/<id>.jpg"); ekranda photoUrl() ile tam adrese çevrilir.
  */
-export async function persistPhoto(tempUri: string, id: string): Promise<string> {
+export async function persistPhoto(tempUri: string, id: string, version?: string): Promise<string> {
   const dir = new Directory(Paths.document, 'cups');
   if (!dir.exists) dir.create({ intermediates: true });
-  const dest = new File(dir, `${id}.jpg`);
+  // Düzenlemede yeni ad: aynı adı kullanmak görüntü önbelleğinde eski fotoğrafı gösterebilir.
+  const name = version ? `${id}-${version}.jpg` : `${id}.jpg`;
+  const dest = new File(dir, name);
   if (dest.exists) dest.delete();
   const source = await shrinkPhoto(tempUri);
   await new File(source).copy(dest);
@@ -120,7 +136,7 @@ export async function persistPhoto(tempUri: string, id: string): Promise<string>
       // önemli değil
     }
   }
-  return `cups/${id}.jpg`;
+  return `cups/${name}`;
 }
 
 /** Kamera fotoğrafları ~8MP; kart için 1080 piksel genişlik yeterli (fincan başına ~3MB yerine ~250KB). */

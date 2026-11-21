@@ -1,5 +1,5 @@
-import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShareCard, type CardHandle } from './ShareCard';
@@ -40,11 +40,22 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
   const [animDone, setAnimDone] = useState(!isFresh);
   const [imageDone, setImageDone] = useState(false);
 
+  // Düzenleme ekranından dönünce güncel hali göster
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      getEntry(String(id)).then((e) => {
+        if (!alive) return;
+        setEntry(e ?? null);
+        if (!e?.photoUri) setImageDone(true);
+      });
+      return () => {
+        alive = false;
+      };
+    }, [id, setImageDone]),
+  );
+
   useEffect(() => {
-    getEntry(String(id)).then((e) => {
-      setEntry(e ?? null);
-      if (!e?.photoUri) setImageDone(true);
-    });
     // Fotoğraf hiç yüklenmezse bile paylaşım sonsuza kadar kilitli kalmasın.
     const t = setTimeout(() => setImageDone(true), 2500);
     // H2 ölçümü: yeni kayıt sonrası üretilen kart sayısı
@@ -159,7 +170,13 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
         {isDetailed(entry) ? <Details entry={entry} width={cardWidth} /> : null}
 
         <View style={{ alignSelf: 'stretch', paddingHorizontal: 16 }}>
-          <ListSection>
+          <ListSection footer={tr.result.editHint}>
+            <ListRow
+              icon="create"
+              tint={colors.accent}
+              title={tr.result.edit}
+              onPress={() => router.push({ pathname: '/new', params: { edit: String(id) } })}
+            />
             <ListRow icon="trash" tint={colors.danger} title={tr.result.delete} destructive onPress={confirmDelete} />
           </ListSection>
         </View>
