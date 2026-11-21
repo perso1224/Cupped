@@ -79,7 +79,7 @@ export const tr = {
     measurement: 'Test sayaçları (sadece bu telefonda)',
     cardsMade: 'Üretilen kart',
     shares: 'Paylaşım',
-    soon: 'Damak Kartı ve Düello yakında.',
+    soon: 'Damak Kartı yakında.',
   },
   progress: {
     title: 'İlerleme',
