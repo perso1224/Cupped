@@ -168,6 +168,8 @@ export const tr = {
     summaryMethod: 'Yöntem',
     summaryPlace: 'Mekan',
     share: 'Bu slaytı paylaş',
+    close: 'Kapat',
+    finish: 'Bitir ✓',
     tapHint: 'Dokun: ileri · Sol kenar: geri',
     empty: 'Bu dönemde henüz fincan yok. Özetin ilk fincanla başlar.',
   },

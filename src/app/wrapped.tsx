@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  PanResponder,
   Animated,
   Easing,
   Image,
@@ -71,9 +72,29 @@ export default function Wrapped() {
   const progressValue = useRef(0);
   const enter = useRef(new Animated.Value(0)).current;
   const slideRef = useRef<CardHandle>(null);
+  const [finished, setFinished] = useState(false);
+  const dragY = useRef(new Animated.Value(0)).current;
+
+  function close() {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  }
+
+  // Aşağı kaydırınca kapat (Instagram hikayeleri gibi).
+  const pan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponderCapture: (_, g) => g.dy > 12 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5,
+      onPanResponderMove: (_, g) => dragY.setValue(Math.max(0, g.dy)),
+      onPanResponderRelease: (_, g) => {
+        if (g.dy > 120 || g.vy > 1.2) close();
+        else Animated.spring(dragY, { toValue: 0, useNativeDriver: true }).start();
+      },
+      onPanResponderTerminate: () => Animated.spring(dragY, { toValue: 0, useNativeDriver: true }).start(),
+    }),
+  ).current;
 
   // Slayt alanı: tam 9:16, ekrana sığan en büyük boyut.
-  const availH = height - insets.top - insets.bottom - 64;
+  const availH = height - insets.top - insets.bottom - 76;
   const W = Math.min(width, (availH * 9) / 16);
   const H = (W * 16) / 9;
 
@@ -92,8 +113,10 @@ export default function Wrapped() {
       easing: Easing.linear,
       useNativeDriver: false,
     });
-    anim.start(({ finished }) => {
-      if (finished && index < slides.length - 1) go(index + 1);
+    anim.start(({ finished: done }) => {
+      if (!done) return;
+      if (index < slides.length - 1) go(index + 1);
+      else setFinished(true); // son slayt: otomatik kapanmaz ki paylaşılabilsin
     });
     return () => {
       anim.stop();
@@ -110,6 +133,7 @@ export default function Wrapped() {
   function onTap(e: GestureResponderEvent) {
     if (e.nativeEvent.locationX < W * 0.3) go(index - 1);
     else if (index < slides.length - 1) go(index + 1);
+    else close(); // son slayta dokununca çık
   }
 
   async function share() {
@@ -127,7 +151,7 @@ export default function Wrapped() {
     return (
       <View style={[styles.screen, { justifyContent: 'center', padding: 32 }]}>
         <Text style={styles.empty}>{tr.wrapped.empty}</Text>
-        <Pressable onPress={() => router.back()} style={styles.emptyBtn}>
+        <Pressable onPress={close} style={styles.emptyBtn}>
           <Text style={styles.emptyBtnText}>{tr.result.done}</Text>
         </Pressable>
       </View>
@@ -137,10 +161,20 @@ export default function Wrapped() {
 
   const slide = slides[index];
   const theme = THEME_BY_KIND[slide.kind];
+  const isLast = index === slides.length - 1;
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 8 }]}>
-      <View style={{ width: W, height: H, alignSelf: 'center', borderRadius: 18, overflow: 'hidden' }}>
+    <View style={[styles.screen, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 8 }]} {...pan.panHandlers}>
+      <Animated.View
+        style={{
+          width: W,
+          height: H,
+          alignSelf: 'center',
+          borderRadius: 18,
+          overflow: 'hidden',
+          transform: [{ translateY: dragY }, { scale: dragY.interpolate({ inputRange: [0, 400], outputRange: [1, 0.85], extrapolate: 'clamp' }) }],
+        }}
+      >
         {/* Sadece bu görünüm kaydedilir (köşeler kare, 9:16). */}
         <View ref={slideRef} collapsable={false} style={{ width: W, height: H, backgroundColor: theme.bg }}>
           <SlideView slide={slide} theme={theme} W={W} H={H} enter={enter} periodLabel={periodLabel} kind={kind} index={index} />
@@ -167,14 +201,24 @@ export default function Wrapped() {
             </View>
           ))}
         </View>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.close}>
+        <Pressable onPress={close} hitSlop={16} style={[styles.close, { backgroundColor: hexA(theme.fg, 0.15) }]}>
           <Text style={[styles.closeText, { color: theme.fg }]}>✕</Text>
         </Pressable>
-      </View>
+      </Animated.View>
 
-      <Pressable onPress={share} style={({ pressed }) => [styles.shareBtn, pressed && { opacity: 0.8 }]}>
-        <Text style={styles.shareText}>{tr.wrapped.share}</Text>
-      </Pressable>
+      <View style={styles.bottomRow}>
+        <Pressable
+          onPress={close}
+          style={({ pressed }) => [styles.closeBtn, isLast && finished && styles.finishBtn, pressed && { opacity: 0.8 }]}
+        >
+          <Text style={[styles.closeBtnText, isLast && finished && { color: '#111' }]}>
+            {isLast && finished ? tr.wrapped.finish : tr.wrapped.close}
+          </Text>
+        </Pressable>
+        <Pressable onPress={share} style={({ pressed }) => [styles.shareBtn, pressed && { opacity: 0.8 }]}>
+          <Text style={styles.shareText}>{tr.wrapped.share}</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -367,7 +411,7 @@ function SlideView({
         ...(slide.place ? ([[tr.wrapped.summaryPlace, slide.place]] as [string, string][]) : []),
       ];
       body = (
-        <View style={[pad, { flex: 1, paddingTop: u * 14 }]}>
+        <View style={[pad, { flex: 1, paddingTop: u * 20 }]}>
           <Animated.Text style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
             {tr.wrapped.summaryTitle} · {periodLabel}
           </Animated.Text>
@@ -413,10 +457,22 @@ function SlideView({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#000' },
-  bars: { position: 'absolute', top: 12, left: 12, right: 52, flexDirection: 'row', gap: 4 },
+  bars: { position: 'absolute', top: 12, left: 12, right: 12, flexDirection: 'row', gap: 4 },
   bar: { flex: 1, height: 3, borderRadius: 2, overflow: 'hidden' },
-  close: { position: 'absolute', top: 2, right: 10, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontSize: 20, fontWeight: '700' },
+  close: { position: 'absolute', top: 22, right: 12, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  closeText: { fontSize: 18, fontWeight: '800' },
+  bottomRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 12, paddingHorizontal: 16 },
+  closeBtn: {
+    borderRadius: 999,
+    paddingHorizontal: 24,
+    height: 48,
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FAF8F5',
+    marginRight: 10,
+  },
+  finishBtn: { backgroundColor: '#D98B2B', borderColor: '#D98B2B' },
+  closeBtnText: { fontSize: 16, fontWeight: '800', color: '#FAF8F5' },
   kicker: { fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 8 },
   huge: { fontWeight: '900', letterSpacing: -1 },
   mega: { fontWeight: '900', letterSpacing: -4 },
@@ -429,8 +485,6 @@ const styles = StyleSheet.create({
   footerBrand: { fontWeight: '900', letterSpacing: -0.5 },
   footerQ: { fontWeight: '600' },
   shareBtn: {
-    marginTop: 12,
-    alignSelf: 'center',
     backgroundColor: '#FAF8F5',
     borderRadius: 999,
     paddingHorizontal: 28,
