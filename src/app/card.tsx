@@ -66,7 +66,7 @@ export default function PalateCard() {
     busy.current = true;
     setSharing(true);
     try {
-      await shareViewAsImage(cardRef);
+      await shareViewAsImage(cardRef, 'palateCard');
     } catch {
       Alert.alert(tr.result.shareError);
     } finally {

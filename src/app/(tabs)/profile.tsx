@@ -1,24 +1,32 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
 import { profileSummary } from '../../lib/progress';
+import { setReminderEnabled } from '../../lib/reminders';
 import { levelFor } from '../../lib/scoring';
-import { clearProfile, loadCounters, type Counters } from '../../lib/storage';
+import { shareFile } from '../../lib/share';
+import { exportAllData, updateMetrics } from '../../lib/storage';
 import { useEntries } from '../../lib/useEntries';
+import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
 import { colors } from '../../theme';
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const entries = useEntries() ?? [];
-  const [counters, setCounters] = useState<Counters>({ cardsGenerated: 0, shares: 0 });
+  const [metrics, reloadMetrics] = useMetrics();
+  const exporting = useRef(false);
+
+  // H6: Kulüp kartının kaç kez görüldüğü
   useFocusEffect(
     useCallback(() => {
-      loadCounters().then(setCounters);
+      updateMetrics((m) => {
+        m.clubViews += 1;
+      }).catch(() => {});
     }, []),
   );
 
@@ -26,6 +34,32 @@ export default function Profile() {
   const profile = useProfile();
   const typeId = palateTypeId ?? profile?.starterTypeId ?? null;
   const type = typeId ? getPalateType(typeId) : null;
+
+  async function toggleReminder(v: boolean) {
+    const ok = await setReminderEnabled(v);
+    if (v && !ok) Alert.alert(tr.profile.reminderDenied);
+    reloadMetrics();
+  }
+
+  async function joinClub() {
+    await updateMetrics((m) => {
+      if (!m.clubInterestAt) m.clubInterestAt = new Date().toISOString();
+    });
+    reloadMetrics();
+    Alert.alert(tr.profile.clubDone);
+  }
+
+  async function doExport() {
+    if (exporting.current) return;
+    exporting.current = true;
+    try {
+      await shareFile(await exportAllData());
+    } catch {
+      Alert.alert(tr.profile.exportError);
+    } finally {
+      exporting.current = false;
+    }
+  }
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 40 }}>
@@ -39,8 +73,9 @@ export default function Profile() {
           <Text style={styles.typeName}>{type.name}</Text>
           <Text style={styles.tagline}>{type.tagline}</Text>
           <Text style={[styles.label, { marginTop: 12 }]}>
-            {tr.result.level}: {levelFor(avg)}
-            {profile ? `  ·  ${tr.profile.goal}: ${tr.onboarding.goal[profile.goal]}` : ''}
+            {entries.length ? `${tr.result.level}: ${levelFor(avg)}` : ''}
+            {entries.length && profile ? '  ·  ' : ''}
+            {profile ? `${tr.profile.goal}: ${tr.onboarding.goal[profile.goal]}` : ''}
           </Text>
         </Card>
       ) : null}
@@ -55,16 +90,41 @@ export default function Profile() {
         </View>
       </Card>
 
-      <Card style={{ marginTop: 16 }}>
-        <Text style={styles.label}>{tr.profile.measurement}</Text>
-        <View style={styles.grid}>
-          <Stat value={counters.cardsGenerated} label={tr.profile.cardsMade} />
-          <Stat value={counters.shares} label={tr.profile.shares} />
+      <Card style={[styles.row, { marginTop: 16 }]}>
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={styles.rowTitle}>{tr.profile.reminder}</Text>
+          <Text style={styles.rowSub}>{tr.profile.reminderSub}</Text>
         </View>
+        <Switch
+          value={!!metrics?.reminderEnabled}
+          onValueChange={toggleReminder}
+          trackColor={{ true: colors.accent, false: colors.line }}
+        />
       </Card>
 
-      <Pressable onPress={() => clearProfile()} hitSlop={10} style={{ marginTop: 24, alignSelf: 'center' }}>
-        <Text style={styles.link}>{tr.profile.redoOnboarding}</Text>
+      {/* H6 sahte kapı: ödeme yok, sadece ilgi ölçülür */}
+      <Card style={[styles.club, { marginTop: 16 }]}>
+        <Text style={styles.clubTitle}>{tr.profile.clubTitle}</Text>
+        <Text style={styles.clubBody}>{tr.profile.clubBody}</Text>
+        {metrics?.clubInterestAt ? (
+          <Text style={styles.clubDone}>{tr.profile.clubDone}</Text>
+        ) : (
+          <PillButton label={tr.profile.clubCta} onPress={joinClub} style={{ marginTop: 14, backgroundColor: colors.accent, borderColor: colors.accent }} />
+        )}
+      </Card>
+
+      <Pressable onPress={doExport} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
+        <Card style={[styles.row, { marginTop: 16 }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowTitle}>{tr.profile.export}</Text>
+            <Text style={styles.rowSub}>{tr.profile.exportSub}</Text>
+          </View>
+          <Text style={styles.chev}>›</Text>
+        </Card>
+      </Pressable>
+
+      <Pressable onPress={() => router.push('/stats')} hitSlop={10} style={{ marginTop: 24, alignSelf: 'center' }}>
+        <Text style={styles.link}>{tr.profile.testStats}</Text>
       </Pressable>
     </ScrollView>
   );
@@ -89,4 +149,12 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 32, fontWeight: '900', color: colors.text },
   statLabel: { fontSize: 13, color: colors.muted },
   link: { fontSize: 14, fontWeight: '600', color: colors.muted, textDecorationLine: 'underline' },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  rowTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
+  rowSub: { fontSize: 13, color: colors.muted, marginTop: 3, lineHeight: 18 },
+  chev: { fontSize: 28, color: colors.muted, fontWeight: '300' },
+  club: { backgroundColor: colors.black },
+  clubTitle: { fontSize: 18, fontWeight: '900', color: colors.white },
+  clubBody: { fontSize: 14, color: '#CFC8BE', marginTop: 6, lineHeight: 20 },
+  clubDone: { fontSize: 14, fontWeight: '700', color: colors.accent, marginTop: 12 },
 });

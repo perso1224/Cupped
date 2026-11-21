@@ -7,8 +7,13 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.perso1224.cupped"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.perso1224.cupped",
+      "infoPlist": {
+        "RCTAsyncStorageExcludeFromBackup": false,
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "tr"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -41,13 +46,16 @@
         "expo-camera",
         {
           "cameraPermission": "Fincanının fotoğrafını çekmek için kameraya erişim gerekiyor. Fotoğraflar sadece telefonunda kalır.",
-          "recordAudioAndroid": false
+          "recordAudioAndroid": false,
+          "microphonePermission": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Fincan fotoğrafını galeriden seçebilmen için fotoğraflarına erişim gerekiyor."
+          "photosPermission": "Fincan fotoğrafını galeriden seçebilmen için fotoğraflarına erişim gerekiyor.",
+          "microphonePermission": false,
+          "cameraPermission": "Fincanının fotoğrafını çekmek için kameraya erişim gerekiyor. Fotoğraflar sadece telefonunda kalır."
         }
       ]
     ]

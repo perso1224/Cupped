@@ -68,7 +68,7 @@ export default function CupResult() {
     busy.current = true;
     setSharing(true);
     try {
-      await shareViewAsImage(cardRef);
+      await shareViewAsImage(cardRef, 'cup', String(id));
     } catch {
       Alert.alert(tr.result.shareError);
     } finally {

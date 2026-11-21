@@ -1,17 +1,20 @@
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
 import { ScoreRing } from '../../components/ScoreRing';
 import { WeekStrip } from '../../components/WeekStrip';
-import { Card } from '../../components/ui';
+import { Card, PillButton } from '../../components/ui';
 import { BRAND } from '../../config/brand';
 import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
 import { tr } from '../../i18n/tr';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
 import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekStrip } from '../../lib/progress';
 import { levelFor } from '../../lib/scoring';
+import { setReminderEnabled } from '../../lib/reminders';
+import { updateMetrics } from '../../lib/storage';
 import { useEntries } from '../../lib/useEntries';
+import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
 import { colors } from '../../theme';
 
@@ -24,6 +27,20 @@ export default function Home() {
   const todays = list.filter((e) => dayKey(new Date(e.createdAt)) === todayKey);
   const todayScore = todays.length ? Math.max(...todays.map((e) => e.score)) : 0;
   const profile = useProfile();
+  const [metrics, reloadMetrics] = useMetrics();
+  const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
+
+  async function answerReminder(yes: boolean) {
+    if (yes) {
+      const ok = await setReminderEnabled(true);
+      if (!ok) Alert.alert(tr.profile.reminderDenied);
+    } else {
+      await updateMetrics((m) => {
+        m.reminderEnabled = false;
+      });
+    }
+    reloadMetrics();
+  }
   const isStarter = list.length === 0 && !!profile;
   const type = list.length
     ? getPalateType(computePalateTypeId(list))
@@ -89,6 +106,17 @@ export default function Home() {
         </View>
       </Card>
 
+      {askReminder ? (
+        <Card style={{ marginTop: 12 }}>
+          <Text style={styles.goalText}>🔔 {tr.homePrompt.reminderTitle}</Text>
+          <Text style={styles.promptBody}>{tr.homePrompt.reminderBody}</Text>
+          <View style={{ flexDirection: 'row', marginTop: 12 }}>
+            <PillButton label={tr.homePrompt.no} variant="light" onPress={() => answerReminder(false)} style={{ flex: 1, marginRight: 8, height: 46 }} />
+            <PillButton label={tr.homePrompt.yes} onPress={() => answerReminder(true)} style={{ flex: 2, height: 46 }} />
+          </View>
+        </Card>
+      ) : null}
+
       {banner ? (
         <Pressable
           onPress={() => router.push({ pathname: '/wrapped', params: { period: 'month', offset: String(banner.offset) } })}
@@ -139,6 +167,7 @@ const styles = StyleSheet.create({
   cardHint: { fontSize: 15, color: colors.text, marginTop: 4 },
   typeName: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 2 },
   goal: { marginTop: 12, paddingVertical: 16 },
+  promptBody: { fontSize: 14, color: colors.muted, marginTop: 6, lineHeight: 20 },
   goalText: { fontSize: 15, fontWeight: '700', color: colors.text },
   goalBar: { height: 8, borderRadius: 4, backgroundColor: colors.line, marginTop: 10, overflow: 'hidden' },
   goalFill: { height: 8, backgroundColor: colors.accent },

@@ -43,6 +43,7 @@ export function normalizeEntry(raw: unknown): CupEntry | null {
     origin: typeof r.origin === 'string' && r.origin.trim() ? r.origin : null,
     brew: r.brew && typeof r.brew === 'object' ? { doseG: r.brew.doseG ?? null, waterMl: r.brew.waterMl ?? null, grind: r.brew.grind ?? null } : null,
     note: typeof r.note === 'string' && r.note.trim() ? r.note : null,
+    captureMs: typeof r.captureMs === 'number' && r.captureMs > 0 ? r.captureMs : null,
     score: Math.max(0, Math.min(100, num(r.score))),
     parts,
     palateTypeId: typeof r.palateTypeId === 'string' && r.palateTypeId ? r.palateTypeId : 'third_wave_nomad',

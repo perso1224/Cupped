@@ -149,7 +149,7 @@ export default function Wrapped() {
       enter.stopAnimation();
       enter.setValue(1);
       await new Promise((r) => requestAnimationFrame(() => r(null)));
-      await shareViewAsImage(slideRef);
+      await shareViewAsImage(slideRef, 'wrapped');
     } catch {
       Alert.alert(tr.result.shareError);
     } finally {

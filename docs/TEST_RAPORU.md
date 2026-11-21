@@ -121,7 +121,20 @@ Aynı sorunu bulan ajanlar tek maddede birleştirildi. Köşeli parantez, sorunu
 - **Metinler:** yüzde ekleri, Oat Milk cümlesi, barista şakası, dönem kelimeleri.
 - **Kurucu kararı:** kartlarda seviye gizlendi.
 
-Kalanlar Paket 2 ve 3'te.
+**Paket 2 tamamlandı (21 Kas):**
+- **K6 ölçüm:**
+  - H2: gerçek paylaşım ve hangi uygulamaya gittiği.
+  - H3: kayıt süresi ve yarıda bırakma.
+  - H4: uygulamanın açıldığı günler, 1./7./30. gün dönüşü.
+  - H6: "Cupped Kulüp · yakında" sahte kapısı.
+  - Bunların hepsi "Test istatistikleri" ekranında görünür.
+- **Y1 skor ayarı (kurucu kararı):** taban 40, ofis 5, detay +10, yeni mekan puanı haftada en fazla 2. Simülasyonda ortalama 57; kasma artık evde demlemenin altında.
+- **Y5 damak tipi kararlılığı:** tek bir detaylı fincan tipi değiştirmiyor; Özet tüm döneme bakıyor.
+- **Y8 dışa aktarma:** JSON dosyası. iCloud yedeği de açıldı.
+- **Günlük hatırlatma (kurucu kararı):** 20:30'da gelir, açılıp kapatılabilir, ana sayfada bir kez sorulur.
+- **app.json:** mikrofon izni kaldırıldı, iPad kapatıldı, şifreleme beyanı eklendi.
+
+**Kalanlar (Paket 3):** Y9 fotoğraf küçültme, Y10 klavye, ORTA ve DÜŞÜK maddeler, ikon, TestFlight hazırlığı.
 
 ## Önerilen düzeltme sırası
 

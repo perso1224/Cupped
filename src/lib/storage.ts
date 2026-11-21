@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import { parseEntries } from './entries';
+import { appLabel, normalizeMetrics, type Metrics, type ShareSource } from './metrics';
 import { normalizePlace } from './scoring';
 import type { Profile } from './onboarding';
 import type { CupEntry } from './types';
@@ -10,6 +11,7 @@ const ENTRIES_KEY = 'cupped.entries.v1';
 const ENTRIES_BACKUP_KEY = 'cupped.entries.v1.bak';
 const COUNTERS_KEY = 'cupped.counters.v1';
 const PROFILE_KEY = 'cupped.profile.v1';
+const METRICS_KEY = 'cupped.metrics.v1';
 
 export type Counters = {
   cardsGenerated: number;
@@ -188,4 +190,64 @@ export async function saveProfile(p: Profile): Promise<void> {
 export async function clearProfile(): Promise<void> {
   await AsyncStorage.removeItem(PROFILE_KEY);
   setProfileCache(null);
+}
+
+// ---------- Ölçüm (H2-H6), sadece bu telefonda ----------
+
+export async function loadMetrics(): Promise<Metrics> {
+  try {
+    return normalizeMetrics(JSON.parse((await AsyncStorage.getItem(METRICS_KEY)) ?? 'null'));
+  } catch {
+    return normalizeMetrics(null);
+  }
+}
+
+export function updateMetrics(fn: (m: Metrics) => void): Promise<Metrics> {
+  return enqueue(async () => {
+    const m = await loadMetrics();
+    fn(m);
+    await AsyncStorage.setItem(METRICS_KEY, JSON.stringify(m));
+    return m;
+  });
+}
+
+function todayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** H4: uygulamanın açıldığı günü kaydeder. */
+export function recordActiveDay(): Promise<Metrics> {
+  const k = todayKey();
+  return updateMetrics((m) => {
+    if (!m.activeDays.includes(k)) m.activeDays.push(k);
+  });
+}
+
+/** H2: paylaşım düğmesine basıldı / paylaşım tamamlandı (hangi uygulamaya). */
+export function recordShare(source: ShareSource, result: 'tap' | 'completed', activityType?: string | null, cupId?: string) {
+  return updateMetrics((m) => {
+    if (result === 'tap') {
+      m.shareTaps[source] += 1;
+      return;
+    }
+    m.sharesCompleted[source] += 1;
+    const app = appLabel(activityType);
+    m.sharesByApp[app] = (m.sharesByApp[app] ?? 0) + 1;
+    if (cupId && !m.sharedCupIds.includes(cupId)) m.sharedCupIds.push(cupId);
+    if (!m.firstShareAt) m.firstShareAt = new Date().toISOString();
+  });
+}
+
+/** Tüm verileri tek bir JSON dosyasına yazar (yedek / kurucuya göndermek için). Dosya adresini döner. */
+export async function exportAllData(): Promise<string> {
+  const [entries, profile, metrics, counters] = await Promise.all([loadEntries(), loadProfile(), loadMetrics(), loadCounters()]);
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  const file = new File(Paths.cache, `cupped-yedek-${stamp}.json`);
+  file.create({ overwrite: true });
+  await file.write(
+    JSON.stringify({ app: 'Cupped', format: 1, exportedAt: d.toISOString(), profile, entries, metrics, counters }, null, 2),
+  );
+  return file.uri;
 }

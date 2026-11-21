@@ -47,6 +47,8 @@ export type CupEntry = {
   /** Detay modu (eski kayıtlarda yok). */
   brew?: Brew | null;
   note?: string | null;
+  /** H3 ölçümü: ekleme ekranının açılışından kayda kadar geçen süre (ms). */
+  captureMs?: number | null;
   score: number;
   parts: ScoreParts;
   palateTypeId: string;

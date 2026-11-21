@@ -1,8 +1,23 @@
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { AppState } from 'react-native';
+import { refreshReminder } from '../lib/reminders';
+import { recordActiveDay } from '../lib/storage';
 import { colors } from '../theme';
 
 export default function RootLayout() {
+  // H4: uygulamanın açıldığı günleri kaydet; hatırlatmayı güncel tut.
+  useEffect(() => {
+    const onActive = () => {
+      recordActiveDay().catch(() => {});
+      refreshReminder();
+    };
+    onActive();
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && onActive());
+    return () => sub.remove();
+  }, []);
+
   return (
     <>
       <StatusBar style="dark" />

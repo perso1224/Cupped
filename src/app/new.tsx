@@ -22,7 +22,8 @@ import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
 import { computePalateTypeId } from '../lib/palate';
 import { classifyPlace, normalizePlace, scoreCup } from '../lib/scoring';
-import { knownPlaces, loadEntries, newId, persistPhoto, saveEntry } from '../lib/storage';
+import { refreshReminder } from '../lib/reminders';
+import { knownPlaces, loadEntries, newId, persistPhoto, saveEntry, updateMetrics } from '../lib/storage';
 import { brewRatio } from '../lib/progress';
 import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from '../lib/types';
 import { colors } from '../theme';
@@ -66,8 +67,13 @@ export default function NewCup() {
     setNotes((cur) => (cur.includes(n) ? cur.filter((x) => x !== n) : cur.length >= 2 ? [cur[1], n] : [...cur, n]));
   }
 
+  // H3: ekranın açılışından kayda kadar geçen süre
+  const openedAt = useRef(Date.now());
   useEffect(() => {
     loadEntries().then(setHistory);
+    updateMetrics((m) => {
+      m.newOpened += 1;
+    }).catch(() => {});
   }, []);
 
   const places = knownPlaces(history).slice(0, 6);
@@ -128,7 +134,12 @@ export default function NewCup() {
           photoUri = null; // geçici dosya iOS tarafından silinir; adresini saklamak boş fotoğraf demek
         }
       }
-      await saveEntry({ id, createdAt, photoUri, ...input, brew, note: noteText, score: total, parts, palateTypeId });
+      const captureMs = Date.now() - openedAt.current;
+      await saveEntry({ id, createdAt, photoUri, ...input, brew, note: noteText, captureMs, score: total, parts, palateTypeId });
+      updateMetrics((m) => {
+        m.newSaved += 1;
+      }).catch(() => {});
+      refreshReminder();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       router.replace({ pathname: '/cup/[id]', params: { id, fresh: '1' } });
     } catch {
