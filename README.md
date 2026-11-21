@@ -5,7 +5,17 @@ Kahve damak kimliği uygulaması (Expo + React Native + TypeScript).
 
 ---
 
-## Telefonda açma rehberi (teknik olmayanlar için)
+## Bilgisayarsız çalışma düzeni (şu an kullanılan)
+
+1. Kod GitHub'a gönderilince **GitHub Actions** ("Expo'ya yayınla") uygulamanın yeni halini otomatik olarak Expo hesabına yükler.
+2. iPhone'da **Expo Go** açılır, projeye dokunulur, en yeni sürüm çalışır.
+3. Bunun için GitHub'da `EXPO_TOKEN` adlı gizli anahtar tanımlıdır (Settings → Secrets and variables → Actions).
+
+Yayının durumu: GitHub'da projenin **Actions** sekmesi (yeşil tik = başarılı, kırmızı çarpı = hata).
+
+---
+
+## Telefonda açma rehberi (bilgisayarla) (teknik olmayanlar için)
 
 İki yol var. Bilgisayarın (Windows veya Linux da olur, Mac gerekmez) varsa **Yol A**'yı kullan; asıl geliştirme bu yolla yapılacak.
 Bilgisayar yoksa **Yol B** ile sadece hızlıca denemek mümkün.
