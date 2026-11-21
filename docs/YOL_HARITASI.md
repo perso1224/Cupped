@@ -48,6 +48,13 @@ TestFlight betasında gerçekten sorun olursa eklenecek.
 - Kayda `photoCheck: 'coffee' | 'unsure' | 'skipped'` alanı eklenir. Skora etkisi yok, sadece ölçüm için (ne kadar hile yapılıyor?).
 - Fotoğrafsız kayıtlar `skipped` olur.
 
+**iOS ve Android (kurucu kararı, 21 Kas):** Uygulama dünyaya iki platformda yayınlanacak. Bu yüzden önerilen yol, iki platformda aynı çalışan tek bir cihaz içi model:
+- Model ImageNet ile eğitilmiş küçük bir sınıflandırıcı olacak (örneğin MobileNet). İçinde "espresso", "coffee mug" ve "cup" sınıfları var; "water bottle" da ayrı bir sınıf, yani su şişesi ayırt edilebilir.
+- TFLite ile telefonun içinde çalışacak. Ücretsiz, internetsiz, iki platformda aynı sonuç.
+- Alternatif: iOS'ta Apple Vision, Android'de Google ML Kit (ikisi de ücretsiz, cihaz içi). Ama iki ayrı kod gerektirir ve sonuçlar platforma göre farklı çıkabilir.
+- Expo Go'da çalışmaz; kendi derlememiz (EAS Build) gerekir. Android'de test için APK yeterli. Yayın için Google Play hesabı gerekir (tek seferlik ~25$).
+- **Davranış kararı: reddetme değil, uyarı.** Yukarıdan çekilmiş latte, karanlıkta espresso ya da Türk kahvesi fincanı yanlışlıkla "kahve değil" çıkabilir. Gerçek kahvesi reddedilen kullanıcı uygulamayı bırakır.
+
 **Ne zaman karar verilir:** TestFlight betasının ilk 2 haftasından sonra. Beta kullanıcılarının fotoğraflarında belirgin hile varsa yapılır, yoksa ertelenir.
 
 ## Sonra (veriye göre, brif 11)
