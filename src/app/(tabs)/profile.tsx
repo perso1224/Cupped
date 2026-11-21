@@ -1,14 +1,15 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
 import { profileSummary } from '../../lib/progress';
 import { levelFor } from '../../lib/scoring';
-import { loadCounters, type Counters } from '../../lib/storage';
+import { clearProfile, loadCounters, type Counters } from '../../lib/storage';
 import { useEntries } from '../../lib/useEntries';
+import { useProfile } from '../../lib/useProfile';
 import { colors } from '../../theme';
 
 export default function Profile() {
@@ -22,21 +23,24 @@ export default function Profile() {
   );
 
   const { avg, places, methods, palateTypeId } = profileSummary(entries);
-  const type = palateTypeId ? getPalateType(palateTypeId) : null;
+  const profile = useProfile();
+  const typeId = palateTypeId ?? profile?.starterTypeId ?? null;
+  const type = typeId ? getPalateType(typeId) : null;
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 40 }}>
-      <Text style={styles.title}>{tr.profile.title}</Text>
+      <Text style={styles.title}>{profile?.nickname ? `@${profile.nickname}` : tr.profile.title}</Text>
 
       <PillButton label={tr.profile.showCard} onPress={() => router.push('/card')} style={{ marginBottom: 16 }} />
 
       {type ? (
         <Card style={{ marginBottom: 16 }}>
-          <Text style={styles.label}>{tr.home.palateType}</Text>
+          <Text style={styles.label}>{palateTypeId ? tr.home.palateType : tr.profile.starter}</Text>
           <Text style={styles.typeName}>{type.name}</Text>
           <Text style={styles.tagline}>{type.tagline}</Text>
           <Text style={[styles.label, { marginTop: 12 }]}>
             {tr.result.level}: {levelFor(avg)}
+            {profile ? `  ·  ${tr.profile.goal}: ${tr.onboarding.goal[profile.goal]}` : ''}
           </Text>
         </Card>
       ) : null}
@@ -58,6 +62,10 @@ export default function Profile() {
           <Stat value={counters.shares} label={tr.profile.shares} />
         </View>
       </Card>
+
+      <Pressable onPress={() => clearProfile()} hitSlop={10} style={{ marginTop: 24, alignSelf: 'center' }}>
+        <Text style={styles.link}>{tr.profile.redoOnboarding}</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -80,4 +88,5 @@ const styles = StyleSheet.create({
   stat: { width: '50%', paddingVertical: 10 },
   statValue: { fontSize: 32, fontWeight: '900', color: colors.text },
   statLabel: { fontSize: 13, color: colors.muted },
+  link: { fontSize: 14, fontWeight: '600', color: colors.muted, textDecorationLine: 'underline' },
 });

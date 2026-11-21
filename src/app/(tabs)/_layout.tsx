@@ -1,8 +1,9 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { Tabs } from 'expo-router/tabs';
 import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { tr } from '../../i18n/tr';
+import { useProfile } from '../../lib/useProfile';
 import { colors } from '../../theme';
 
 function TabIcon({ glyph, color }: { glyph: string; color: ColorValue }) {
@@ -10,6 +11,10 @@ function TabIcon({ glyph, color }: { glyph: string; color: ColorValue }) {
 }
 
 export default function TabsLayout() {
+  const profile = useProfile();
+  if (profile === undefined) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  if (profile === null) return <Redirect href="/onboarding" />;
+
   return (
     <Tabs
       screenOptions={{

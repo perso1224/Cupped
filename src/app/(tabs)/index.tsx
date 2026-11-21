@@ -12,6 +12,7 @@ import { computePalateTypeId, getPalateType } from '../../lib/palate';
 import { addDays, currentStreak, dayKey, discoveriesIn, inRange, startOfMonth, startOfWeek, weekStrip } from '../../lib/progress';
 import { levelFor } from '../../lib/scoring';
 import { useEntries } from '../../lib/useEntries';
+import { useProfile } from '../../lib/useProfile';
 import { colors } from '../../theme';
 
 export default function Home() {
@@ -22,7 +23,13 @@ export default function Home() {
   const todayKey = dayKey(now);
   const todays = list.filter((e) => dayKey(new Date(e.createdAt)) === todayKey);
   const todayScore = todays.length ? Math.max(...todays.map((e) => e.score)) : 0;
-  const type = list.length ? getPalateType(computePalateTypeId(list)) : null;
+  const profile = useProfile();
+  const isStarter = list.length === 0 && !!profile;
+  const type = list.length
+    ? getPalateType(computePalateTypeId(list))
+    : profile
+      ? getPalateType(profile.starterTypeId)
+      : null;
   const streak = currentStreak(list, now);
   const ws = startOfWeek(now);
   const disc = discoveriesIn(list, ws, addDays(ws, 7));
@@ -54,7 +61,7 @@ export default function Home() {
           {todays.length === 0 ? <Text style={styles.cardHint}>{tr.home.noCupToday}</Text> : null}
           {type ? (
             <>
-              <Text style={[styles.cardLabel, { marginTop: 14 }]}>{tr.home.palateType}</Text>
+              <Text style={[styles.cardLabel, { marginTop: 14 }]}>{isStarter ? tr.profile.starter : tr.home.palateType}</Text>
               <Text style={styles.typeName}>{type.name}</Text>
             </>
           ) : null}

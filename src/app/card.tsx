@@ -12,6 +12,7 @@ import { profileSummary } from '../lib/progress';
 import { levelFor } from '../lib/scoring';
 import { shareViewAsImage } from '../lib/share';
 import { useEntries } from '../lib/useEntries';
+import { useProfile } from '../lib/useProfile';
 import { colors } from '../theme';
 
 /** "Göster" modu: tam ekran Damak Kartı. Parlaklık artar, ekran kapanmaz. */
@@ -40,7 +41,9 @@ export default function PalateCard() {
   }, []);
 
   const s = profileSummary(entries ?? []);
-  const type = s.palateTypeId ? getPalateType(s.palateTypeId) : null;
+  const profile = useProfile();
+  const typeId = s.palateTypeId ?? profile?.starterTypeId ?? null;
+  const type = typeId ? getPalateType(typeId) : null;
   // Paylaşılan görsel tam 9:16 olsun diye kart, ekrana sığan 9:16 bir çerçevenin içinde.
   const frameW = Math.min(width, ((height - insets.top - insets.bottom - 64) * 9) / 16);
   const frameH = (frameW * 16) / 9;
@@ -81,7 +84,8 @@ export default function PalateCard() {
           style={{ width: frameW, height: frameH, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}
         >
         <View style={[styles.card, { width: cardWidth, minHeight: Math.min(520, frameH - 32) }]}>
-          <Text style={styles.kicker}>{tr.palateCard.title}</Text>
+          <Text style={styles.kicker}>{s.palateTypeId ? tr.palateCard.title : tr.profile.starter}</Text>
+          {profile?.nickname ? <Text style={styles.nick}>@{profile.nickname}</Text> : null}
           {type ? (
             <>
               <Text style={[styles.typeName, { fontSize: cardWidth * 0.12 }]} adjustsFontSizeToFit numberOfLines={2}>
@@ -139,6 +143,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { backgroundColor: colors.black, borderRadius: 32, padding: 28 },
   kicker: { color: colors.accent, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.4 },
+  nick: { color: '#BDB6AC', fontSize: 16, fontWeight: '700', marginTop: 8 },
   typeName: { color: colors.white, fontWeight: '900', marginTop: 14, letterSpacing: -1 },
   tagline: { color: '#CFC8BE', fontSize: 16, lineHeight: 22, marginTop: 10 },
   levelRow: { flexDirection: 'row', alignItems: 'center', marginTop: 18 },

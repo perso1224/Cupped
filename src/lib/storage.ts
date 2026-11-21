@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
+import type { Profile } from './onboarding';
 import type { CupEntry } from './types';
 
 // Tüm veriler sadece telefonda tutulur (sunucu yok).
 const ENTRIES_KEY = 'cupped.entries.v1';
 const COUNTERS_KEY = 'cupped.counters.v1';
+const PROFILE_KEY = 'cupped.profile.v1';
 
 export type Counters = {
   cardsGenerated: number;
@@ -67,4 +69,44 @@ export function knownPlaces(entries: CupEntry[]): string[] {
     }
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
+}
+
+// Profil bellekte de tutulur; değişince dinleyen ekranlar (useProfile) güncellenir.
+let profileCache: Profile | null | undefined;
+const profileListeners = new Set<(p: Profile | null) => void>();
+
+export function subscribeProfile(fn: (p: Profile | null) => void): () => void {
+  profileListeners.add(fn);
+  return () => profileListeners.delete(fn);
+}
+
+function setProfileCache(p: Profile | null) {
+  profileCache = p;
+  profileListeners.forEach((fn) => fn(p));
+}
+
+export function cachedProfile(): Profile | null | undefined {
+  return profileCache;
+}
+
+export async function loadProfile(): Promise<Profile | null> {
+  if (profileCache !== undefined) return profileCache;
+  try {
+    const raw = await AsyncStorage.getItem(PROFILE_KEY);
+    profileCache = raw ? (JSON.parse(raw) as Profile) : null;
+  } catch {
+    profileCache = null;
+  }
+  return profileCache;
+}
+
+export async function saveProfile(p: Profile): Promise<void> {
+  await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+  setProfileCache(p);
+}
+
+/** Tanıtımı tekrar göstermek için (test amaçlı). Fincanlar silinmez. */
+export async function clearProfile(): Promise<void> {
+  await AsyncStorage.removeItem(PROFILE_KEY);
+  setProfileCache(null);
 }

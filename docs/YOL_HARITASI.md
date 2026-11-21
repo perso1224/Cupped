@@ -12,7 +12,7 @@ Briften sonraki kararlar ve ileride yapılacak işler burada tutulur.
 | (d) Paylaşım kartı | ✅ |
 | (e) Geçmiş, Damak Pasaportu, haftalık/aylık rapor, seri | ✅ |
 | (f) Damak Kartı ("Göster" modu) | ✅ |
-| (g) Onboarding | ⏳ |
+| (g) Onboarding | ✅ |
 | (h) Detay modu (tat notları, menşei, gram/su/öğütme, not) | ⏳ |
 
 **Kapsamdan çıkarılanlar:** Düello (QR), kurucu kararı (21 Kas 2026).
@@ -29,6 +29,7 @@ Hazırlık listesi:
 - [ ] "Verilerimi dışa aktar" (JSON). Brifte var, telefon değişirse veri kaybını önler
 - [ ] Apple Developer hesabı (kurucu alır), ardından EAS Build ile bulutta iOS derlemesi (Mac gerekmez) ve TestFlight'a gönderim
 - [ ] Otomatik yayın düzeni: TestFlight sürümü de aynı EAS Update kanalından güncellenecek şekilde ayarlanır
+- [ ] Tek dokunuşla doğrudan Instagram Hikayesi'ne paylaşım (Instagram Stories URL şeması). Ücretsiz bir Facebook/Meta geliştirici uygulama kimliği ve uygulamanın kendi derlemesi gerekir; Expo Go'da çalışmaz. Şimdilik iOS paylaşım menüsü kullanılıyor.
 
 ## Ertelenen özellik: Fotoğrafta kahve kontrolü (ücretsiz, cihaz içi)
 
