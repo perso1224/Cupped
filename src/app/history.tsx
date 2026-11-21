@@ -6,7 +6,7 @@ import { FadeIn } from '../components/motion';
 import { tr } from '../i18n/tr';
 import { useEntries } from '../lib/useEntries';
 import type { CupEntry } from '../lib/types';
-import { colors } from '../theme';
+import { colors, type } from '../theme';
 
 function groupByDay(list: CupEntry[]) {
   const groups: { label: string; items: CupEntry[] }[] = [];
@@ -53,7 +53,7 @@ export default function History() {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   back: { fontSize: 40, fontWeight: '300', color: colors.text, marginRight: 12, marginTop: -6 },
-  title: { fontSize: 28, fontWeight: '900', color: colors.text },
+  title: { ...type.largeTitle },
   day: { fontSize: 14, fontWeight: '700', color: colors.muted, marginTop: 16, marginBottom: 8, textTransform: 'capitalize' },
   empty: { fontSize: 15, color: colors.muted, marginTop: 16 },
 });

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors } from '../theme';
+import { Icon, type IconName } from './Icon';
 import { haptic } from './motion';
 
 /** Küçük halka: Cal AI'daki makro halkalarının karşılığı (Emek / Keşif / Derinlik, kafein…). */
@@ -59,7 +60,7 @@ export function MetricTile({
   label: string;
   fraction: number;
   color: ColorValue;
-  icon: string;
+  icon: IconName;
 }) {
   return (
     <View style={styles.tile}>
@@ -70,7 +71,7 @@ export function MetricTile({
         {label}
       </Text>
       <View style={{ alignItems: 'center', marginTop: 10 }}>
-        <MiniRing fraction={fraction} color={color} center={<Text style={{ fontSize: 18 }}>{icon}</Text>} />
+        <MiniRing fraction={fraction} color={color} center={<Icon name={icon} size={20} color={color} />} />
       </View>
     </View>
   );

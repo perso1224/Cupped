@@ -1,36 +1,60 @@
 import { router } from 'expo-router';
+import { Fragment } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
+import { Icon } from '../../components/Icon';
+import { WeekChart } from '../../components/WeekChart';
 import { WeekStrip } from '../../components/WeekStrip';
 import { MetricTile, MiniRing, Pager } from '../../components/dashboard';
 import { FadeIn, Pop, PressScale, animateLayout } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
-import { BRAND } from '../../config/brand';
-import { DAILY_CAFFEINE_REF, WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
-import { tr } from '../../i18n/tr';
+import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
+import { tr, upper } from '../../i18n/tr';
 import { agoLabel, caffeineToday, dailyNudge, levelProgress, weekPartAverages } from '../../lib/home';
+import { insights } from '../../lib/insights';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
-import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekStrip } from '../../lib/progress';
-import { levelFor } from '../../lib/scoring';
+import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekStrip, weeklyPalateScore } from '../../lib/progress';
 import { setReminderEnabled } from '../../lib/reminders';
+import { levelFor } from '../../lib/scoring';
 import { updateMetrics } from '../../lib/storage';
 import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
-import { colors } from '../../theme';
+import { useSettings } from '../../lib/useSettings';
+import { colors, tint, type } from '../../theme';
 
+/**
+ * Ana sayfa "Özet": Apple Fitness/Sağlık tarzı bölümlü yapı + Cal AI tarzı pano.
+ * Bugün · Bu Hafta · Öne Çıkanlar · Son Fincanlar
+ */
 export default function Home() {
   const insets = useSafeAreaInsets();
+  const { width: screenW } = useWindowDimensions();
   const entries = useEntries();
   const list = entries ?? [];
+  const profile = useProfile();
+  const settings = useSettings();
+  const [metrics, reloadMetrics] = useMetrics();
   const now = new Date();
+
   const todayKey = dayKey(now);
   const todays = list.filter((e) => dayKey(new Date(e.createdAt)) === todayKey);
   const todayScore = todays.length ? Math.max(...todays.map((e) => e.score)) : 0;
-  const profile = useProfile();
-  const [metrics, reloadMetrics] = useMetrics();
+  const streak = currentStreak(list, now);
+  const ws = startOfWeek(now);
+  const weekEntries = list.filter((e) => inRange(e, ws, addDays(ws, 7)));
+  const disc = discoveriesIn(list, ws, addDays(ws, 7));
+  const discoveries = disc.places.length + disc.methods.length;
+  const parts = weekPartAverages(list, now);
+  const caffeine = caffeineToday(list, now);
+  const level = levelProgress(list);
+  const nudge = dailyNudge(list, now);
+  const highlights = insights(list, now).slice(0, 3);
+  const type_ = list.length ? getPalateType(computePalateTypeId(list)) : profile ? getPalateType(profile.starterTypeId) : null;
   const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
+  const dateLabel = upper(now.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }));
+  const pageW = screenW - 40;
 
   async function answerReminder(yes: boolean) {
     animateLayout();
@@ -44,21 +68,7 @@ export default function Home() {
     }
     reloadMetrics();
   }
-  const type = list.length
-    ? getPalateType(computePalateTypeId(list))
-    : profile
-      ? getPalateType(profile.starterTypeId)
-      : null;
-  const streak = currentStreak(list, now);
-  const { width: screenW } = useWindowDimensions();
-  const pageW = screenW - 40;
-  const parts = weekPartAverages(list, now);
-  const caffeine = caffeineToday(list, now);
-  const level = levelProgress(list);
-  const nudge = dailyNudge(list, now);
-  const ws = startOfWeek(now);
-  const disc = discoveriesIn(list, ws, addDays(ws, 7));
-  const discoveries = disc.places.length + disc.methods.length;
+
   // Damak Özeti afişi: ayın ilk 7 gününde geçen ayın özeti (asıl "Wrapped anı"), sonra bu ayın özeti.
   const banner = (() => {
     const label = (d: Date) => {
@@ -76,18 +86,78 @@ export default function Home() {
     return null;
   })();
 
+  const scorePage = (
+    <View key="score">
+      <Card style={styles.bigCard}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bigNumber}>{todays.length ? todayScore : '–'}</Text>
+          <Text style={styles.cardTitle}>{tr.home.todayScore}</Text>
+          <Text style={styles.cardSub}>{todays.length ? levelFor(todayScore) : tr.home.noCupToday}</Text>
+        </View>
+        <MiniRing
+          size={112}
+          stroke={11}
+          fraction={todays.length ? todayScore / 100 : 0}
+          center={<Icon name={todays.length ? 'trophy' : 'cafe-outline'} size={32} color={colors.accent} />}
+        />
+      </Card>
+      <View style={styles.tiles}>
+        <MetricTile value={`+${parts.effort.avg}`} label={tr.home.effortWeek} fraction={parts.effort.fraction} color={tint.amber} icon="hand-left" />
+        <MetricTile value={`+${parts.discovery.avg}`} label={tr.home.discoveryWeek} fraction={parts.discovery.fraction} color={tint.cherry} icon="compass" />
+        <MetricTile value={`+${parts.depth.avg}`} label={tr.home.depthWeek} fraction={parts.depth.fraction} color={tint.espresso} icon="leaf" />
+      </View>
+    </View>
+  );
+
+  const caffeinePage = (
+    <View key="caffeine">
+      <Card style={styles.bigCard}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bigNumber}>
+            {caffeine.mg}
+            <Text style={styles.bigUnit}> mg</Text>
+          </Text>
+          <Text style={styles.cardTitle}>{tr.home.caffeineToday}</Text>
+          <Text style={styles.cardSub}>{tr.home.caffeineRef(settings.caffeineRef)}</Text>
+        </View>
+        <MiniRing
+          size={112}
+          stroke={11}
+          fraction={caffeine.mg / settings.caffeineRef}
+          color={caffeine.mg > settings.caffeineRef ? tint.cherry : tint.amber}
+          center={<Icon name="flash" size={32} color={caffeine.mg > settings.caffeineRef ? tint.cherry : tint.amber} />}
+        />
+      </Card>
+      <View style={styles.tiles}>
+        <MetricTile value={String(caffeine.cups)} label={tr.home.cupsToday} fraction={caffeine.cups / 4} color={tint.amber} icon="cafe" />
+        <MetricTile
+          value={agoLabel(caffeine.minutesSinceLast)}
+          label={tr.home.lastCup}
+          fraction={caffeine.minutesSinceLast === null ? 0 : Math.min(1, caffeine.minutesSinceLast / 360)}
+          color={tint.cherry}
+          icon="time"
+        />
+        <MetricTile value={String(parts.cups)} label={tr.home.cupsWeek} fraction={parts.cups / 14} color={tint.espresso} icon="calendar" />
+      </View>
+    </View>
+  );
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 40 }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: 48 }}
     >
+      {/* Başlık: tarih + büyük "Özet" (Apple Fitness gibi) */}
       <View style={styles.header}>
-        <Text style={styles.brand}>{BRAND.name}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.date}>{dateLabel}</Text>
+          <Text style={styles.largeTitle}>{tr.home.summary}</Text>
+        </View>
         <View style={styles.streak}>
           <Pop trigger={streak}>
-            <Text style={{ fontSize: 16 }}>🔥</Text>
+            <Icon name="flame" size={16} color={streak > 0 ? tint.cherry : colors.muted} />
           </Pop>
-          <Text style={styles.streakText}>{tr.home.streak(streak)}</Text>
+          <Text style={styles.streakText}>{streak}</Text>
         </View>
       </View>
 
@@ -96,180 +166,202 @@ export default function Home() {
       {entries && list.length === 0 ? (
         <Card style={[styles.ctaCard, { marginTop: 20 }]}>
           <Text style={styles.ctaTitle}>{tr.home.ctaTitle}</Text>
-          <Text style={styles.ctaBody}>
-            {type ? tr.home.ctaBodyWithType(type.name) : tr.home.ctaBody}
-          </Text>
+          <Text style={styles.ctaBody}>{type_ ? tr.home.ctaBodyWithType(type_.name) : tr.home.ctaBody}</Text>
           <PillButton label={tr.home.ctaButton} variant="light" onPress={() => router.push('/new')} style={{ marginTop: 16 }} />
         </Card>
       ) : (
-        <View style={{ marginTop: 20, marginHorizontal: -20 }}>
-          <View style={{ paddingHorizontal: 20 }}>
-            <Pager
-              width={pageW}
-              pages={[
-                // Sayfa 1: bugünkü skor + bu haftanın Emek / Keşif / Derinlik halkaları
-                <View key="score">
-                  <Card style={styles.bigCard}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.bigNumber}>{todays.length ? todayScore : '–'}</Text>
-                      <Text style={styles.cardLabel}>{tr.home.todayScore}</Text>
-                      <Text style={styles.cardHint}>{todays.length ? levelFor(todayScore) : tr.home.noCupToday}</Text>
-                    </View>
-                    <MiniRing
-                      size={112}
-                      stroke={11}
-                      fraction={todays.length ? todayScore / 100 : 0}
-                      center={<Text style={{ fontSize: 34 }}>{todays.length ? '🎯' : '☕'}</Text>}
-                    />
-                  </Card>
-                  <View style={styles.tiles}>
-                    <MetricTile value={`+${parts.effort.avg}`} label={tr.home.effortWeek} fraction={parts.effort.fraction} color={colors.accent} icon="🫖" />
-                    <MetricTile value={`+${parts.discovery.avg}`} label={tr.home.discoveryWeek} fraction={parts.discovery.fraction} color="#B5402F" icon="🧭" />
-                    <MetricTile value={`+${parts.depth.avg}`} label={tr.home.depthWeek} fraction={parts.depth.fraction} color="#2B1A12" icon="👃" />
-                  </View>
-                </View>,
-                // Sayfa 2: kafein (yaklaşık) + bugün / son kahve / bu hafta
-                <View key="caffeine">
-                  <Card style={styles.bigCard}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.bigNumber}>
-                        {caffeine.mg}
-                        <Text style={styles.bigUnit}> mg</Text>
-                      </Text>
-                      <Text style={styles.cardLabel}>{tr.home.caffeineToday}</Text>
-                      <Text style={styles.cardHint}>{tr.home.caffeineRef(DAILY_CAFFEINE_REF)}</Text>
-                    </View>
-                    <MiniRing
-                      size={112}
-                      stroke={11}
-                      fraction={caffeine.mg / DAILY_CAFFEINE_REF}
-                      color={caffeine.mg > DAILY_CAFFEINE_REF ? '#B5402F' : colors.accent}
-                      center={<Text style={{ fontSize: 34 }}>⚡</Text>}
-                    />
-                  </Card>
-                  <View style={styles.tiles}>
-                    <MetricTile value={String(caffeine.cups)} label={tr.home.cupsToday} fraction={caffeine.cups / 4} color={colors.accent} icon="☕" />
-                    <MetricTile value={agoLabel(caffeine.minutesSinceLast)} label={tr.home.lastCup} fraction={caffeine.minutesSinceLast === null ? 0 : Math.min(1, caffeine.minutesSinceLast / 360)} color="#B5402F" icon="⏱️" />
-                    <MetricTile value={String(parts.cups)} label={tr.home.cupsWeek} fraction={parts.cups / 14} color="#2B1A12" icon="📅" />
-                  </View>
-                </View>,
-              ]}
-            />
-          </View>
-        </View>
-      )}
+        <>
+          {/* BUGÜN */}
+          <SectionHeader title={tr.home.today} />
+          <Pager width={pageW} pages={settings.showCaffeine ? [scorePage, caffeinePage] : [scorePage]} />
 
-      {type && list.length > 0 ? (
-        <FadeIn index={1}>
-          <PressScale onPress={() => router.push('/card')} scaleTo={0.98} style={styles.typeCard}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardLabel}>{tr.home.palateType}</Text>
-                <Text style={styles.typeName}>{type.name}</Text>
+          {askReminder ? (
+            <Card style={{ marginTop: 14 }}>
+              <View style={styles.inlineTitle}>
+                <Icon name="notifications" size={18} color={tint.cherry} />
+                <Text style={styles.cardTitleDark}>{tr.homePrompt.reminderTitle}</Text>
               </View>
-              <Text style={styles.chev}>›</Text>
-            </View>
-            {level ? (
-              <>
-                <View style={styles.levelBar}>
-                  <View style={[styles.levelFill, { width: `${Math.max(4, level.fraction * 100)}%` }]} />
+              <Text style={styles.cardSub}>{tr.homePrompt.reminderBody}</Text>
+              <View style={{ flexDirection: 'row', marginTop: 12 }}>
+                <PillButton label={tr.homePrompt.no} variant="light" onPress={() => answerReminder(false)} style={{ flex: 1, marginRight: 8, height: 46 }} />
+                <PillButton label={tr.homePrompt.yes} onPress={() => answerReminder(true)} style={{ flex: 2, height: 46 }} />
+              </View>
+            </Card>
+          ) : null}
+
+          {/* BU HAFTA */}
+          <SectionHeader title={tr.home.thisWeek} />
+          <FadeIn index={0}>
+            <Card>
+              <View style={styles.chartHeader}>
+                <View>
+                  <Text style={styles.cardTitle}>{tr.progress.weeklyScore}</Text>
+                  <Text style={styles.chartValue}>{weeklyPalateScore(weekEntries)}</Text>
                 </View>
-                <Text style={styles.levelText}>
-                  {level.next ? tr.home.levelNext(level.level, level.next, level.toNext) : tr.home.levelTop(level.level)}
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.cardTitle}>{tr.home.weekCups}</Text>
+                  <Text style={styles.chartValueSmall}>{weekEntries.length}</Text>
+                </View>
+              </View>
+              <WeekChart days={weekStrip(list, now)} />
+              <View style={styles.goalRow}>
+                <Icon name={discoveries >= WEEKLY.discoveryGoal ? 'checkmark-circle' : 'compass-outline'} size={18} color={tint.amber} />
+                <Text style={styles.goalText}>
+                  {discoveries >= WEEKLY.discoveryGoal ? tr.home.goalDone : tr.home.goal(discoveries, WEEKLY.discoveryGoal)}
                 </Text>
-              </>
+              </View>
+              <View style={styles.bar}>
+                <View style={[styles.barFill, { width: `${Math.min(1, discoveries / WEEKLY.discoveryGoal) * 100}%` }]} />
+              </View>
+            </Card>
+          </FadeIn>
+
+          {type_ ? (
+            <FadeIn index={1}>
+              <PressScale onPress={() => router.push('/card')} scaleTo={0.98} style={styles.typeCard}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={styles.typeIcon}>
+                    <Icon name="color-palette" size={20} color="#fff" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>{tr.home.palateType}</Text>
+                    <Text style={styles.typeName}>{type_.name}</Text>
+                  </View>
+                  <Icon name="chevron-forward" size={18} color="#C4BEB6" />
+                </View>
+                {level ? (
+                  <>
+                    <View style={[styles.bar, { marginTop: 14 }]}>
+                      <View style={[styles.barFill, { backgroundColor: colors.black, width: `${Math.max(4, level.fraction * 100)}%` }]} />
+                    </View>
+                    <Text style={styles.cardSub}>
+                      {level.next ? tr.home.levelNext(level.level, level.next, level.toNext) : tr.home.levelTop(level.level)}
+                    </Text>
+                  </>
+                ) : null}
+              </PressScale>
+            </FadeIn>
+          ) : null}
+
+          {banner ? (
+            <PressScale
+              onPress={() => router.push({ pathname: '/wrapped', params: { period: 'month', offset: String(banner.offset) } })}
+              scaleTo={0.97}
+              style={styles.banner}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bannerTitle}>{banner.title}</Text>
+                <Text style={styles.bannerSub}>{tr.wrapped.bannerSub}</Text>
+              </View>
+              <View style={styles.bannerPlay}>
+                <Icon name="play" size={20} color={colors.black} />
+              </View>
+            </PressScale>
+          ) : null}
+
+          {/* ÖNE ÇIKANLAR */}
+          {nudge || highlights.length ? (
+            <>
+              <SectionHeader title={tr.home.highlights} />
+              <FadeIn index={2}>
+                <View style={styles.group}>
+                  {nudge ? (
+                    <HighlightRow icon="bulb" color={tint.amber} title={tr.home.nudgeTitle} text={nudge.text} />
+                  ) : null}
+                  {highlights.map((h, i) => (
+                    <Fragment key={h.id}>
+                      {nudge || i > 0 ? <View style={styles.separator} /> : null}
+                      <HighlightRow
+                        icon={h.icon}
+                        color={h.icon === 'trending-down' ? tint.cherry : h.icon === 'trending-up' ? tint.sage : tint.slate}
+                        title={h.title}
+                        text={h.text}
+                      />
+                    </Fragment>
+                  ))}
+                </View>
+              </FadeIn>
+            </>
+          ) : null}
+
+          {/* SON FİNCANLAR */}
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>{tr.home.recent}</Text>
+            {list.length > 5 ? (
+              <Pressable onPress={() => router.push('/history')} hitSlop={10}>
+                <Text style={styles.link}>{tr.home.seeAll}</Text>
+              </Pressable>
             ) : null}
-          </PressScale>
-        </FadeIn>
-      ) : null}
-
-      {nudge ? (
-        <FadeIn index={2}>
-          <Card style={styles.nudge}>
-            <Text style={styles.nudgeEmoji}>{nudge.emoji}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardLabel}>{tr.home.nudgeTitle}</Text>
-              <Text style={styles.nudgeText}>{nudge.text}</Text>
+          </View>
+          <FadeIn index={3}>
+            <View style={styles.group}>
+              {list.slice(0, 5).map((e, i) => (
+                <Fragment key={e.id}>
+                  {i > 0 ? <View style={[styles.separator, { marginLeft: 92 }]} /> : null}
+                  <CupRow entry={e} showParts plain />
+                </Fragment>
+              ))}
             </View>
-          </Card>
-        </FadeIn>
-      ) : null}
-
-      <Card style={styles.goal}>
-        <Text style={styles.goalText}>
-          {discoveries >= WEEKLY.discoveryGoal ? tr.home.goalDone : tr.home.goal(discoveries, WEEKLY.discoveryGoal)}
-        </Text>
-        <View style={styles.goalBar}>
-          <View style={[styles.goalFill, { width: `${Math.min(1, discoveries / WEEKLY.discoveryGoal) * 100}%` }]} />
-        </View>
-      </Card>
-
-      {askReminder ? (
-        <Card style={{ marginTop: 12 }}>
-          <Text style={styles.goalText}>🔔 {tr.homePrompt.reminderTitle}</Text>
-          <Text style={styles.promptBody}>{tr.homePrompt.reminderBody}</Text>
-          <View style={{ flexDirection: 'row', marginTop: 12 }}>
-            <PillButton label={tr.homePrompt.no} variant="light" onPress={() => answerReminder(false)} style={{ flex: 1, marginRight: 8, height: 46 }} />
-            <PillButton label={tr.homePrompt.yes} onPress={() => answerReminder(true)} style={{ flex: 2, height: 46 }} />
-          </View>
-        </Card>
-      ) : null}
-
-      {banner ? (
-        <PressScale
-          onPress={() => router.push({ pathname: '/wrapped', params: { period: 'month', offset: String(banner.offset) } })}
-          scaleTo={0.97}
-          style={styles.banner}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.bannerTitle}>{banner.title}</Text>
-            <Text style={styles.bannerSub}>{tr.wrapped.bannerSub}</Text>
-          </View>
-          <View style={styles.bannerPlay}>
-            <Text style={styles.bannerPlayText}>▶</Text>
-          </View>
-        </PressScale>
-      ) : null}
-
-      {list.length > 0 ? (
-      <View style={styles.sectionRow}>
-        <Text style={styles.section}>{tr.home.recent}</Text>
-        {list.length > 5 ? (
-          <Pressable onPress={() => router.push('/history')} hitSlop={10}>
-            <Text style={styles.link}>{tr.home.seeAll}</Text>
-          </Pressable>
-        ) : null}
-      </View>
-      ) : null}
-      {list.slice(0, 5).map((e, i) => (
-        <FadeIn key={e.id} index={i}>
-          <CupRow entry={e} showParts />
-        </FadeIn>
-      ))}
+          </FadeIn>
+        </>
+      )}
     </ScrollView>
   );
 }
 
+function SectionHeader({ title }: { title: string }) {
+  return <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 12 }]}>{title}</Text>;
+}
+
+function HighlightRow({ icon, color, title, text }: { icon: Parameters<typeof Icon>[0]['name']; color: string; title: string; text: string }) {
+  return (
+    <View style={styles.hlRow}>
+      <View style={[styles.hlIcon, { backgroundColor: color }]}>
+        <Icon name={icon} size={16} color="#fff" />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.hlTitle}>{title}</Text>
+        <Text style={styles.hlText}>{text}</Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  brand: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
+  header: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 14 },
+  date: { ...type.sectionHeader },
+  largeTitle: { ...type.largeTitle, marginTop: 2 },
   streak: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: colors.line,
+    paddingVertical: 7,
+    gap: 5,
+    marginBottom: 4,
   },
-  streakText: { marginLeft: 6, fontWeight: '700', color: colors.text },
+  streakText: { ...type.headline, fontWeight: '700' },
+  sectionTitle: { ...type.title2 },
+  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 28, marginBottom: 12 },
+  link: { ...type.body, color: colors.accent },
   bigCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 22 },
-  bigNumber: { fontSize: 48, fontWeight: '900', color: colors.text, letterSpacing: -1.5 },
-  bigUnit: { fontSize: 20, fontWeight: '800', color: colors.muted, letterSpacing: 0 },
+  bigNumber: { fontSize: 48, fontWeight: '800', color: colors.text, letterSpacing: -1.5 },
+  bigUnit: { fontSize: 20, fontWeight: '700', color: colors.muted, letterSpacing: 0 },
+  cardTitle: { ...type.footnote, fontWeight: '600' },
+  cardTitleDark: { ...type.headline },
+  cardSub: { ...type.footnote, marginTop: 4, lineHeight: 18 },
+  inlineTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tiles: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  chartHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
+  chartValue: { fontSize: 34, fontWeight: '800', color: colors.text, letterSpacing: -1 },
+  chartValueSmall: { fontSize: 22, fontWeight: '800', color: colors.text },
+  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 18 },
+  goalText: { ...type.subhead, color: colors.text, fontWeight: '600' },
+  bar: { height: 6, borderRadius: 3, backgroundColor: colors.line, marginTop: 8, overflow: 'hidden' },
+  barFill: { height: 6, borderRadius: 3, backgroundColor: colors.accent },
   typeCard: {
-    marginTop: 14,
+    marginTop: 12,
     backgroundColor: colors.card,
     borderRadius: 22,
     padding: 18,
@@ -278,38 +370,19 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
   },
-  chev: { fontSize: 28, color: colors.muted, fontWeight: '300' },
-  levelBar: { height: 8, borderRadius: 4, backgroundColor: colors.line, marginTop: 12, overflow: 'hidden' },
-  levelFill: { height: 8, borderRadius: 4, backgroundColor: colors.black },
-  levelText: { fontSize: 13, fontWeight: '600', color: colors.muted, marginTop: 6 },
-  nudge: { marginTop: 12, flexDirection: 'row', alignItems: 'center' },
-  nudgeEmoji: { fontSize: 28, marginRight: 12 },
-  nudgeText: { fontSize: 15, fontWeight: '600', color: colors.text, marginTop: 2, lineHeight: 21 },
-  ctaCard: { backgroundColor: colors.black },
-  ctaTitle: { fontSize: 22, fontWeight: '900', color: colors.white },
-  ctaBody: { fontSize: 15, color: '#CFC8BE', marginTop: 6, lineHeight: 21 },
-  cardLabel: { fontSize: 13, fontWeight: '700', color: colors.muted },
-  cardHint: { fontSize: 15, color: colors.text, marginTop: 4 },
-  typeName: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 2 },
-  goal: { marginTop: 12, paddingVertical: 16 },
-  promptBody: { fontSize: 14, color: colors.muted, marginTop: 6, lineHeight: 20 },
-  goalText: { fontSize: 15, fontWeight: '700', color: colors.text },
-  goalBar: { height: 8, borderRadius: 4, backgroundColor: colors.line, marginTop: 10, overflow: 'hidden' },
-  goalFill: { height: 8, backgroundColor: colors.accent },
-  banner: {
-    marginTop: 12,
-    backgroundColor: colors.black,
-    borderRadius: 22,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bannerTitle: { color: colors.white, fontSize: 17, fontWeight: '900' },
+  typeIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  typeName: { ...type.title3, marginTop: 1 },
+  banner: { marginTop: 12, backgroundColor: colors.black, borderRadius: 22, padding: 18, flexDirection: 'row', alignItems: 'center' },
+  bannerTitle: { color: colors.white, fontSize: 17, fontWeight: '700' },
   bannerSub: { color: '#BDB6AC', fontSize: 13, marginTop: 4 },
-  bannerPlay: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginLeft: 12 },
-  bannerPlayText: { color: colors.black, fontSize: 18, fontWeight: '900', marginLeft: 3 },
-  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 28, marginBottom: 12 },
-  section: { fontSize: 20, fontWeight: '800', color: colors.text },
-  link: { fontSize: 15, fontWeight: '700', color: colors.accent },
-  empty: { fontSize: 15, color: colors.muted, lineHeight: 22 },
+  bannerPlay: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginLeft: 12, paddingLeft: 3 },
+  group: { backgroundColor: colors.card, borderRadius: 18, overflow: 'hidden' },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 56 },
+  hlRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14, gap: 12 },
+  hlIcon: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  hlTitle: { ...type.footnote, fontWeight: '600' },
+  hlText: { ...type.subhead, color: colors.text, marginTop: 1, lineHeight: 20 },
+  ctaCard: { backgroundColor: colors.black },
+  ctaTitle: { fontSize: 22, fontWeight: '800', color: colors.white },
+  ctaBody: { fontSize: 15, color: '#CFC8BE', marginTop: 6, lineHeight: 21 },
 });

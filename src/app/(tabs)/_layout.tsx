@@ -1,20 +1,24 @@
 import { Redirect, router } from 'expo-router';
 import { Tabs } from 'expo-router/tabs';
-import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
+import { Animated, Pressable, StyleSheet, View, type ColorValue } from 'react-native';
+import { Icon, type IconName } from '../../components/Icon';
 import { haptic } from '../../components/motion';
 import { tr } from '../../i18n/tr';
 import { useProfile } from '../../lib/useProfile';
 import { colors } from '../../theme';
 
-/** Sekme simgesi: seçilince hafifçe büyüyüp yerine oturur. */
-function TabIcon({ glyph, color, focused }: { glyph: string; color: ColorValue; focused: boolean }) {
-  const [s] = useState(() => new Animated.Value(focused ? 1.12 : 1));
+/** Sekme simgesi (iOS gibi: seçiliyken dolu, değilken çizgi). Seçilince hafifçe büyüyüp yerine oturur. */
+function TabIcon({ name, color, focused }: { name: string; color: ColorValue; focused: boolean }) {
+  const [s] = useState(() => new Animated.Value(focused ? 1.08 : 1));
   useEffect(() => {
-    Animated.spring(s, { toValue: focused ? 1.12 : 1, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
+    Animated.spring(s, { toValue: focused ? 1.08 : 1, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
   }, [focused, s]);
-  return <Animated.Text style={{ fontSize: 20, color, transform: [{ scale: s }] }}>{glyph}</Animated.Text>;
+  return (
+    <Animated.View style={{ transform: [{ scale: s }] }}>
+      <Icon name={(focused ? name : `${name}-outline`) as IconName} size={24} color={color} />
+    </Animated.View>
+  );
 }
 
 export default function TabsLayout() {
@@ -36,11 +40,11 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: tr.tabs.home, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} glyph="⌂" color={color} /> }}
+        options={{ title: tr.tabs.home, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} name="home" color={color} /> }}
       />
       <Tabs.Screen
         name="progress"
-        options={{ title: tr.tabs.progress, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} glyph="▤" color={color} /> }}
+        options={{ title: tr.tabs.progress, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} name="stats-chart" color={color} /> }}
       />
       <Tabs.Screen
         name="add"
@@ -51,12 +55,12 @@ export default function TabsLayout() {
               <Pressable
                 accessibilityLabel="Fincan ekle"
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+                  haptic.medium();
                   router.push('/new');
                 }}
                 style={({ pressed }) => [styles.plus, pressed && { transform: [{ scale: 0.94 }] }]}
               >
-                <Text style={styles.plusText}>+</Text>
+                <Icon name="add" size={34} color={colors.white} />
               </Pressable>
             </View>
           ),
@@ -64,11 +68,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="passport"
-        options={{ title: tr.tabs.passport, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} glyph="✦" color={color} /> }}
+        options={{ title: tr.tabs.passport, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} name="ribbon" color={color} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: tr.tabs.profile, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} glyph="◉" color={color} /> }}
+        options={{ title: tr.tabs.profile, tabBarIcon: ({ color, focused }) => <TabIcon focused={focused} name="person-circle" color={color} /> }}
       />
     </Tabs>
   );
@@ -89,5 +93,4 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
   },
-  plusText: { color: colors.white, fontSize: 36, fontWeight: '300', marginTop: -3 },
 });

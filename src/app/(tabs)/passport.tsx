@@ -7,7 +7,7 @@ import { tr } from '../../i18n/tr';
 import { badgeProgress, passport } from '../../lib/progress';
 import type { Method } from '../../lib/types';
 import { useEntries } from '../../lib/useEntries';
-import { colors } from '../../theme';
+import { colors, type } from '../../theme';
 
 const ALL_METHODS: Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
 
@@ -91,7 +91,7 @@ function Stamp({ label, earned }: { label: string; earned: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 28, fontWeight: '900', color: colors.text },
+  title: { ...type.largeTitle },
   summary: { fontSize: 17, fontWeight: '700', color: colors.accent, marginTop: 4 },
   section: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 28, marginBottom: 12 },
   stamps: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },

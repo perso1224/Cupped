@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { currentStreak, dayKey } from './progress';
 import { nextReminder } from './reminderTime';
-import { loadEntries, loadMetrics, updateMetrics } from './storage';
+import { loadEntries, loadMetrics, loadSettings, updateMetrics } from './storage';
 
 /**
  * Günlük hatırlatma: telefonun kendi (yerel) bildirimi, sunucu yok.
@@ -26,7 +26,8 @@ export async function refreshReminder(): Promise<void> {
     if (!perm.granted) return;
     const entries = await loadEntries();
     const days = new Set(entries.map((e) => dayKey(new Date(e.createdAt))));
-    const r = nextReminder(days, currentStreak(entries), new Date());
+    const s = await loadSettings();
+    const r = nextReminder(days, currentStreak(entries), new Date(), s.reminderHour, s.reminderMinute);
     await Notifications.scheduleNotificationAsync({
       content: { title: r.title, body: r.body },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at },

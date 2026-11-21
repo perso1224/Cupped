@@ -12,6 +12,9 @@ describe('hatırlatma zamanı', () => {
   it('saat geçtiyse yarın (ay sonu dahil)', () => {
     expect(nextReminder(new Set(), 0, new Date(2026, 10, 30, 22, 0)).at).toEqual(new Date(2026, 11, 1, 20, 30));
   });
+  it('özel saat', () => {
+    expect(nextReminder(new Set(), 0, morning, 13, 0).at).toEqual(new Date(2026, 10, 21, 13, 0));
+  });
   it('seri metni', () => {
     expect(nextReminder(new Set(), 4, morning).body).toContain('Serin 4 gün');
     expect(nextReminder(new Set(), 0, morning).body).toContain('Bugün hangi kahveyi');

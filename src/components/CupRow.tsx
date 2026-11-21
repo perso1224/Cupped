@@ -19,13 +19,15 @@ export function timeLabel(iso: string) {
 
 /** timeOnly: gün başlığı altında listelenirken sadece saat (tarih tekrar etmesin). */
 /** showParts: skor parçalarını küçük çipler olarak göster (Cal AI'daki makro çipleri gibi). */
-export function CupRow({ entry, timeOnly, showParts }: { entry: CupEntry; timeOnly?: boolean; showParts?: boolean }) {
+/** plain: gruplu liste içinde (kartsız, gölgesiz) satır. */
+export function CupRow({ entry, timeOnly, showParts, plain }: { entry: CupEntry; timeOnly?: boolean; showParts?: boolean; plain?: boolean }) {
+  const Wrap = plain ? View : Card;
   const chips = showParts
     ? (['effort', 'discovery', 'depth', 'selectivity'] as const).filter((k) => entry.parts[k] !== 0)
     : [];
   return (
     <PressScale onPress={() => router.push(`/cup/${entry.id}`)} scaleTo={0.97}>
-      <Card style={styles.row}>
+      <Wrap style={plain ? styles.plainRow : styles.row}>
         {entry.photoUri ? (
           <Image source={{ uri: photoUrl(entry.photoUri)! }} style={styles.thumb} />
         ) : (
@@ -57,12 +59,13 @@ export function CupRow({ entry, timeOnly, showParts }: { entry: CupEntry; timeOn
           ) : null}
         </View>
         <Text style={styles.rowScore}>{entry.score}</Text>
-      </Card>
+      </Wrap>
     </PressScale>
   );
 }
 
 const styles = StyleSheet.create({
+  plainRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14 },
   row: { flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 12 },
   thumb: { width: 64, height: 64, borderRadius: 14 },
   thumbEmpty: { backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },

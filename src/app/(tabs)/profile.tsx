@@ -1,26 +1,26 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useRef } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useCallback } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CountUp } from '../../components/motion';
+import { Icon } from '../../components/Icon';
+import { ListRow, ListSection } from '../../components/List';
+import { CountUp, PressScale } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
-import { profileSummary } from '../../lib/progress';
-import { setReminderEnabled } from '../../lib/reminders';
+import { badgeProgress, profileSummary } from '../../lib/progress';
 import { levelFor } from '../../lib/scoring';
-import { shareFile } from '../../lib/share';
-import { exportAllData, updateMetrics } from '../../lib/storage';
+import { updateMetrics } from '../../lib/storage';
 import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
-import { colors } from '../../theme';
+import { colors, tint, type } from '../../theme';
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const entries = useEntries() ?? [];
   const [metrics, reloadMetrics] = useMetrics();
-  const exporting = useRef(false);
+  const profile = useProfile();
 
   // H6: Kulüp kartının kaç kez görüldüğü
   useFocusEffect(
@@ -31,16 +31,12 @@ export default function Profile() {
     }, []),
   );
 
-  const { avg, places, methods, palateTypeId } = profileSummary(entries);
-  const profile = useProfile();
+  const { avg, places, methods, palateTypeId, streak } = profileSummary(entries);
   const typeId = palateTypeId ?? profile?.starterTypeId ?? null;
-  const type = typeId ? getPalateType(typeId) : null;
-
-  async function toggleReminder(v: boolean) {
-    const ok = await setReminderEnabled(v);
-    if (v && !ok) Alert.alert(tr.profile.reminderDenied);
-    reloadMetrics();
-  }
+  const type_ = typeId ? getPalateType(typeId) : null;
+  const badges = badgeProgress(entries);
+  const earned = badges.filter((b) => b.earned).length;
+  const initial = (profile?.nickname?.trim()?.[0] ?? 'C').toLocaleUpperCase('tr-TR');
 
   async function joinClub() {
     await updateMetrics((m) => {
@@ -50,83 +46,73 @@ export default function Profile() {
     Alert.alert(tr.profile.clubDone);
   }
 
-  async function doExport() {
-    if (exporting.current) return;
-    exporting.current = true;
-    try {
-      await shareFile(await exportAllData());
-    } catch {
-      Alert.alert(tr.profile.exportError);
-    } finally {
-      exporting.current = false;
-    }
-  }
-
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 40 }}>
-      <Text style={styles.title}>{profile?.nickname ? `@${profile.nickname}` : tr.profile.title}</Text>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: 48 }}
+    >
+      <View style={styles.header}>
+        <Text style={styles.largeTitle}>{tr.profile.title}</Text>
+        <Pressable onPress={() => router.push('/settings')} hitSlop={12} style={styles.gear} accessibilityLabel={tr.settings.title}>
+          <Icon name="settings-outline" size={22} color={colors.text} />
+        </Pressable>
+      </View>
 
-      <PillButton label={tr.profile.showCard} onPress={() => router.push('/card')} style={{ marginBottom: 16 }} />
+      {/* Kimlik */}
+      <View style={styles.identity}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{initial}</Text>
+        </View>
+        <Text style={styles.nick}>{profile?.nickname ? `@${profile.nickname}` : tr.profile.noNick}</Text>
+        {type_ ? <Text style={styles.typeLine}>{type_.name}</Text> : null}
+        <PillButton label={tr.profile.showCard} onPress={() => router.push('/card')} style={{ marginTop: 14, alignSelf: 'stretch' }} />
+      </View>
 
-      {type ? (
-        <Card style={{ marginBottom: 16 }}>
-          <Text style={styles.label}>{palateTypeId ? tr.home.palateType : tr.profile.starter}</Text>
-          <Text style={styles.typeName}>{type.name}</Text>
-          <Text style={styles.tagline}>{type.tagline}</Text>
-          <Text style={[styles.label, { marginTop: 12 }]}>
-            {entries.length ? `${tr.result.level}: ${levelFor(avg)}` : ''}
-            {entries.length && profile ? '  ·  ' : ''}
-            {profile ? `${tr.profile.goal}: ${tr.onboarding.goal[profile.goal]}` : ''}
-          </Text>
+      {/* 3'lü özet */}
+      <Card style={styles.statsCard}>
+        <Stat value={entries.length} label={tr.profile.cups} />
+        <View style={styles.vsep} />
+        <Stat value={avg} label={tr.profile.avg} />
+        <View style={styles.vsep} />
+        <Stat value={streak} label={tr.profile.streakDays} />
+      </Card>
+
+      {type_ ? (
+        <Card style={{ marginTop: 12 }}>
+          <Text style={styles.cardTitle}>{palateTypeId ? tr.home.palateType : tr.profile.starter}</Text>
+          <Text style={styles.typeName}>{type_.name}</Text>
+          <Text style={styles.tagline}>{type_.tagline}</Text>
+          <View style={styles.metaRow}>
+            {entries.length ? <Meta icon="podium" text={`${tr.result.level}: ${levelFor(avg)}`} /> : null}
+            {profile ? <Meta icon="flag" text={tr.onboarding.goal[profile.goal]} /> : null}
+          </View>
         </Card>
       ) : null}
 
-      <Card>
-        <Text style={styles.label}>{tr.profile.stats}</Text>
-        <View style={styles.grid}>
-          <Stat value={entries.length} label={tr.profile.cups} />
-          <Stat value={avg} label={tr.profile.avg} />
-          <Stat value={places} label={tr.profile.places} />
-          <Stat value={methods} label={tr.profile.methods} />
-        </View>
-      </Card>
-
-      <Card style={[styles.row, { marginTop: 16 }]}>
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={styles.rowTitle}>{tr.profile.reminder}</Text>
-          <Text style={styles.rowSub}>{tr.profile.reminderSub}</Text>
-        </View>
-        <Switch
-          value={!!metrics?.reminderEnabled}
-          onValueChange={toggleReminder}
-          trackColor={{ true: colors.accent, false: colors.line }}
-        />
-      </Card>
+      <ListSection title={tr.profile.collection}>
+        <ListRow icon="ribbon" tint={tint.amber} title={tr.profile.badges} value={`${earned}/${badges.length}`} chevron onPress={() => router.push('/passport')} />
+        <ListRow icon="location" tint={tint.cherry} title={tr.profile.places} value={String(places)} chevron onPress={() => router.push('/passport')} />
+        <ListRow icon="cafe" tint={tint.espresso} title={tr.profile.methods} value={`${methods}/5`} chevron onPress={() => router.push('/passport')} />
+        <ListRow icon="time" tint={tint.slate} title={tr.progress.history} chevron onPress={() => router.push('/history')} />
+      </ListSection>
 
       {/* H6 sahte kapı: ödeme yok, sadece ilgi ölçülür */}
-      <Card style={[styles.club, { marginTop: 16 }]}>
-        <Text style={styles.clubTitle}>{tr.profile.clubTitle}</Text>
-        <Text style={styles.clubBody}>{tr.profile.clubBody}</Text>
+      <PressScale onPress={metrics?.clubInterestAt ? undefined : joinClub} scaleTo={0.98} style={styles.club}>
+        <View style={styles.clubIcon}>
+          <Icon name="sparkles" size={20} color={colors.black} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.clubTitle}>{tr.profile.clubTitle}</Text>
+          <Text style={styles.clubBody}>{metrics?.clubInterestAt ? tr.profile.clubDone : tr.profile.clubBody}</Text>
+        </View>
         {metrics?.clubInterestAt ? (
-          <Text style={styles.clubDone}>{tr.profile.clubDone}</Text>
+          <Icon name="checkmark-circle" size={24} color={colors.accent} />
         ) : (
-          <PillButton label={tr.profile.clubCta} onPress={joinClub} style={{ marginTop: 14, backgroundColor: colors.accent, borderColor: colors.accent }} />
-        )}
-      </Card>
-
-      <Pressable onPress={doExport} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
-        <Card style={[styles.row, { marginTop: 16 }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rowTitle}>{tr.profile.export}</Text>
-            <Text style={styles.rowSub}>{tr.profile.exportSub}</Text>
+          <View style={styles.clubCta}>
+            <Text style={styles.clubCtaText}>{tr.profile.clubCtaShort}</Text>
           </View>
-          <Text style={styles.chev}>›</Text>
-        </Card>
-      </Pressable>
-
-      <Pressable onPress={() => router.push('/stats')} hitSlop={10} style={{ marginTop: 24, alignSelf: 'center' }}>
-        <Text style={styles.link}>{tr.profile.testStats}</Text>
-      </Pressable>
+        )}
+      </PressScale>
     </ScrollView>
   );
 }
@@ -140,22 +126,39 @@ function Stat({ value, label }: { value: number; label: string }) {
   );
 }
 
+function Meta({ icon, text }: { icon: 'podium' | 'flag'; text: string }) {
+  return (
+    <View style={styles.meta}>
+      <Icon name={icon} size={14} color={colors.muted} />
+      <Text style={styles.metaText}>{text}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  title: { fontSize: 28, fontWeight: '900', color: colors.text, marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '700', color: colors.muted },
-  typeName: { fontSize: 26, fontWeight: '900', color: colors.text, marginTop: 4 },
-  tagline: { fontSize: 15, color: colors.muted, marginTop: 6, lineHeight: 21 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
-  stat: { width: '50%', paddingVertical: 10 },
-  statValue: { fontSize: 32, fontWeight: '900', color: colors.text },
-  statLabel: { fontSize: 13, color: colors.muted },
-  link: { fontSize: 14, fontWeight: '600', color: colors.muted, textDecorationLine: 'underline' },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  rowTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  rowSub: { fontSize: 13, color: colors.muted, marginTop: 3, lineHeight: 18 },
-  chev: { fontSize: 28, color: colors.muted, fontWeight: '300' },
-  club: { backgroundColor: colors.black },
-  clubTitle: { fontSize: 18, fontWeight: '900', color: colors.white },
-  clubBody: { fontSize: 14, color: '#CFC8BE', marginTop: 6, lineHeight: 20 },
-  clubDone: { fontSize: 14, fontWeight: '700', color: colors.accent, marginTop: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  largeTitle: { ...type.largeTitle },
+  gear: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
+  identity: { alignItems: 'center', marginTop: 16 },
+  avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: colors.white, fontSize: 36, fontWeight: '800' },
+  nick: { ...type.title3, marginTop: 10 },
+  typeLine: { ...type.subhead, marginTop: 2 },
+  statsCard: { flexDirection: 'row', marginTop: 20, paddingVertical: 16 },
+  stat: { flex: 1, alignItems: 'center' },
+  statValue: { fontSize: 26, fontWeight: '800', color: colors.text },
+  statLabel: { ...type.caption, marginTop: 2 },
+  vsep: { width: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginVertical: 4 },
+  cardTitle: { ...type.footnote, fontWeight: '600' },
+  typeName: { ...type.title2, marginTop: 2 },
+  tagline: { ...type.subhead, marginTop: 6, lineHeight: 21 },
+  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12 },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  metaText: { ...type.footnote, fontWeight: '600' },
+  club: { marginTop: 24, backgroundColor: colors.black, borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  clubIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  clubTitle: { color: colors.white, fontSize: 16, fontWeight: '700' },
+  clubBody: { color: '#CFC8BE', fontSize: 13, marginTop: 3, lineHeight: 18 },
+  clubCta: { backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
+  clubCtaText: { color: colors.black, fontWeight: '700', fontSize: 13 },
 });

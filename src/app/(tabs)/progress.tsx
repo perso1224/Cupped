@@ -9,7 +9,7 @@ import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
 import { addDays, inRange, periodRange, periodReport, startOfMonth, startOfWeek, weeklyRecordBefore } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
-import { colors } from '../../theme';
+import { colors, type } from '../../theme';
 
 export default function Progress() {
   const insets = useSafeAreaInsets();
@@ -113,7 +113,7 @@ function Stat({ value, label }: { value: number; label: string }) {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 28, fontWeight: '900', color: colors.text, marginBottom: 16 },
+  title: { ...type.largeTitle, marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '700', color: colors.muted },
   big: { fontSize: 64, fontWeight: '900', color: colors.text, letterSpacing: -2 },
   typeName: { fontSize: 22, fontWeight: '900', color: colors.text, marginTop: 2 },

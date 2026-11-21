@@ -1,4 +1,5 @@
 import * as Haptics from 'expo-haptics';
+import { cachedSettings, loadSettings, subscribeSettings } from '../lib/storage';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
@@ -20,29 +21,48 @@ import {
  * Hepsi React Native Animated ile ve mümkün olduğunca native driver'da (akıcı, Expo Go uyumlu).
  */
 
+// Hareket azaltma: telefonun sistem ayarı VEYA uygulamadaki ayar. Titreşim de uygulama ayarına uyar.
+let systemReduce = false;
 let reduceMotion = false;
+let hapticsOn = true;
+const recompute = () => {
+  const s = cachedSettings();
+  reduceMotion = systemReduce || s.reduceMotion;
+  hapticsOn = s.haptics;
+};
 AccessibilityInfo.isReduceMotionEnabled()
-  .then((v) => (reduceMotion = v))
+  .then((v) => {
+    systemReduce = v;
+    recompute();
+  })
   .catch(() => {});
-AccessibilityInfo.addEventListener('reduceMotionChanged', (v) => (reduceMotion = v));
+AccessibilityInfo.addEventListener('reduceMotionChanged', (v) => {
+  systemReduce = v;
+  recompute();
+});
+subscribeSettings(recompute);
+loadSettings().then(recompute).catch(() => {});
 
 export function useReducedMotion(): boolean {
   const [v, setV] = useState(reduceMotion);
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then(setV)
-      .catch(() => {});
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setV);
-    return () => sub.remove();
+    const update = () => setV(reduceMotion);
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', () => setTimeout(update, 0));
+    const unsub = subscribeSettings(() => setTimeout(update, 0));
+    return () => {
+      sub.remove();
+      unsub();
+    };
   }, []);
   return v;
 }
 
 /** Hafif dokunuş titreşimleri. */
 export const haptic = {
-  select: () => Haptics.selectionAsync().catch(() => {}),
-  light: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}),
-  success: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}),
+  select: () => hapticsOn && Haptics.selectionAsync().catch(() => {}),
+  light: () => hapticsOn && Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}),
+  medium: () => hapticsOn && Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}),
+  success: () => hapticsOn && Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}),
 };
 
 /** Sonraki düzen değişikliğini (aç/kapa, ekle/çıkar) yumuşak geçişle yap. */

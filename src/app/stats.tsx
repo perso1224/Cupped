@@ -8,7 +8,7 @@ import { clearProfile } from '../lib/storage';
 import { useEntries } from '../lib/useEntries';
 import { useMetrics } from '../lib/useMetrics';
 import { useProfile } from '../lib/useProfile';
-import { colors } from '../theme';
+import { colors, type } from '../theme';
 
 const pct = (x: number | null) => (x === null ? tr.stats.none : `%${Math.round(x * 100)}`);
 const yn = (b: boolean) => (b ? tr.stats.yes : tr.stats.no);
@@ -105,7 +105,7 @@ function Row({ label, value, sub, small }: { label: string; value: string; sub?:
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center' },
   back: { fontSize: 40, fontWeight: '300', color: colors.text, marginRight: 12, marginTop: -6 },
-  title: { fontSize: 26, fontWeight: '900', color: colors.text },
+  title: { ...type.largeTitle },
   intro: { fontSize: 14, color: colors.muted, lineHeight: 20, marginTop: 8 },
   section: { fontSize: 13, fontWeight: '800', color: colors.accent, marginBottom: 4 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },

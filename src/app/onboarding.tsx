@@ -1,9 +1,8 @@
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Animated, Easing, KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PressScale } from '../components/motion';
+import { PressScale, haptic } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { BRAND } from '../config/brand';
 import { tr, upper } from '../i18n/tr';
@@ -40,13 +39,13 @@ export default function Onboarding() {
   }, [step, fade]);
 
   function set<K extends keyof OnboardingAnswers>(k: K, v: OnboardingAnswers[K], autoNext = true) {
-    Haptics.selectionAsync().catch(() => {});
+    haptic.select();
     setA((p) => ({ ...p, [k]: v }));
     if (autoNext) setTimeout(() => setStep((s) => s + 1), 180);
   }
 
   function toggleNote(n: TasteNote) {
-    Haptics.selectionAsync().catch(() => {});
+    haptic.select();
     setA((p) => {
       const cur = p.notes ?? [];
       if (cur.includes(n)) return { ...p, notes: cur.filter((x) => x !== n) };
@@ -67,7 +66,7 @@ export default function Onboarding() {
 
   async function finish() {
     await saveProfile({ ...answers, starterTypeId, onboardedAt: new Date().toISOString() });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    haptic.success();
     router.replace('/');
     setTimeout(() => router.push('/new'), 350);
   }

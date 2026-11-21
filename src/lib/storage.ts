@@ -3,6 +3,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { parseEntries } from './entries';
 import { appLabel, normalizeMetrics, type Metrics, type ShareSource } from './metrics';
+import { normalizeSettings, type Settings } from './settings';
 import { normalizePlace } from './scoring';
 import type { Profile } from './onboarding';
 import type { CupEntry } from './types';
@@ -13,6 +14,7 @@ const ENTRIES_BACKUP_KEY = 'cupped.entries.v1.bak';
 const COUNTERS_KEY = 'cupped.counters.v1';
 const PROFILE_KEY = 'cupped.profile.v1';
 const METRICS_KEY = 'cupped.metrics.v1';
+const SETTINGS_KEY = 'cupped.settings.v1';
 
 export type Counters = {
   cardsGenerated: number;
@@ -267,4 +269,77 @@ export async function exportAllData(): Promise<string> {
     JSON.stringify({ app: 'Cupped', format: 1, exportedAt: d.toISOString(), profile, entries, metrics, counters }, null, 2),
   );
   return file.uri;
+}
+
+// ---------- Ayarlar (bellekte de tutulur; değişince useSettings dinleyicileri güncellenir) ----------
+
+let settingsCache: Settings = normalizeSettings(null);
+let settingsLoaded = false;
+const settingsListeners = new Set<(s: Settings) => void>();
+
+export function cachedSettings(): Settings {
+  return settingsCache;
+}
+
+export function subscribeSettings(fn: (s: Settings) => void): () => void {
+  settingsListeners.add(fn);
+  return () => settingsListeners.delete(fn);
+}
+
+export async function loadSettings(): Promise<Settings> {
+  if (settingsLoaded) return settingsCache;
+  try {
+    settingsCache = normalizeSettings(JSON.parse((await AsyncStorage.getItem(SETTINGS_KEY)) ?? 'null'));
+  } catch {
+    settingsCache = normalizeSettings(null);
+  }
+  settingsLoaded = true;
+  settingsListeners.forEach((fn) => fn(settingsCache));
+  return settingsCache;
+}
+
+export async function updateSettings(patch: Partial<Settings>): Promise<Settings> {
+  const next = normalizeSettings({ ...(await loadSettings()), ...patch });
+  settingsCache = next;
+  settingsListeners.forEach((fn) => fn(next));
+  await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+  return next;
+}
+
+// ---------- Yedekten geri yükleme ve silme ----------
+
+/**
+ * Dışa aktarılmış yedek dosyasını (JSON) okuyup fincanları birleştirir (aynı id'ler tekrar eklenmez).
+ * Profil yoksa yedekteki profil kullanılır. Eklenen fincan sayısını döner.
+ */
+export function importBackup(json: string): Promise<number> {
+  return enqueue(async () => {
+    const data = JSON.parse(json) as { entries?: unknown; profile?: unknown };
+    const incoming = parseEntries(JSON.stringify(Array.isArray(data.entries) ? data.entries : []));
+    const current = await readEntriesStrict();
+    const ids = new Set(current.map((e) => e.id));
+    // Yedekteki fotoğraflar bu telefonda yok: fotoğrafsız eklenir
+    const added = incoming.filter((e) => !ids.has(e.id)).map((e) => ({ ...e, photoUri: null }));
+    await writeEntries([...added, ...current]);
+    if (!(await loadProfile()) && data.profile && typeof data.profile === 'object') {
+      await saveProfile(data.profile as Profile);
+    }
+    return added.length;
+  });
+}
+
+/** Tüm verileri siler (fincanlar, fotoğraflar, profil, ölçümler, ayarlar). Geri alınamaz. */
+export function deleteAllData(): Promise<void> {
+  return enqueue(async () => {
+    await AsyncStorage.multiRemove([ENTRIES_KEY, ENTRIES_BACKUP_KEY, COUNTERS_KEY, METRICS_KEY, SETTINGS_KEY, PROFILE_KEY]);
+    try {
+      const dir = new Directory(Paths.document, 'cups');
+      if (dir.exists) dir.delete();
+    } catch {
+      // fotoğraf klasörü silinemese de veriler silinmiş olur
+    }
+    settingsCache = normalizeSettings(null);
+    settingsListeners.forEach((fn) => fn(settingsCache));
+    setProfileCache(null);
+  });
 }

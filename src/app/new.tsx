@@ -1,5 +1,4 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -21,7 +20,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { animateLayout } from '../components/motion';
+import { animateLayout, haptic } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
 import { computePalateTypeId } from '../lib/palate';
@@ -93,7 +92,7 @@ export default function NewCup() {
     // Deklanşör flaşı (iOS kamerasındaki gibi kısa beyaz parlama)
     flash.setValue(0.85);
     Animated.timing(flash, { toValue: 0, duration: 260, useNativeDriver: true }).start();
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    haptic.light();
     try {
       const pic = await cameraRef.current?.takePictureAsync({ quality: 0.6 });
       if (pic?.uri) {
@@ -159,7 +158,7 @@ export default function NewCup() {
         m.newSaved += 1;
       }).catch(() => {});
       refreshReminder();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      haptic.success();
       router.replace({ pathname: '/cup/[id]', params: { id, fresh: '1', ...(newBadges ? { badges: newBadges } : {}) } });
     } catch {
       Alert.alert(tr.capture.saveError);
