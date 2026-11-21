@@ -41,6 +41,23 @@ function placeKeyOf(e: CupEntry): string | null {
   return normalizePlace(e.placeName);
 }
 
+/** Detay modu kullanılmış mı? (tat notu, menşei, tarif ya da not) */
+export function isDetailed(e: Pick<CupEntry, 'notes' | 'origin' | 'brew' | 'note'>): boolean {
+  const b = e.brew;
+  return (
+    e.notes.length > 0 ||
+    !!(e.origin && e.origin.trim()) ||
+    !!(b && (b.doseG || b.waterMl || b.grind)) ||
+    !!(e.note && e.note.trim())
+  );
+}
+
+/** Kahve:su oranı, ör. 15 g / 250 ml → "1:16.7" yerine yuvarlanmış "1:17". */
+export function brewRatio(doseG: number | null | undefined, waterMl: number | null | undefined): string | null {
+  if (!doseG || !waterMl || doseG <= 0 || waterMl <= 0) return null;
+  return `1:${Math.round(waterMl / doseG)}`;
+}
+
 // ---------- Seri ve haftalık şerit ----------
 
 /** Bugün (ya da henüz bugün kayıt yoksa dün) biten, üst üste fincanlı gün sayısı. */
@@ -244,6 +261,9 @@ export function earnedBadges(entries: CupEntry[]): Badge[] {
     perMonth.set(month, (perMonth.get(month) ?? 0) + 1);
   }
   if ([...perMonth.values()].some((n) => n >= BADGE_RULES.newPlacesInMonth)) earned.add('five_new_month');
+
+  // Derinlik: detay modu kullanılan fincan sayısı
+  if (sorted.filter(isDetailed).length >= BADGE_RULES.detailedCups) earned.add('depth');
 
   return BADGES.filter((b) => earned.has(b.id));
 }

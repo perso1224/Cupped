@@ -13,7 +13,7 @@ Briften sonraki kararlar ve ileride yapılacak işler burada tutulur.
 | (e) Geçmiş, Damak Pasaportu, haftalık/aylık rapor, seri | ✅ |
 | (f) Damak Kartı ("Göster" modu) | ✅ |
 | (g) Onboarding | ✅ |
-| (h) Detay modu (tat notları, menşei, gram/su/öğütme, not) | ⏳ |
+| (h) Detay modu (tat notları, menşei, gram/su/öğütme, not) | ✅ |
 
 **Kapsamdan çıkarılanlar:** Düello (QR), kurucu kararı (21 Kas 2026).
 

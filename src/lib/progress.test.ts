@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  brewRatio,
   currentStreak,
   discoveriesIn,
   earnedBadges,
+  isDetailed,
   passport,
   periodReport,
   profileSummary,
@@ -171,5 +173,30 @@ describe('profil özeti', () => {
     );
     expect(s).toMatchObject({ cups: 2, avg: 51, places: 1, methods: 2, streak: 2 });
     expect(profileSummary([], WED).palateTypeId).toBeNull();
+  });
+});
+
+describe('detay modu', () => {
+  it('detaylı kayıt tespiti', () => {
+    expect(isDetailed({ notes: [], origin: null })).toBe(false);
+    expect(isDetailed({ notes: [], origin: '  ' })).toBe(false);
+    expect(isDetailed({ notes: ['fruity'], origin: null })).toBe(true);
+    expect(isDetailed({ notes: [], origin: 'Kenya' })).toBe(true);
+    expect(isDetailed({ notes: [], origin: null, brew: { doseG: 15, waterMl: null, grind: null } })).toBe(true);
+    expect(isDetailed({ notes: [], origin: null, note: 'güzeldi' })).toBe(true);
+  });
+
+  it('kahve:su oranı', () => {
+    expect(brewRatio(15, 250)).toBe('1:17');
+    expect(brewRatio(18, 36)).toBe('1:2');
+    expect(brewRatio(null, 250)).toBeNull();
+    expect(brewRatio(0, 250)).toBeNull();
+  });
+
+  it('Derinlik rozeti: 5 detaylı fincan', () => {
+    const ids = (list: CupEntry[]) => earnedBadges(list).map((b) => b.id);
+    const four = [1, 2, 3, 4].map((d) => cup(at(2026, 10, d), { origin: 'Etiyopya' }));
+    expect(ids(four)).not.toContain('depth');
+    expect(ids([...four, cup(at(2026, 10, 5), { notes: ['bold'] })])).toContain('depth');
   });
 });

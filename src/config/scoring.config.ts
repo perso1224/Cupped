@@ -138,6 +138,7 @@ export const BADGES: Badge[] = [
   { id: 'pourover_patience', name: 'Pour-over Sabrı', description: 'Evde 5 filtre kahve demledin.' },
   { id: 'first_geisha', name: 'İlk Geisha', description: 'Geisha çekirdeğiyle tanıştın.' },
   { id: 'five_new_month', name: 'Ayda 5 Yeni Mekan', description: 'Bir ayda 5 yeni mekan keşfettin.' },
+  { id: 'depth', name: 'Derinlik', description: '5 fincanı detaylı kaydettin: tat notu, menşei ya da tarif.' },
 ];
 
 export const BADGE_RULES = {
@@ -146,6 +147,7 @@ export const BADGE_RULES = {
   chainStreak: 3,
   homeFilters: 5,
   newPlacesInMonth: 5,
+  detailedCups: 5,
 } as const;
 
 /** Damak Özeti'ndeki "≈ X ml kahve" eğlenceli bilgisi için yaklaşık fincan hacimleri. */

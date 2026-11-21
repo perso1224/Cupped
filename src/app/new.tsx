@@ -19,10 +19,19 @@ import { tr } from '../i18n/tr';
 import { computePalateTypeId } from '../lib/palate';
 import { classifyPlace, normalizePlace, scoreCup } from '../lib/scoring';
 import { knownPlaces, loadEntries, newId, persistPhoto, saveEntry } from '../lib/storage';
-import type { CupEntry, CupInput, Method, VenueKind } from '../lib/types';
+import { brewRatio } from '../lib/progress';
+import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from '../lib/types';
 import { colors } from '../theme';
 
 const METHODS: Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
+const NOTES: TasteNote[] = ['fruity', 'floral', 'chocolate', 'nutty', 'caramel', 'bright', 'bold'];
+const GRINDS: Grind[] = ['fine', 'medium', 'coarse'];
+
+/** "15,5" ya da "15.5" → 15.5; boş/geçersiz → null */
+function parseNum(t: string): number | null {
+  const n = parseFloat(t.replace(',', '.'));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
 
 type Where = { kind: 'home' } | { kind: 'office' } | { kind: 'place'; name: string };
 
@@ -37,6 +46,18 @@ export default function NewCup() {
   const [typed, setTyped] = useState('');
   const [history, setHistory] = useState<CupEntry[]>([]);
   const [saving, setSaving] = useState(false);
+  // Detay modu
+  const [showDetail, setShowDetail] = useState(false);
+  const [notes, setNotes] = useState<TasteNote[]>([]);
+  const [origin, setOrigin] = useState('');
+  const [dose, setDose] = useState('');
+  const [water, setWater] = useState('');
+  const [grind, setGrind] = useState<Grind | null>(null);
+  const [note, setNote] = useState('');
+
+  function toggleNote(n: TasteNote) {
+    setNotes((cur) => (cur.includes(n) ? cur.filter((x) => x !== n) : cur.length >= 2 ? [cur[1], n] : [...cur, n]));
+  }
 
   useEffect(() => {
     loadEntries().then(setHistory);
@@ -77,7 +98,11 @@ export default function NewCup() {
       const id = newId();
       const venueKind: VenueKind = where.kind === 'place' ? classifyPlace(where.name) : where.kind;
       const placeName = where.kind === 'place' ? where.name : null;
-      const input: CupInput = { method, placeName, venueKind, notes: [], origin: null };
+      const input: CupInput = { method, placeName, venueKind, notes, origin: origin.trim() || null };
+      const doseG = parseNum(dose);
+      const waterMl = parseNum(water);
+      const brew = doseG || waterMl || grind ? { doseG, waterMl, grind } : null;
+      const noteText = note.trim() || null;
       const { total, parts } = scoreCup(input, history);
       const createdAt = new Date().toISOString();
       const palateTypeId = computePalateTypeId([...history, { ...input, createdAt }]);
@@ -89,7 +114,7 @@ export default function NewCup() {
           photoUri = photo; // kopyalanamazsa geçici adresi kullan
         }
       }
-      await saveEntry({ id, createdAt, photoUri, ...input, score: total, parts, palateTypeId });
+      await saveEntry({ id, createdAt, photoUri, ...input, brew, note: noteText, score: total, parts, palateTypeId });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       router.replace({ pathname: '/cup/[id]', params: { id, fresh: '1' } });
     } finally {
@@ -188,6 +213,72 @@ export default function NewCup() {
             style={styles.input}
           />
         </View>
+
+        <Pressable onPress={() => setShowDetail((v) => !v)} hitSlop={8} style={styles.detailToggle}>
+          <Text style={styles.detailToggleText}>{showDetail ? tr.capture.hideDetail : tr.capture.addDetail}</Text>
+        </Pressable>
+
+        {showDetail ? (
+          <View>
+            <Text style={styles.detailHint}>{tr.capture.detailHint}</Text>
+
+            <Text style={styles.label}>{tr.capture.notesLabel}</Text>
+            <View style={styles.chips}>
+              {NOTES.map((n) => (
+                <Chip key={n} label={tr.notes[n]} selected={notes.includes(n)} onPress={() => toggleNote(n)} />
+              ))}
+            </View>
+
+            <Text style={styles.label}>{tr.capture.originLabel}</Text>
+            <TextInput
+              value={origin}
+              onChangeText={setOrigin}
+              placeholder={tr.capture.originPlaceholder}
+              placeholderTextColor={colors.muted}
+              style={styles.input}
+            />
+
+            <Text style={styles.label}>
+              {tr.capture.recipeLabel}
+              {brewRatio(parseNum(dose), parseNum(water)) ? `  ·  ${tr.capture.ratio(brewRatio(parseNum(dose), parseNum(water))!)}` : ''}
+            </Text>
+            <View style={{ flexDirection: 'row' }}>
+              <TextInput
+                value={dose}
+                onChangeText={setDose}
+                placeholder={tr.capture.doseLabel}
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+                style={[styles.input, { flex: 1, flexBasis: 0, minWidth: 0, marginRight: 8 }]}
+              />
+              <TextInput
+                value={water}
+                onChangeText={setWater}
+                placeholder={tr.capture.waterLabel}
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+                style={[styles.input, { flex: 1, flexBasis: 0, minWidth: 0 }]}
+              />
+            </View>
+
+            <Text style={styles.label}>{tr.capture.grindLabel}</Text>
+            <View style={styles.chips}>
+              {GRINDS.map((g) => (
+                <Chip key={g} label={tr.capture.grind[g]} selected={grind === g} onPress={() => setGrind(grind === g ? null : g)} />
+              ))}
+            </View>
+
+            <Text style={styles.label}>{tr.capture.noteLabel}</Text>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              placeholder={tr.capture.notePlaceholder}
+              placeholderTextColor={colors.muted}
+              multiline
+              style={[styles.input, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]}
+            />
+          </View>
+        ) : null}
       </ScrollView>
 
       <View style={[styles.saveBar, { paddingBottom: insets.bottom + 12 }]}>
@@ -230,6 +321,10 @@ const styles = StyleSheet.create({
   q: { fontSize: 26, fontWeight: '900', color: colors.text, marginTop: 24, marginBottom: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap' },
   inputRow: { marginTop: 4 },
+  detailToggle: { marginTop: 24, alignSelf: 'flex-start' },
+  detailToggleText: { fontSize: 16, fontWeight: '800', color: colors.accent },
+  detailHint: { fontSize: 14, color: colors.muted, lineHeight: 20, marginTop: 8 },
+  label: { fontSize: 15, fontWeight: '800', color: colors.text, marginTop: 20, marginBottom: 10 },
   input: {
     height: 50,
     borderRadius: 14,

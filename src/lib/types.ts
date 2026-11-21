@@ -12,6 +12,15 @@ export type TasteNote =
   | 'bright'
   | 'bold';
 
+export type Grind = 'fine' | 'medium' | 'coarse';
+
+/** Detay modu: isteğe bağlı tarif bilgisi. */
+export type Brew = {
+  doseG: number | null; // kahve (gram)
+  waterMl: number | null; // su (ml)
+  grind: Grind | null;
+};
+
 export type ScoreParts = {
   base: number;
   effort: number;
@@ -35,6 +44,9 @@ export type CupEntry = {
   venueKind: VenueKind;
   notes: TasteNote[];
   origin: string | null;
+  /** Detay modu (eski kayıtlarda yok). */
+  brew?: Brew | null;
+  note?: string | null;
   score: number;
   parts: ScoreParts;
   palateTypeId: string;
