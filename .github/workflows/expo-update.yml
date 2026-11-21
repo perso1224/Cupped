@@ -1,0 +1,41 @@
+# Her kod gönderiminde uygulamanın yeni halini Expo'ya yükler.
+# Sonra iPhone'da Expo Go ile açılabilir. Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar.
+name: Expo'ya yayınla
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      COMMIT_MESSAGE: ${{ github.event.head_commit.message || 'Elle başlatıldı' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Anahtar kontrolü
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::EXPO_TOKEN bulunamadı. GitHub > Settings > Secrets and variables > Actions altına ekleyin."
+            exit 1
+          fi
+
+      - name: Paketleri kur
+        run: npm ci
+
+      - name: Expo projesine bağlan
+        run: npx eas-cli@latest init --force --non-interactive
+
+      - name: Güncelleme ayarlarını hazırla
+        run: npx eas-cli@latest update:configure --platform ios --environment preview --non-interactive
+
+      - name: Yayınla
+        run: npx eas-cli@latest update --branch preview --message "$COMMIT_MESSAGE" --platform ios --environment preview --non-interactive
