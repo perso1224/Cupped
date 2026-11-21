@@ -173,6 +173,14 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
 
         <View style={{ alignSelf: 'stretch', paddingHorizontal: 16 }}>
           <ListSection footer={tr.result.editHint}>
+            {mode === 'detail' ? (
+              <ListRow
+                icon="repeat"
+                tint={colors.black}
+                title={tr.result.again}
+                onPress={() => router.push({ pathname: '/new', params: { again: String(id) } })}
+              />
+            ) : null}
             <ListRow
               icon="create"
               tint={colors.accent}

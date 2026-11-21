@@ -149,6 +149,7 @@ export const tr = {
     notFound: 'Fincan bulunamadı.',
     delete: 'Fincanı sil',
     edit: 'Düzenle',
+    again: 'Aynısından bir tane daha',
     editHint: 'Skor, o günkü geçmişine göre yeniden hesaplanır.',
     newBadge: 'YENİ ROZET',
     deleteTitle: 'Bu fincan silinsin mi?',

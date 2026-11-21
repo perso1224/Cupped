@@ -105,7 +105,9 @@ export default function Progress() {
             style={{ marginTop: 12 }}
           />
         ) : null}
-        <PillButton label={tr.progress.history} icon="time-outline" variant="light" onPress={() => router.push('/history')} style={{ marginTop: 12 }} />
+        {entries.length > 0 ? (
+  <PillButton label={tr.progress.history} icon="time-outline" variant="light" onPress={() => router.push('/history')} style={{ marginTop: 12 }} />
+        ) : null}
       </FadeIn>
     </ScrollView>
   );

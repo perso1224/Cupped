@@ -18,3 +18,7 @@
 - [x] Liste satırları: kısa değerler (saat, sayı) artık kesilmiyor (SE'de "20:30" → "20..." sorunu); taşan uzun başlık düzeltildi
 - [x] Fincan detayı: skor parçaları tek satırda (SE'de 3+1 kırılma yoktu)
 - [x] Yeni: Pasaport'ta mekana/yönteme dokun → o mekanın/yöntemin fincanları + ortalama skor (web'de test edildi)
+- [x] Fotoğraf küçültme: genişlik biliniyorsa görüntü bir kez çözülür (büyük galeri fotoğraflarında bellek)
+- [x] Dışa aktarma: eski yedek dosyaları önbellekte birikmez
+- [x] İlerleme: hiç fincan yokken "Tüm fincanlar" düğmesi gizli
+- [x] Yeni: "Aynısından bir tane daha" (fincan detayı): yöntem, mekan, menşei, tarif dolu gelir → H3 kayıt hızı (web'de test edildi)

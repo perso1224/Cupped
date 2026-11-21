@@ -50,8 +50,10 @@ type Where = { kind: 'home' } | { kind: 'office' } | { kind: 'place'; name: stri
 export default function NewCup() {
   const insets = useSafeAreaInsets();
   // ?edit=<id>: var olan fincanı düzenle (fotoğraf adımı atlanır, alanlar dolu gelir)
-  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  // ?again=<id>: aynı fincandan bir tane daha (yöntem, mekan, menşei ve tarif dolu gelir; fotoğraf yeni)
+  const { edit, again } = useLocalSearchParams<{ edit?: string; again?: string }>();
   const editId = typeof edit === 'string' && edit ? edit : null;
+  const againId = !editId && typeof again === 'string' && again ? again : null;
   const [original, setOriginal] = useState<CupEntry | null>(null);
   const [photoChanged, setPhotoChanged] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
@@ -104,10 +106,26 @@ export default function NewCup() {
       });
       return;
     }
+    if (againId) {
+      getEntry(againId).then((e) => {
+        if (!e) return;
+        setMethod(e.method);
+        if (e.venueKind === 'home' || e.venueKind === 'office') setWhere({ kind: e.venueKind });
+        else if (e.placeName) {
+          setWhere({ kind: 'place', name: e.placeName });
+          setTyped(e.placeName);
+        }
+        setOrigin(e.origin ?? '');
+        setDose(e.brew?.doseG ? String(e.brew.doseG) : '');
+        setWater(e.brew?.waterMl ? String(e.brew.waterMl) : '');
+        setGrind(e.brew?.grind ?? null);
+        setShowDetail(!!(e.origin || e.brew));
+      });
+    }
     updateMetrics((m) => {
       m.newOpened += 1;
     }).catch(() => {});
-  }, [editId]);
+  }, [editId, againId]);
 
   const places = knownPlaces(history).slice(0, 6);
 
