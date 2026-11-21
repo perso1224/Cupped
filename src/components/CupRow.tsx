@@ -18,7 +18,11 @@ export function timeLabel(iso: string) {
 }
 
 /** timeOnly: gün başlığı altında listelenirken sadece saat (tarih tekrar etmesin). */
-export function CupRow({ entry, timeOnly }: { entry: CupEntry; timeOnly?: boolean }) {
+/** showParts: skor parçalarını küçük çipler olarak göster (Cal AI'daki makro çipleri gibi). */
+export function CupRow({ entry, timeOnly, showParts }: { entry: CupEntry; timeOnly?: boolean; showParts?: boolean }) {
+  const chips = showParts
+    ? (['effort', 'discovery', 'depth', 'selectivity'] as const).filter((k) => entry.parts[k] !== 0)
+    : [];
   return (
     <PressScale onPress={() => router.push(`/cup/${entry.id}`)} scaleTo={0.97}>
       <Card style={styles.row}>
@@ -41,6 +45,16 @@ export function CupRow({ entry, timeOnly }: { entry: CupEntry; timeOnly?: boolea
               ? new Date(entry.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
               : timeLabel(entry.createdAt)}
           </Text>
+          {chips.length ? (
+            <View style={styles.chips}>
+              {chips.map((k) => (
+                <Text key={k} style={[styles.chip, entry.parts[k] < 0 && styles.chipNeg]}>
+                  {entry.parts[k] > 0 ? '+' : ''}
+                  {entry.parts[k]} {tr.result.breakdown[k]}
+                </Text>
+              ))}
+            </View>
+          ) : null}
         </View>
         <Text style={styles.rowScore}>{entry.score}</Text>
       </Card>
@@ -55,5 +69,17 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   rowSub: { fontSize: 14, color: colors.muted, marginTop: 2 },
   rowTime: { fontSize: 12, color: colors.muted, marginTop: 4 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 6, gap: 4 },
+  chip: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.text,
+    backgroundColor: colors.accentSoft,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  chipNeg: { backgroundColor: colors.line, color: colors.muted },
   rowScore: { fontSize: 30, fontWeight: '900', color: colors.text, marginLeft: 8 },
 });

@@ -173,3 +173,20 @@ export const WRAPPED_RULES = {
   /** Ana sayfada Damak Özeti afişi bu kadar fincandan sonra görünür. */
   minCupsForBanner: 3,
 } as const;
+
+/**
+ * Ana sayfadaki kafein tahmini (mg, tek fincan için yaklaşık ortalamalar).
+ * Sağlık tavsiyesi değildir; sadece fikir vermek için.
+ */
+export const CAFFEINE_MG: Record<Method, number> = {
+  espresso: 63, // tek shot
+  filter: 120, // ~240 ml demleme
+  coldbrew: 150, // ~350 ml
+  milk: 110, // latte/flat white (çoğunlukla çift shot)
+  turkish: 60, // tek fincan
+};
+/** Yetişkinler için sık kullanılan günlük referans üst sınır (mg). */
+export const DAILY_CAFFEINE_REF = 400;
+
+/** Ana sayfadaki küçük halkaların tavan puanları (Emek / Keşif / Derinlik). */
+export const PART_MAX = { effort: 25, discovery: 25, depth: 10 } as const;

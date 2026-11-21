@@ -22,6 +22,15 @@ export function periodWord(kind: 'week' | 'month', offset: number): PeriodWord {
     : { this: 'Bu ay', thisLower: 'bu ay', best: 'Ayın fincanı' };
 }
 
+/** Seviye adları -e hâli: "Uzman'a", "Seçici'ye"… */
+const LEVEL_DATIVE: Record<string, string> = {
+  Çaylak: "Çaylak'a",
+  Meraklı: "Meraklı'ya",
+  Seçici: "Seçici'ye",
+  Uzman: "Uzman'a",
+  Efsane: "Efsane'ye",
+};
+
 /** Arayüzdeki tüm Türkçe metinler. */
 export const tr = {
   tabs: {
@@ -58,6 +67,17 @@ export const tr = {
     goal: (done: number, goal: number) => `Bu hafta ${Math.min(done, goal)}/${goal} yeni keşif`,
     goalDone: 'Haftalık keşif hedefi tamam!',
     seeAll: 'Tümünü gör',
+    effortWeek: 'Emek · hafta',
+    discoveryWeek: 'Keşif · hafta',
+    depthWeek: 'Derinlik · hafta',
+    caffeineToday: 'Bugünkü kafein (yaklaşık)',
+    caffeineRef: (n: number) => `Günlük referans ~${n} mg · sağlık tavsiyesi değildir`,
+    cupsToday: 'Bugün fincan',
+    lastCup: 'Son kahve',
+    cupsWeek: 'Bu hafta',
+    levelNext: (cur: string, next: string, pts: number) => `${cur} · ${LEVEL_DATIVE[next] ?? next} ${pts} puan`,
+    levelTop: (cur: string) => `${cur} · en üst seviye`,
+    nudgeTitle: 'Günün önerisi',
     ctaTitle: 'İlk fincanını ekle',
     ctaBody: 'Fotoğrafını çek, 2 dokunuşta kaydet; skorun ve damak tipin ortaya çıksın.',
     ctaBodyWithType: (t: string) => `Tahminimiz ${t}. İlk fincanla gerçek damak tipin ortaya çıksın.`,

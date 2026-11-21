@@ -1,14 +1,15 @@
 import { router } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
-import { ScoreRing } from '../../components/ScoreRing';
 import { WeekStrip } from '../../components/WeekStrip';
+import { MetricTile, MiniRing, Pager } from '../../components/dashboard';
 import { FadeIn, Pop, PressScale, animateLayout } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { BRAND } from '../../config/brand';
-import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
+import { DAILY_CAFFEINE_REF, WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
 import { tr } from '../../i18n/tr';
+import { agoLabel, caffeineToday, dailyNudge, levelProgress, weekPartAverages } from '../../lib/home';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
 import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekStrip } from '../../lib/progress';
 import { levelFor } from '../../lib/scoring';
@@ -43,13 +44,18 @@ export default function Home() {
     }
     reloadMetrics();
   }
-  const isStarter = list.length === 0 && !!profile;
   const type = list.length
     ? getPalateType(computePalateTypeId(list))
     : profile
       ? getPalateType(profile.starterTypeId)
       : null;
   const streak = currentStreak(list, now);
+  const { width: screenW } = useWindowDimensions();
+  const pageW = screenW - 40;
+  const parts = weekPartAverages(list, now);
+  const caffeine = caffeineToday(list, now);
+  const level = levelProgress(list);
+  const nudge = dailyNudge(list, now);
   const ws = startOfWeek(now);
   const disc = discoveriesIn(list, ws, addDays(ws, 7));
   const discoveries = disc.places.length + disc.methods.length;
@@ -96,20 +102,98 @@ export default function Home() {
           <PillButton label={tr.home.ctaButton} variant="light" onPress={() => router.push('/new')} style={{ marginTop: 16 }} />
         </Card>
       ) : (
-      <Card style={[styles.todayCard, { marginTop: 20 }]}>
-        <ScoreRing score={todayScore} size={150} empty={todays.length === 0} caption={todays.length ? levelFor(todayScore) : undefined} />
-        <View style={{ flex: 1, marginLeft: 16 }}>
-          <Text style={styles.cardLabel}>{tr.home.todayScore}</Text>
-          {todays.length === 0 ? <Text style={styles.cardHint}>{tr.home.noCupToday}</Text> : null}
-          {type ? (
-            <>
-              <Text style={[styles.cardLabel, { marginTop: 14 }]}>{isStarter ? tr.profile.starter : tr.home.palateType}</Text>
-              <Text style={styles.typeName}>{type.name}</Text>
-            </>
-          ) : null}
+        <View style={{ marginTop: 20, marginHorizontal: -20 }}>
+          <View style={{ paddingHorizontal: 20 }}>
+            <Pager
+              width={pageW}
+              pages={[
+                // Sayfa 1: bugünkü skor + bu haftanın Emek / Keşif / Derinlik halkaları
+                <View key="score">
+                  <Card style={styles.bigCard}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.bigNumber}>{todays.length ? todayScore : '–'}</Text>
+                      <Text style={styles.cardLabel}>{tr.home.todayScore}</Text>
+                      <Text style={styles.cardHint}>{todays.length ? levelFor(todayScore) : tr.home.noCupToday}</Text>
+                    </View>
+                    <MiniRing
+                      size={112}
+                      stroke={11}
+                      fraction={todays.length ? todayScore / 100 : 0}
+                      center={<Text style={{ fontSize: 34 }}>{todays.length ? '🎯' : '☕'}</Text>}
+                    />
+                  </Card>
+                  <View style={styles.tiles}>
+                    <MetricTile value={`+${parts.effort.avg}`} label={tr.home.effortWeek} fraction={parts.effort.fraction} color={colors.accent} icon="🫖" />
+                    <MetricTile value={`+${parts.discovery.avg}`} label={tr.home.discoveryWeek} fraction={parts.discovery.fraction} color="#B5402F" icon="🧭" />
+                    <MetricTile value={`+${parts.depth.avg}`} label={tr.home.depthWeek} fraction={parts.depth.fraction} color="#2B1A12" icon="👃" />
+                  </View>
+                </View>,
+                // Sayfa 2: kafein (yaklaşık) + bugün / son kahve / bu hafta
+                <View key="caffeine">
+                  <Card style={styles.bigCard}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.bigNumber}>
+                        {caffeine.mg}
+                        <Text style={styles.bigUnit}> mg</Text>
+                      </Text>
+                      <Text style={styles.cardLabel}>{tr.home.caffeineToday}</Text>
+                      <Text style={styles.cardHint}>{tr.home.caffeineRef(DAILY_CAFFEINE_REF)}</Text>
+                    </View>
+                    <MiniRing
+                      size={112}
+                      stroke={11}
+                      fraction={caffeine.mg / DAILY_CAFFEINE_REF}
+                      color={caffeine.mg > DAILY_CAFFEINE_REF ? '#B5402F' : colors.accent}
+                      center={<Text style={{ fontSize: 34 }}>⚡</Text>}
+                    />
+                  </Card>
+                  <View style={styles.tiles}>
+                    <MetricTile value={String(caffeine.cups)} label={tr.home.cupsToday} fraction={caffeine.cups / 4} color={colors.accent} icon="☕" />
+                    <MetricTile value={agoLabel(caffeine.minutesSinceLast)} label={tr.home.lastCup} fraction={caffeine.minutesSinceLast === null ? 0 : Math.min(1, caffeine.minutesSinceLast / 360)} color="#B5402F" icon="⏱️" />
+                    <MetricTile value={String(parts.cups)} label={tr.home.cupsWeek} fraction={parts.cups / 14} color="#2B1A12" icon="📅" />
+                  </View>
+                </View>,
+              ]}
+            />
+          </View>
         </View>
-      </Card>
       )}
+
+      {type && list.length > 0 ? (
+        <FadeIn index={1}>
+          <PressScale onPress={() => router.push('/card')} scaleTo={0.98} style={styles.typeCard}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardLabel}>{tr.home.palateType}</Text>
+                <Text style={styles.typeName}>{type.name}</Text>
+              </View>
+              <Text style={styles.chev}>›</Text>
+            </View>
+            {level ? (
+              <>
+                <View style={styles.levelBar}>
+                  <View style={[styles.levelFill, { width: `${Math.max(4, level.fraction * 100)}%` }]} />
+                </View>
+                <Text style={styles.levelText}>
+                  {level.next ? tr.home.levelNext(level.level, level.next, level.toNext) : tr.home.levelTop(level.level)}
+                </Text>
+              </>
+            ) : null}
+          </PressScale>
+        </FadeIn>
+      ) : null}
+
+      {nudge ? (
+        <FadeIn index={2}>
+          <Card style={styles.nudge}>
+            <Text style={styles.nudgeEmoji}>{nudge.emoji}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardLabel}>{tr.home.nudgeTitle}</Text>
+              <Text style={styles.nudgeText}>{nudge.text}</Text>
+            </View>
+          </Card>
+        </FadeIn>
+      ) : null}
 
       <Card style={styles.goal}>
         <Text style={styles.goalText}>
@@ -159,7 +243,7 @@ export default function Home() {
       ) : null}
       {list.slice(0, 5).map((e, i) => (
         <FadeIn key={e.id} index={i}>
-          <CupRow entry={e} />
+          <CupRow entry={e} showParts />
         </FadeIn>
       ))}
     </ScrollView>
@@ -180,7 +264,27 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   streakText: { marginLeft: 6, fontWeight: '700', color: colors.text },
-  todayCard: { flexDirection: 'row', alignItems: 'center' },
+  bigCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 22 },
+  bigNumber: { fontSize: 48, fontWeight: '900', color: colors.text, letterSpacing: -1.5 },
+  bigUnit: { fontSize: 20, fontWeight: '800', color: colors.muted, letterSpacing: 0 },
+  tiles: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  typeCard: {
+    marginTop: 14,
+    backgroundColor: colors.card,
+    borderRadius: 22,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  chev: { fontSize: 28, color: colors.muted, fontWeight: '300' },
+  levelBar: { height: 8, borderRadius: 4, backgroundColor: colors.line, marginTop: 12, overflow: 'hidden' },
+  levelFill: { height: 8, borderRadius: 4, backgroundColor: colors.black },
+  levelText: { fontSize: 13, fontWeight: '600', color: colors.muted, marginTop: 6 },
+  nudge: { marginTop: 12, flexDirection: 'row', alignItems: 'center' },
+  nudgeEmoji: { fontSize: 28, marginRight: 12 },
+  nudgeText: { fontSize: 15, fontWeight: '600', color: colors.text, marginTop: 2, lineHeight: 21 },
   ctaCard: { backgroundColor: colors.black },
   ctaTitle: { fontSize: 22, fontWeight: '900', color: colors.white },
   ctaBody: { fontSize: 15, color: '#CFC8BE', marginTop: 6, lineHeight: 21 },
