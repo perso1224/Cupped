@@ -129,14 +129,15 @@ export function bumpCounter(name: keyof Counters): Promise<void> {
  * Kameradan/galeriden gelen geçici fotoğrafı kalıcı klasöre kopyalar.
  * Göreli yol döner ("cups/<id>.jpg"); ekranda photoUrl() ile tam adrese çevrilir.
  */
-export async function persistPhoto(tempUri: string, id: string, version?: string): Promise<string> {
+export async function persistPhoto(tempUri: string, id: string, opts: { version?: string; width?: number } = {}): Promise<string> {
+  const { version } = opts;
   const dir = new Directory(Paths.document, 'cups');
   if (!dir.exists) dir.create({ intermediates: true });
   // Düzenlemede yeni ad: aynı adı kullanmak görüntü önbelleğinde eski fotoğrafı gösterebilir.
   const name = version ? `${id}-${version}.jpg` : `${id}.jpg`;
   const dest = new File(dir, name);
   if (dest.exists) dest.delete();
-  const source = await shrinkPhoto(tempUri);
+  const source = await shrinkPhoto(tempUri, opts.width);
   await new File(source).copy(dest);
   if (source !== tempUri) {
     try {
@@ -150,11 +151,17 @@ export async function persistPhoto(tempUri: string, id: string, version?: string
 
 /** Kamera fotoğrafları ~8MP; kart için 1080 piksel genişlik yeterli (fincan başına ~3MB yerine ~250KB). */
 const MAX_PHOTO_WIDTH = 1080;
-async function shrinkPhoto(uri: string): Promise<string> {
+async function shrinkPhoto(uri: string, knownWidth?: number): Promise<string> {
   try {
-    const original = await ImageManipulator.manipulate(uri).renderAsync();
+    // Genişlik kameradan/galeriden biliniyorsa görüntü tek kez çözülür (büyük fotoğraflarda bellek sıçraması olmasın)
+    let width = knownWidth;
+    if (!width) {
+      const probe = await ImageManipulator.manipulate(uri).renderAsync();
+      width = probe.width;
+      probe.release?.();
+    }
     const ctx = ImageManipulator.manipulate(uri);
-    if (original.width > MAX_PHOTO_WIDTH) ctx.resize({ width: MAX_PHOTO_WIDTH });
+    if (width > MAX_PHOTO_WIDTH) ctx.resize({ width: MAX_PHOTO_WIDTH });
     const img = await ctx.renderAsync();
     const saved = await img.saveAsync({ compress: 0.82, format: SaveFormat.JPEG });
     return saved.uri;
@@ -299,6 +306,12 @@ export function exportAllData(): Promise<string> {
     const d = new Date();
     const p2 = (n: number) => String(n).padStart(2, '0');
     const stamp = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}`;
+    // Eski dışa aktarma dosyaları önbellekte birikmesin (tüm geçmişin düz metin kopyaları)
+    try {
+      for (const item of Paths.cache.list()) if (item instanceof File && item.name.startsWith('cupped-yedek-')) item.delete();
+    } catch {
+      // önemli değil
+    }
     const file = new File(Paths.cache, `cupped-yedek-${stamp}.json`);
     file.create({ overwrite: true });
     await file.write(

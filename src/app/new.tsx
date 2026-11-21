@@ -57,6 +57,7 @@ export default function NewCup() {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [photo, setPhoto] = useState<string | null>(null);
+  const photoWidth = useRef<number | undefined>(undefined);
   const [step, setStep] = useState<'photo' | 'details'>(editId ? 'details' : 'photo');
   const [method, setMethod] = useState<Method | null>(null);
   const [where, setWhere] = useState<Where | null>(null);
@@ -147,6 +148,7 @@ export default function NewCup() {
     try {
       const pic = await cameraRef.current?.takePictureAsync({ quality: 0.6 });
       if (pic?.uri) {
+        photoWidth.current = pic.width;
         setPhoto(pic.uri);
         setPhotoChanged(true);
         setStep('details');
@@ -167,6 +169,7 @@ export default function NewCup() {
       return;
     }
     if (!res.canceled && res.assets[0]?.uri) {
+      photoWidth.current = res.assets[0].width;
       setPhoto(res.assets[0].uri);
       setPhotoChanged(true);
       setStep('details');
@@ -199,7 +202,7 @@ export default function NewCup() {
       let photoUri: string | null = null;
       if (photo) {
         try {
-          photoUri = await persistPhoto(photo, id);
+          photoUri = await persistPhoto(photo, id, { width: photoWidth.current });
         } catch {
           photoUri = null; // geçici dosya iOS tarafından silinir; adresini saklamak boş fotoğraf demek
         }
@@ -246,7 +249,7 @@ export default function NewCup() {
       let photoUri = orig.photoUri;
       if (photoChanged && photo) {
         try {
-          photoUri = await persistPhoto(photo, orig.id, Date.now().toString(36));
+          photoUri = await persistPhoto(photo, orig.id, { version: Date.now().toString(36), width: photoWidth.current });
         } catch {
           photoUri = orig.photoUri;
         }
