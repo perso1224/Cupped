@@ -1,7 +1,17 @@
 # Cupped
 
-Kahve damak kimliği uygulaması (Expo + React Native + TypeScript).
-Şu an sadece ekranda **"Merhaba"** yazan boş bir uygulama.
+Kahve damak kimliği uygulaması (Expo + React Native + TypeScript, Expo Router).
+
+**Şu anki sürüm (en küçük çalışan sürüm):** ortada "+" olan alt menü, kamera ile hızlı kayıt (Nasıl? + Nerede?),
+Fincan Skoru ve Damak Tipi hesabı, 9:16 paylaşım kartı, son fincanlar listesi, profil istatistikleri ve test sayaçları.
+Veriler sadece telefonda tutulur.
+
+### Kod nerede?
+- `src/app/` — ekranlar (her dosya bir ekran)
+- `src/config/scoring.config.ts` — **tüm skor puanları, zincir listesi, seviyeler ve damak tipleri** (sayıları buradan değiştir)
+- `src/config/brand.ts` — marka adı
+- `src/i18n/tr.ts` — arayüzdeki tüm Türkçe metinler
+- `src/lib/scoring.ts`, `src/lib/palate.ts` — skor ve damak tipi hesabı (testleri yanlarında, `npm test`)
 
 ---
 
@@ -88,6 +98,5 @@ Bir dahaki sefere sadece `cd Cupped` ve `npx expo start` yeterli.
 
 ## Proje yapısı (şimdilik)
 
-- `App.tsx` — ekranda görünen her şey burada. "Merhaba" yazısını değiştirip kaydedersen telefonda anında güncellenir.
 - `app.json` — uygulamanın adı, ikonu gibi ayarlar.
 - `package.json` — kullanılan paketlerin listesi.

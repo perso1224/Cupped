@@ -7,7 +7,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.perso1224.cupped"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,6 +21,35 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "scheme": "cupped",
+    "owner": "perso1224",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c8c4040d-10b8-4a67-a97f-b0eb75c889b5"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c8c4040d-10b8-4a67-a97f-b0eb75c889b5"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Fincanının fotoğrafını çekmek için kameraya erişim gerekiyor. Fotoğraflar sadece telefonunda kalır.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Fincan fotoğrafını galeriden seçebilmen için fotoğraflarına erişim gerekiyor."
+        }
+      ]
+    ]
   }
 }

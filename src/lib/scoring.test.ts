@@ -1,0 +1,103 @@
+import { describe, expect, it } from 'vitest';
+import { classifyPlace, levelFor, matchChain, scoreCup } from './scoring';
+import type { CupEntry, CupInput } from './types';
+
+let n = 0;
+function entry(p: Partial<CupEntry>): CupEntry {
+  n++;
+  return {
+    id: String(n),
+    createdAt: new Date(2026, 0, n).toISOString(),
+    photoUri: null,
+    method: 'espresso',
+    placeName: null,
+    venueKind: 'home',
+    notes: [],
+    origin: null,
+    score: 0,
+    parts: { base: 0, effort: 0, depth: 0, discovery: 0, selectivity: 0 },
+    palateTypeId: 'pure_intensity',
+    ...p,
+  };
+}
+const input = (p: Partial<CupInput>): CupInput => ({
+  method: 'espresso',
+  placeName: null,
+  venueKind: 'home',
+  notes: [],
+  origin: null,
+  ...p,
+});
+
+describe('zincir eşleştirme', () => {
+  it('Türkçe karakter ve büyük/küçük harf farkını yok sayar', () => {
+    expect(matchChain('kahve dunyasi')).toBe('Kahve Dünyası');
+    expect(matchChain('STARBUCKS Kadıköy')).toBe('Starbucks');
+    expect(matchChain('Gloria Jeans')).toBe("Gloria Jean's");
+  });
+  it('listede olmayan mekan bağımsızdır', () => {
+    expect(classifyPlace('Mahalle Kavurucusu')).toBe('independent');
+    expect(classifyPlace('Starbucks')).toBe('chain');
+  });
+});
+
+describe('Fincan Skoru', () => {
+  it('ilk kayıt: taban + emek + yeni yöntem', () => {
+    const r = scoreCup(input({ method: 'filter', venueKind: 'home' }), []);
+    expect(r.parts).toEqual({ base: 30, effort: 25, depth: 0, discovery: 10, selectivity: 0 });
+    expect(r.total).toBe(65);
+  });
+
+  it('yeni bağımsız mekan keşif puanı alır, aynı mekana tekrar gidince almaz', () => {
+    const first = scoreCup(input({ venueKind: 'independent', placeName: 'Mahalle Kavurucusu' }), []);
+    expect(first.parts.discovery).toBe(25); // yeni mekan + yeni yöntem
+    const history = [entry({ venueKind: 'independent', placeName: 'mahalle kavurucusu' })];
+    const again = scoreCup(input({ venueKind: 'independent', placeName: 'Mahalle Kavurucusu' }), history);
+    expect(again.parts.discovery).toBe(0);
+    expect(again.total).toBe(45);
+  });
+
+  it('ofis kahvesi en düşük emektir', () => {
+    const history = [entry({ method: 'espresso' })];
+    expect(scoreCup(input({ venueKind: 'office' }), history).total).toBe(30);
+  });
+
+  it('aynı zincire art arda 3. ziyarette -5', () => {
+    const s = { venueKind: 'chain' as const, placeName: 'Starbucks' };
+    const h2 = [entry(s), entry(s)];
+    expect(scoreCup(input(s), h2.slice(0, 1)).parts.selectivity).toBe(0); // 2. ziyaret
+    expect(scoreCup(input(s), h2).parts.selectivity).toBe(-5); // 3. ziyaret
+  });
+
+  it('arada başka mekan varsa seri bozulur', () => {
+    const s = { venueKind: 'chain' as const, placeName: 'Starbucks' };
+    const h = [entry(s), entry({ venueKind: 'home' }), entry(s)];
+    expect(scoreCup(input(s), h).parts.selectivity).toBe(0);
+  });
+
+  it('detay: 2 tat notu ve menşei derinlik verir; skor 100ü geçmez', () => {
+    const r = scoreCup(
+      input({ method: 'filter', venueKind: 'home', notes: ['fruity', 'bright'], origin: 'Etiyopya' }),
+      [],
+    );
+    expect(r.parts.depth).toBe(20);
+    expect(r.total).toBe(85);
+    const big = scoreCup(
+      input({ method: 'filter', venueKind: 'independent', placeName: 'Yeni Yer', notes: ['fruity', 'bright'], origin: 'Kenya' }),
+      [],
+    );
+    expect(big.total).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('seviye etiketleri', () => {
+  it.each([
+    [0, 'Çaylak'],
+    [39, 'Çaylak'],
+    [40, 'Meraklı'],
+    [60, 'Seçici'],
+    [75, 'Uzman'],
+    [90, 'Efsane'],
+    [100, 'Efsane'],
+  ])('%i → %s', (score, label) => expect(levelFor(score)).toBe(label));
+});

@@ -31,6 +31,11 @@ jobs:
       - name: Paketleri kur
         run: npm ci
 
+      - name: Testler ve tür kontrolü
+        run: |
+          npm test
+          npm run typecheck
+
       - name: Expo projesine bağlan
         run: npx eas-cli@latest init --force --non-interactive
 

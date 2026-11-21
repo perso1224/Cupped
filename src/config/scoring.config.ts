@@ -1,0 +1,117 @@
+import type { Method, TasteNote, VenueKind } from '../lib/types';
+
+/**
+ * Skor ve damak tipi ayarlarının TAMAMI burada.
+ * Sayıları değiştirmek için sadece bu dosyayı düzenlemek yeterli.
+ * Hedef: ortalama ~60, 90+ nadir.
+ */
+export const SCORING = {
+  base: 30,
+  effort: {
+    home: 25, // Evde manuel demleme
+    independent: 15, // Bağımsız / üçüncü dalga mekan
+    chain: 5, // Zincir mekan
+    office: 0, // Ofis makinesi / hazır
+  } satisfies Record<VenueKind, number>,
+  depth: {
+    twoNotes: 10, // 2 tat notu girildi (detay modu)
+    origin: 10, // Menşei girildi (detay modu)
+  },
+  discovery: {
+    newPlace: 15, // İlk kez gidilen mekan
+    newMethod: 10, // İlk kez denenen yöntem
+  },
+  selectivity: {
+    sameChainStreakFrom: 3, // Aynı zincire art arda 3. ziyaret ve sonrası
+    penalty: -5,
+  },
+  max: 100,
+  min: 0,
+} as const;
+
+/** Cihazdaki küçük zincir listesi. Listede olmayan mekan bağımsız sayılır. */
+export const CHAINS: string[] = [
+  'Starbucks',
+  "Gloria Jean's",
+  'Kahve Dünyası',
+  'Caribou',
+  'Espressolab',
+  'Tchibo',
+  'Simit Sarayı',
+  'Costa',
+  'Caffè Nero',
+  'Dunkin',
+  'Mado',
+  'Big Chefs',
+];
+
+export const LEVELS: { min: number; label: string }[] = [
+  { min: 90, label: 'Efsane' },
+  { min: 75, label: 'Uzman' },
+  { min: 60, label: 'Seçici' },
+  { min: 40, label: 'Meraklı' },
+  { min: 0, label: 'Çaylak' },
+];
+
+export type PalateType = {
+  id: string;
+  name: string;
+  /** Kendini öven ama öz-ironili tek cümle. */
+  tagline: string;
+};
+
+export const PALATE_TYPES: PalateType[] = [
+  { id: 'floral_explorer', name: 'Floral Explorer', tagline: 'Fincanında çiçek bahçesi ararsın ve bazen gerçekten bulursun.' },
+  { id: 'aroma_hunter', name: 'Aroma Avcısı', tagline: 'Koklamadan tek yudum almazsın; masadakiler bekler.' },
+  { id: 'classic_master', name: 'Klasik Usta', tagline: 'Trendler gelip geçer, senin zevkin yerinden kıpırdamaz.' },
+  { id: 'sweet_balancer', name: 'Tatlı Dengeci', tagline: 'Hayat yeterince acı, fincanın en azından tatlı olsun.' },
+  { id: 'night_shift', name: 'Gece Vardiyası', tagline: 'Kahven gece kadar koyu, verimin de öyle (iddia).' },
+  { id: 'acid_romantic', name: 'Asit Romantiği', tagline: 'Herkes "ekşi" der, sen "canlı asidite" dersin.' },
+  { id: 'oat_milk_diplomat', name: 'Oat Milk Diplomatı', tagline: 'Sert sözlerden de sert kahveden de kaçınır, her masada barışı korursun.' },
+  { id: 'pure_intensity', name: 'Saf Yoğunluk', tagline: 'Lafı uzatmazsın: tek shot, net karar.' },
+  { id: 'foam_guardian', name: 'Köpük Muhafızı', tagline: 'Köpüksüz Türk kahvesi senin için küçük bir skandal.' },
+  { id: 'cool_head', name: 'Soğuk Kafalı', tagline: 'Mevsim fark etmez, sen her koşulda serin kalırsın.' },
+  { id: 'pourover_philosopher', name: 'Pour-over Filozofu', tagline: 'Su sıcaklığını derecesine kadar bilirsin; sormayan da öğrenir.' },
+  { id: 'third_wave_nomad', name: 'Üçüncü Dalga Gezgini', tagline: 'Menüde "single origin" görünce adımların kendiliğinden yavaşlar.' },
+  { id: 'cafe_nomad', name: 'Kafe Göçebesi', tagline: 'Aynı kafeye iki kez gitmek senin için neredeyse taahhüt.' },
+];
+
+/** Detay modu: en sık iki tat notu → tip (sıra önemsiz). */
+export const NOTE_PAIR_TYPES: { notes: [TasteNote, TasteNote]; typeId: string }[] = [
+  { notes: ['fruity', 'bright'], typeId: 'floral_explorer' },
+  { notes: ['floral', 'fruity'], typeId: 'aroma_hunter' },
+  { notes: ['chocolate', 'nutty'], typeId: 'classic_master' },
+  { notes: ['caramel', 'chocolate'], typeId: 'sweet_balancer' },
+  { notes: ['bold', 'chocolate'], typeId: 'night_shift' },
+  { notes: ['bright', 'floral'], typeId: 'acid_romantic' },
+];
+
+/** Detay modu: eşleşen çift yoksa en sık tek nota göre tip. */
+export const SINGLE_NOTE_TYPES: Record<TasteNote, string> = {
+  fruity: 'floral_explorer',
+  floral: 'aroma_hunter',
+  chocolate: 'classic_master',
+  nutty: 'classic_master',
+  caramel: 'sweet_balancer',
+  bright: 'acid_romantic',
+  bold: 'pure_intensity',
+};
+
+/** Basit mod: en sık yönteme göre tip. Filtre için ev/dışarı ayrımı yapılır. */
+export const METHOD_TYPES: Record<Exclude<Method, 'filter'>, string> & {
+  filter: { home: string; out: string };
+} = {
+  espresso: 'pure_intensity',
+  milk: 'oat_milk_diplomat',
+  turkish: 'foam_guardian',
+  coldbrew: 'cool_head',
+  filter: { home: 'pourover_philosopher', out: 'third_wave_nomad' },
+};
+
+export const PALATE_RULES = {
+  /** Damak tipi son kaç fincana bakarak hesaplanır. */
+  window: 10,
+  /** Kafe Göçebesi: son `nomadWindow` fincanda en az `nomadDistinctPlaces` farklı mekan. */
+  nomadWindow: 6,
+  nomadDistinctPlaces: 4,
+} as const;
