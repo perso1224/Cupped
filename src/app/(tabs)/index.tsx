@@ -6,10 +6,10 @@ import { ScoreRing } from '../../components/ScoreRing';
 import { WeekStrip } from '../../components/WeekStrip';
 import { Card } from '../../components/ui';
 import { BRAND } from '../../config/brand';
-import { WEEKLY } from '../../config/scoring.config';
+import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
 import { tr } from '../../i18n/tr';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
-import { addDays, currentStreak, dayKey, discoveriesIn, startOfWeek, weekStrip } from '../../lib/progress';
+import { addDays, currentStreak, dayKey, discoveriesIn, inRange, startOfMonth, startOfWeek, weekStrip } from '../../lib/progress';
 import { levelFor } from '../../lib/scoring';
 import { useEntries } from '../../lib/useEntries';
 import { colors } from '../../theme';
@@ -27,6 +27,10 @@ export default function Home() {
   const ws = startOfWeek(now);
   const disc = discoveriesIn(list, ws, addDays(ws, 7));
   const discoveries = disc.places.length + disc.methods.length;
+  const ms = startOfMonth(now);
+  const monthCups = list.filter((e) => inRange(e, ms, new Date(now.getFullYear(), now.getMonth() + 1, 1))).length;
+  const monthName = ms.toLocaleDateString('tr-TR', { month: 'long' });
+  const monthLabel = monthName.charAt(0).toLocaleUpperCase('tr-TR') + monthName.slice(1);
 
   return (
     <ScrollView
@@ -66,6 +70,21 @@ export default function Home() {
         </View>
       </Card>
 
+      {monthCups >= WRAPPED_RULES.minCupsForBanner ? (
+        <Pressable
+          onPress={() => router.push({ pathname: '/wrapped', params: { period: 'month' } })}
+          style={({ pressed }) => [styles.banner, pressed && { opacity: 0.85 }]}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.bannerTitle}>{tr.wrapped.bannerMonth(monthLabel)}</Text>
+            <Text style={styles.bannerSub}>{tr.wrapped.bannerSub}</Text>
+          </View>
+          <View style={styles.bannerPlay}>
+            <Text style={styles.bannerPlayText}>▶</Text>
+          </View>
+        </Pressable>
+      ) : null}
+
       <View style={styles.sectionRow}>
         <Text style={styles.section}>{tr.home.recent}</Text>
         {list.length > 5 ? (
@@ -104,6 +123,18 @@ const styles = StyleSheet.create({
   goalText: { fontSize: 15, fontWeight: '700', color: colors.text },
   goalBar: { height: 8, borderRadius: 4, backgroundColor: colors.line, marginTop: 10, overflow: 'hidden' },
   goalFill: { height: 8, backgroundColor: colors.accent },
+  banner: {
+    marginTop: 12,
+    backgroundColor: colors.black,
+    borderRadius: 22,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bannerTitle: { color: colors.white, fontSize: 17, fontWeight: '900' },
+  bannerSub: { color: '#BDB6AC', fontSize: 13, marginTop: 4 },
+  bannerPlay: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginLeft: 12 },
+  bannerPlayText: { color: colors.black, fontSize: 18, fontWeight: '900', marginLeft: 3 },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 28, marginBottom: 12 },
   section: { fontSize: 20, fontWeight: '800', color: colors.text },
   link: { fontSize: 15, fontWeight: '700', color: colors.accent },

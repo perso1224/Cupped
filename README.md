@@ -7,7 +7,7 @@ Fincan Skoru ve Damak Tipi hesabı, 9:16 paylaşım kartı, haftalık gün şeri
 İlerleme (Haftalık Damak Skoru ve rekor, haftalık/aylık rapor kartı), Damak Pasaportu (yöntem/tip/mekan damgaları, rozetler),
 tüm fincanlar (geçmiş), profil istatistikleri ve test sayaçları. Veriler sadece telefonda tutulur.
 
-**Brif aşamaları:** (a)–(f) tamam (Düello kapsam dışı) · (g) onboarding · (h) detay modu.
+**Brif aşamaları:** (a)–(f) tamam (Düello kapsam dışı) + Damak Özeti hikayesi (Wrapped tarzı) · (g) onboarding · (h) detay modu.
 Ertelenen işler, TestFlight hazırlık listesi ve "fotoğrafta kahve kontrolü" planı: [`docs/YOL_HARITASI.md`](docs/YOL_HARITASI.md)
 
 ### Kod nerede?

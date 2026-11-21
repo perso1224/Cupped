@@ -18,7 +18,7 @@ import { colors } from '../theme';
 export default function PalateCard() {
   useKeepAwake();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const entries = useEntries();
   const cardRef = useRef<CardHandle>(null);
   const [sharing, setSharing] = useState(false);
@@ -41,7 +41,10 @@ export default function PalateCard() {
 
   const s = profileSummary(entries ?? []);
   const type = s.palateTypeId ? getPalateType(s.palateTypeId) : null;
-  const cardWidth = Math.min(width - 32, 420);
+  // Paylaşılan görsel tam 9:16 olsun diye kart, ekrana sığan 9:16 bir çerçevenin içinde.
+  const frameW = Math.min(width, ((height - insets.top - insets.bottom - 64) * 9) / 16);
+  const frameH = (frameW * 16) / 9;
+  const cardWidth = frameW - 32;
 
   async function share() {
     if (sharing) return;
@@ -72,7 +75,12 @@ export default function PalateCard() {
       </View>
 
       <View style={styles.center}>
-        <View ref={cardRef} collapsable={false} style={[styles.card, { width: cardWidth }]}>
+        <View
+          ref={cardRef}
+          collapsable={false}
+          style={{ width: frameW, height: frameH, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}
+        >
+        <View style={[styles.card, { width: cardWidth, minHeight: Math.min(520, frameH - 32) }]}>
           <Text style={styles.kicker}>{tr.palateCard.title}</Text>
           {type ? (
             <>
@@ -106,6 +114,7 @@ export default function PalateCard() {
             <Text style={styles.brand}>{BRAND.name}</Text>
           </View>
         </View>
+        </View>
       </View>
     </View>
   );
@@ -128,7 +137,7 @@ const styles = StyleSheet.create({
   hint: { fontSize: 14, fontWeight: '600', color: colors.muted },
   share: { fontSize: 15, fontWeight: '800', color: colors.accent },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  card: { backgroundColor: colors.black, borderRadius: 32, padding: 28, minHeight: 520 },
+  card: { backgroundColor: colors.black, borderRadius: 32, padding: 28 },
   kicker: { color: colors.accent, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.4 },
   typeName: { color: colors.white, fontWeight: '900', marginTop: 14, letterSpacing: -1 },
   tagline: { color: '#CFC8BE', fontSize: 16, lineHeight: 22, marginTop: 10 },

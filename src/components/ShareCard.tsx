@@ -36,6 +36,7 @@ export function ShareCard({
   const ringSize = width * 0.42;
 
   return (
+    <View style={{ width, height, borderRadius: 28, overflow: 'hidden' }}>
     <View ref={ref} collapsable={false} style={[styles.card, { width, height }]}>
       <View style={{ height: photoH, backgroundColor: colors.accentSoft }}>
         {entry.photoUri ? (
@@ -71,11 +72,12 @@ export function ShareCard({
         <Text style={styles.brand}>{BRAND.name}</Text>
       </View>
     </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.bg, borderRadius: 28, overflow: 'hidden' },
+  card: { backgroundColor: colors.bg, overflow: 'hidden' },
   noPhoto: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',

@@ -49,7 +49,7 @@ export default function CupResult() {
     );
   }
 
-  const cardWidth = Math.min(width - 64, 360);
+  const cardWidth = Math.min(width - 32, 420);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>

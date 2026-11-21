@@ -11,6 +11,7 @@ export default function RootLayout() {
         <Stack.Screen name="new" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="cup/[id]" options={{ presentation: 'modal' }} />
         <Stack.Screen name="card" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+        <Stack.Screen name="wrapped" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#000' } }} />
       </Stack>
     </>
   );

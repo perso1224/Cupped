@@ -147,3 +147,19 @@ export const BADGE_RULES = {
   homeFilters: 5,
   newPlacesInMonth: 5,
 } as const;
+
+/** Damak Özeti'ndeki "≈ X ml kahve" eğlenceli bilgisi için yaklaşık fincan hacimleri. */
+export const CUP_VOLUME_ML: Record<Method, number> = {
+  espresso: 40,
+  filter: 250,
+  coldbrew: 300,
+  milk: 300,
+  turkish: 70,
+};
+
+export const WRAPPED_RULES = {
+  /** Evde içilen fincanların oranı bu eşiği geçerse "mekan" slaytı yerine "evin en iyi kafen" slaytı gösterilir. */
+  homeShare: 0.5,
+  /** Ana sayfada Damak Özeti afişi bu kadar fincandan sonra görünür. */
+  minCupsForBanner: 3,
+} as const;

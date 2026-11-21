@@ -1,25 +1,19 @@
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
-import { ReportCard } from '../../components/ReportCard';
-import type { CardHandle } from '../../components/ShareCard';
 import { Card, Chip, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
 import { addDays, periodReport, startOfMonth, startOfWeek, weeklyRecordBefore } from '../../lib/progress';
-import { shareViewAsImage } from '../../lib/share';
 import { useEntries } from '../../lib/useEntries';
 import { colors } from '../../theme';
 
 export default function Progress() {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const entries = useEntries() ?? [];
   const [kind, setKind] = useState<'week' | 'month'>('week');
-  const [sharing, setSharing] = useState(false);
-  const cardRef = useRef<CardHandle>(null);
 
   const now = new Date();
   const ws = startOfWeek(now);
@@ -31,18 +25,6 @@ export default function Progress() {
   const record = weeklyRecordBefore(entries, ws);
   const isRecord = kind === 'week' && report.palateScore > record && record > 0;
   const type = report.palateTypeId ? getPalateType(report.palateTypeId) : null;
-
-  async function share() {
-    if (sharing) return;
-    setSharing(true);
-    try {
-      await shareViewAsImage(cardRef);
-    } catch {
-      Alert.alert(tr.result.shareError);
-    } finally {
-      setSharing(false);
-    }
-  }
 
   return (
     <ScrollView
@@ -87,17 +69,11 @@ export default function Progress() {
       ) : null}
 
       {report.cups > 0 ? (
-        <>
-          <View style={{ alignItems: 'center', marginTop: 20 }}>
-            <ReportCard ref={cardRef} report={report} kind={kind} width={Math.min(width - 80, 320)} />
-          </View>
-          <PillButton
-            label={kind === 'week' ? tr.progress.shareWeek : tr.progress.shareMonth}
-            onPress={share}
-            disabled={sharing}
-            style={{ marginTop: 16 }}
-          />
-        </>
+        <PillButton
+          label={`▶  ${kind === 'week' ? tr.wrapped.weekTitle : tr.wrapped.monthTitle}`}
+          onPress={() => router.push({ pathname: '/wrapped', params: { period: kind } })}
+          style={{ marginTop: 20, backgroundColor: colors.accent, borderColor: colors.accent }}
+        />
       ) : null}
 
       <PillButton
