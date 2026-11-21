@@ -22,11 +22,11 @@ Briften sonraki kararlar ve ileride yapılacak işler burada tutulur.
 Ne zaman: (f)(g)(h) bittiğinde ve 10-20 kişilik Expo Go denemesinden sonra (yol haritası Ay 2-3).
 
 Hazırlık listesi:
-- [ ] Uygulama ikonu ve açılış ekranı (şu an Expo'nun varsayılanları)
+- [~] Uygulama ikonu ve açılış ekranı: geçici ikon var (fincan izi halkaları), marka adı kesinleşince yenilenecek
 - [ ] Marka adı ve handle ön araştırması (TÜRKPATENT), `src/config/brand.ts` güncellenir
 - [ ] Gizlilik politikası sayfası (veri sadece cihazda; kamera ve fotoğraf izinleri ne için)
-- [ ] Kamera ve fotoğraf izin metinleri (`app.json` içinde hazır, son kontrol)
-- [ ] "Verilerimi dışa aktar" (JSON). Brifte var, telefon değişirse veri kaybını önler
+- [x] Kamera ve fotoğraf izin metinleri Türkçe; gereksiz mikrofon izni kaldırıldı
+- [x] "Verilerimi dışa aktar" (JSON), Profil'de
 - [ ] Apple Developer hesabı (kurucu alır), ardından EAS Build ile bulutta iOS derlemesi (Mac gerekmez) ve TestFlight'a gönderim
 - [ ] Otomatik yayın düzeni: TestFlight sürümü de aynı EAS Update kanalından güncellenecek şekilde ayarlanır
 - [ ] Tek dokunuşla doğrudan Instagram Hikayesi'ne paylaşım (Instagram Stories URL şeması). Ücretsiz bir Facebook/Meta geliştirici uygulama kimliği ve uygulamanın kendi derlemesi gerekir; Expo Go'da çalışmaz. Şimdilik iOS paylaşım menüsü kullanılıyor.

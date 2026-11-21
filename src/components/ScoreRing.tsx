@@ -12,6 +12,7 @@ export function ScoreRing({
   stroke = 14,
   animate = false,
   caption,
+  empty,
   onAnimationEnd,
 }: {
   score: number;
@@ -19,28 +20,35 @@ export function ScoreRing({
   stroke?: number;
   animate?: boolean;
   caption?: string;
+  /** Skor yokken halkada "–" göster (0 kötü bir not gibi görünmesin). */
+  empty?: boolean;
   onAnimationEnd?: () => void;
 }) {
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
-  const progress = useRef(new Animated.Value(animate ? 0 : score)).current;
-  const [shown, setShown] = useState(animate ? 0 : score);
+  // Animated.Value bir kez oluşturulur (useState başlatıcısı; ref'i render'da okumamak için)
+  const [progress] = useState(() => new Animated.Value(animate ? 0 : score));
+  const [animShown, setAnimShown] = useState(0);
+  const shown = animate ? animShown : score;
+  const onEnd = useRef(onAnimationEnd);
+  useEffect(() => {
+    onEnd.current = onAnimationEnd;
+  });
 
   useEffect(() => {
     if (!animate) {
       progress.setValue(score);
-      setShown(score);
       return;
     }
-    const id = progress.addListener(({ value }) => setShown(Math.round(value)));
+    const id = progress.addListener(({ value }) => setAnimShown(Math.round(value)));
     Animated.timing(progress, {
       toValue: score,
       duration: 1200,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start(() => onAnimationEnd?.());
+    }).start(() => onEnd.current?.());
     return () => progress.removeListener(id);
-  }, [score, animate]);
+  }, [score, animate, progress]);
 
   const dashOffset = progress.interpolate({
     inputRange: [0, 100],
@@ -65,7 +73,7 @@ export function ScoreRing({
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <Text style={[styles.number, { fontSize: size * 0.32 }]}>{shown}</Text>
+      <Text style={[styles.number, { fontSize: size * 0.32 }]}>{empty ? '–' : shown}</Text>
       {caption ? <Text style={styles.caption}>{caption}</Text> : null}
     </View>
   );

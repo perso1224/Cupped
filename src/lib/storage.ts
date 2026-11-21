@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { parseEntries } from './entries';
 import { appLabel, normalizeMetrics, type Metrics, type ShareSource } from './metrics';
 import { normalizePlace } from './scoring';
@@ -108,8 +109,24 @@ export async function persistPhoto(tempUri: string, id: string): Promise<string>
   if (!dir.exists) dir.create({ intermediates: true });
   const dest = new File(dir, `${id}.jpg`);
   if (dest.exists) dest.delete();
-  await new File(tempUri).copy(dest);
+  const source = await shrinkPhoto(tempUri);
+  await new File(source).copy(dest);
   return `cups/${id}.jpg`;
+}
+
+/** Kamera fotoğrafları ~8MP; kart için 1080 piksel genişlik yeterli (fincan başına ~3MB yerine ~250KB). */
+const MAX_PHOTO_WIDTH = 1080;
+async function shrinkPhoto(uri: string): Promise<string> {
+  try {
+    const original = await ImageManipulator.manipulate(uri).renderAsync();
+    const ctx = ImageManipulator.manipulate(uri);
+    if (original.width > MAX_PHOTO_WIDTH) ctx.resize({ width: MAX_PHOTO_WIDTH });
+    const img = await ctx.renderAsync();
+    const saved = await img.saveAsync({ compress: 0.82, format: SaveFormat.JPEG });
+    return saved.uri;
+  } catch {
+    return uri; // küçültülemezse orijinali kullan
+  }
 }
 
 /** Saklanan (göreli) fotoğraf yolunu bu kurulumdaki tam adrese çevirir. */

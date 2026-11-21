@@ -10,7 +10,7 @@ import { colors } from '../theme';
 function groupByDay(list: CupEntry[]) {
   const groups: { label: string; items: CupEntry[] }[] = [];
   for (const e of list) {
-    const label = new Date(e.createdAt).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const label = new Date(e.createdAt).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const last = groups[groups.length - 1];
     if (last && last.label === label) last.items.push(e);
     else groups.push({ label, items: [e] });
@@ -39,7 +39,7 @@ export default function History() {
         <View key={g.label}>
           <Text style={styles.day}>{g.label}</Text>
           {g.items.map((e) => (
-            <CupRow key={e.id} entry={e} />
+            <CupRow key={e.id} entry={e} timeOnly />
           ))}
         </View>
       ))}

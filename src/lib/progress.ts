@@ -215,11 +215,15 @@ export function passport(entries: CupEntry[]): Passport {
   };
 }
 
-export function earnedBadges(entries: CupEntry[]): Badge[] {
-  const sorted = [...entries].sort(byDate);
-  const earned = new Set<string>();
+export type BadgeProgress = { badge: Badge; current: number; target: number; earned: boolean };
 
-  // Rutine Saplandın: art arda N gün, her gün tek ve aynı yöntem
+/** Her rozet için ilerleme (ör. 2/5). Kilitli rozetler hedef gösterebilsin diye. */
+export function badgeProgress(entries: CupEntry[]): BadgeProgress[] {
+  const sorted = [...entries].sort(byDate);
+  const best = new Map<string, number>();
+  const bump = (id: string, v: number) => best.set(id, Math.max(best.get(id) ?? 0, v));
+
+  // Rutine Saplandın: art arda N gün, her gün tek ve aynı yöntem (en uzun seri)
   const dayMethods = new Map<string, Set<Method>>();
   for (const e of sorted) {
     const k = dayKey(new Date(e.createdAt));
@@ -234,32 +238,29 @@ export function earnedBadges(entries: CupEntry[]): Badge[] {
     run = only && consecutive && only === prevMethod ? run + 1 : only ? 1 : 0;
     prevKey = k;
     prevMethod = only;
-    if (run >= BADGE_RULES.routineDays) earned.add('routine');
+    bump('routine', run);
   }
 
   // Üçüncü Dalga Mülteci
-  const indep = new Set(sorted.filter((e) => e.venueKind === 'independent').map(placeKeyOf).filter(Boolean));
-  if (indep.size >= BADGE_RULES.independentPlaces) earned.add('third_wave_refugee');
+  bump('third_wave_refugee', new Set(sorted.filter((e) => e.venueKind === 'independent').map(placeKeyOf).filter(Boolean)).size);
 
-  // Zincir Sadıkı: aynı zincire art arda N ziyaret
+  // Zincir Sadıkı: aynı zincire art arda N ziyaret (en uzun seri)
   let chainRun = 0;
   let lastChain: string | null = null;
   for (const e of sorted) {
     const chain = e.venueKind === 'chain' && e.placeName ? matchChain(e.placeName) : null;
     chainRun = chain && chain === lastChain ? chainRun + 1 : chain ? 1 : 0;
     lastChain = chain;
-    if (chainRun >= BADGE_RULES.chainStreak) earned.add('chain_loyal');
+    bump('chain_loyal', chainRun);
   }
 
   // Pour-over Sabrı
-  if (sorted.filter((e) => e.method === 'filter' && e.venueKind === 'home').length >= BADGE_RULES.homeFilters) {
-    earned.add('pourover_patience');
-  }
+  bump('pourover_patience', sorted.filter((e) => e.method === 'filter' && e.venueKind === 'home').length);
 
   // İlk Geisha
-  if (sorted.some((e) => e.origin && normalizePlace(e.origin).includes('geisha'))) earned.add('first_geisha');
+  bump('first_geisha', sorted.some((e) => e.origin && normalizePlace(e.origin).includes('geisha')) ? 1 : 0);
 
-  // Ayda 5 Yeni Mekan
+  // Ayda 5 Yeni Mekan (en iyi ay)
   const seen = new Set<string>();
   const perMonth = new Map<string, number>();
   for (const e of sorted) {
@@ -269,13 +270,32 @@ export function earnedBadges(entries: CupEntry[]): Badge[] {
     const d = new Date(e.createdAt);
     const month = `${d.getFullYear()}-${d.getMonth()}`;
     perMonth.set(month, (perMonth.get(month) ?? 0) + 1);
+    bump('five_new_month', perMonth.get(month)!);
   }
-  if ([...perMonth.values()].some((n) => n >= BADGE_RULES.newPlacesInMonth)) earned.add('five_new_month');
 
-  // Derinlik: detay modu kullanılan fincan sayısı
-  if (sorted.filter(isDetailed).length >= BADGE_RULES.detailedCups) earned.add('depth');
+  // Derinlik
+  bump('depth', sorted.filter(isDetailed).length);
 
-  return BADGES.filter((b) => earned.has(b.id));
+  const targets: Record<string, number> = {
+    routine: BADGE_RULES.routineDays,
+    third_wave_refugee: BADGE_RULES.independentPlaces,
+    chain_loyal: BADGE_RULES.chainStreak,
+    pourover_patience: BADGE_RULES.homeFilters,
+    first_geisha: 1,
+    five_new_month: BADGE_RULES.newPlacesInMonth,
+    depth: BADGE_RULES.detailedCups,
+  };
+  return BADGES.map((badge) => {
+    const target = targets[badge.id] ?? 1;
+    const current = Math.min(best.get(badge.id) ?? 0, target);
+    return { badge, current, target, earned: current >= target };
+  });
+}
+
+export function earnedBadges(entries: CupEntry[]): Badge[] {
+  return badgeProgress(entries)
+    .filter((p) => p.earned)
+    .map((p) => p.badge);
 }
 
 // ---------- Profil / Damak Kartı özeti ----------

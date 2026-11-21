@@ -37,6 +37,7 @@ jobs:
         run: |
           npm test
           npm run typecheck
+          npm run lint
 
       - name: Expo projesine bağlan
         run: npx eas-cli@latest init --force --non-interactive

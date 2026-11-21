@@ -16,7 +16,8 @@ export function timeLabel(iso: string) {
   );
 }
 
-export function CupRow({ entry }: { entry: CupEntry }) {
+/** timeOnly: gün başlığı altında listelenirken sadece saat (tarih tekrar etmesin). */
+export function CupRow({ entry, timeOnly }: { entry: CupEntry; timeOnly?: boolean }) {
   return (
     <Pressable onPress={() => router.push(`/cup/${entry.id}`)} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
       <Card style={styles.row}>
@@ -34,7 +35,11 @@ export function CupRow({ entry }: { entry: CupEntry }) {
           <Text style={styles.rowSub} numberOfLines={1}>
             {placeLabel(entry)}
           </Text>
-          <Text style={styles.rowTime}>{timeLabel(entry.createdAt)}</Text>
+          <Text style={styles.rowTime}>
+            {timeOnly
+              ? new Date(entry.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+              : timeLabel(entry.createdAt)}
+          </Text>
         </View>
         <Text style={styles.rowScore}>{entry.score}</Text>
       </Card>

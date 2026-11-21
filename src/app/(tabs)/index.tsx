@@ -83,8 +83,17 @@ export default function Home() {
 
       <WeekStrip days={weekStrip(list, now)} />
 
+      {entries && list.length === 0 ? (
+        <Card style={[styles.ctaCard, { marginTop: 20 }]}>
+          <Text style={styles.ctaTitle}>{tr.home.ctaTitle}</Text>
+          <Text style={styles.ctaBody}>
+            {type ? tr.home.ctaBodyWithType(type.name) : tr.home.ctaBody}
+          </Text>
+          <PillButton label={tr.home.ctaButton} variant="light" onPress={() => router.push('/new')} style={{ marginTop: 16 }} />
+        </Card>
+      ) : (
       <Card style={[styles.todayCard, { marginTop: 20 }]}>
-        <ScoreRing score={todayScore} size={150} caption={todays.length ? levelFor(todayScore) : undefined} />
+        <ScoreRing score={todayScore} size={150} empty={todays.length === 0} caption={todays.length ? levelFor(todayScore) : undefined} />
         <View style={{ flex: 1, marginLeft: 16 }}>
           <Text style={styles.cardLabel}>{tr.home.todayScore}</Text>
           {todays.length === 0 ? <Text style={styles.cardHint}>{tr.home.noCupToday}</Text> : null}
@@ -96,6 +105,7 @@ export default function Home() {
           ) : null}
         </View>
       </Card>
+      )}
 
       <Card style={styles.goal}>
         <Text style={styles.goalText}>
@@ -132,6 +142,7 @@ export default function Home() {
         </Pressable>
       ) : null}
 
+      {list.length > 0 ? (
       <View style={styles.sectionRow}>
         <Text style={styles.section}>{tr.home.recent}</Text>
         {list.length > 5 ? (
@@ -140,7 +151,7 @@ export default function Home() {
           </Pressable>
         ) : null}
       </View>
-      {entries && list.length === 0 ? <Text style={styles.empty}>{tr.home.empty}</Text> : null}
+      ) : null}
       {list.slice(0, 5).map((e) => (
         <CupRow key={e.id} entry={e} />
       ))}
@@ -163,6 +174,9 @@ const styles = StyleSheet.create({
   },
   streakText: { marginLeft: 6, fontWeight: '700', color: colors.text },
   todayCard: { flexDirection: 'row', alignItems: 'center' },
+  ctaCard: { backgroundColor: colors.black },
+  ctaTitle: { fontSize: 22, fontWeight: '900', color: colors.white },
+  ctaBody: { fontSize: 15, color: '#CFC8BE', marginTop: 6, lineHeight: 21 },
   cardLabel: { fontSize: 13, fontWeight: '700', color: colors.muted },
   cardHint: { fontSize: 15, color: colors.text, marginTop: 4 },
   typeName: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 2 },

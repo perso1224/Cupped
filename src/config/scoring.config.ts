@@ -135,17 +135,18 @@ export const WEEKLY = {
   discoveryGoal: 2,
 } as const;
 
-export type Badge = { id: string; name: string; description: string };
+/** description: kazanınca görünen metin · howTo: kilitliyken nasıl kazanılacağı */
+export type Badge = { id: string; name: string; description: string; howTo: string };
 
 /** Rozetler. Eşikler BADGE_RULES içinde. */
 export const BADGES: Badge[] = [
-  { id: 'routine', name: 'Rutine Saplandın', description: '5 gün üst üste aynı içecek. Yarın bir sürpriz?' },
-  { id: 'third_wave_refugee', name: 'Üçüncü Dalga Mülteci', description: '5 farklı bağımsız mekan gezdin.' },
-  { id: 'chain_loyal', name: 'Zincir Sadıkı', description: 'Aynı zincire art arda 3 kez gittin. Sadakat güzel şey.' },
-  { id: 'pourover_patience', name: 'Pour-over Sabrı', description: 'Evde 5 filtre kahve demledin.' },
-  { id: 'first_geisha', name: 'İlk Geisha', description: 'Geisha çekirdeğiyle tanıştın.' },
-  { id: 'five_new_month', name: 'Ayda 5 Yeni Mekan', description: 'Bir ayda 5 yeni mekan keşfettin.' },
-  { id: 'depth', name: 'Derinlik', description: '5 fincanı detaylı kaydettin: tat notu, menşei ya da tarif.' },
+  { id: 'routine', name: 'Rutine Saplandın', description: '5 gün üst üste aynı içecek. Yarın bir sürpriz?', howTo: '5 gün üst üste aynı yöntemle iç' },
+  { id: 'third_wave_refugee', name: 'Üçüncü Dalga Mülteci', description: '5 farklı bağımsız mekan gezdin.', howTo: '5 farklı bağımsız kafeye git' },
+  { id: 'chain_loyal', name: 'Zincir Sadıkı', description: 'Aynı zincire art arda 3 kez gittin. Sadakat güzel şey.', howTo: 'Aynı zincire art arda 3 kez git' },
+  { id: 'pourover_patience', name: 'Pour-over Sabrı', description: 'Evde 5 filtre kahve demledin.', howTo: 'Evde 5 filtre kahve demle' },
+  { id: 'first_geisha', name: 'İlk Geisha', description: 'Geisha çekirdeğiyle tanıştın.', howTo: 'Detay modunda menşei olarak Geisha yaz' },
+  { id: 'five_new_month', name: 'Ayda 5 Yeni Mekan', description: 'Bir ayda 5 yeni mekan keşfettin.', howTo: 'Bir ay içinde 5 yeni mekan keşfet' },
+  { id: 'depth', name: 'Derinlik', description: '5 fincanı detaylı kaydettin: tat notu, menşei ya da tarif.', howTo: '5 fincanı detay moduyla kaydet' },
 ];
 
 export const BADGE_RULES = {

@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   close: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
   closeText: { fontSize: 18, fontWeight: '700', color: colors.text },
   hint: { fontSize: 14, fontWeight: '600', color: colors.muted },
-  share: { fontSize: 15, fontWeight: '800', color: colors.accent },
+  share: { fontSize: 15, fontWeight: '800', color: colors.black, backgroundColor: colors.accent, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { backgroundColor: colors.black, borderRadius: 32, padding: 28 },
   kicker: { color: colors.accent, fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },

@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Easing, KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip, PillButton } from '../components/ui';
@@ -31,12 +31,12 @@ export default function Onboarding() {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const [a, setA] = useState<Partial<OnboardingAnswers>>({ notes: [], nickname: '' });
-  const fade = useRef(new Animated.Value(1)).current;
+  const [fade] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     fade.setValue(0);
     Animated.timing(fade, { toValue: 1, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  }, [step]);
+  }, [step, fade]);
 
   function set<K extends keyof OnboardingAnswers>(k: K, v: OnboardingAnswers[K], autoNext = true) {
     Haptics.selectionAsync().catch(() => {});
@@ -169,6 +169,11 @@ export default function Onboarding() {
     );
     footer = <PillButton label={tr.onboarding.finish} onPress={finish} />;
   }
+
+  // Geri dönülen ve zaten cevaplanmış tek seçimli sorularda "Devam" göster
+  const answeredSingle =
+    (step === 1 && a.cupsPerDay) || (step === 2 && a.usualPlace) || (step === 3 && a.favMethod) || (step === 5 && a.goal);
+  if (!footer && answeredSingle) footer = <PillButton label={tr.onboarding.next} onPress={() => setStep(step + 1)} />;
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: colors.bg }}>

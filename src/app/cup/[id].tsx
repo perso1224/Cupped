@@ -36,7 +36,7 @@ export default function CupResult() {
     // H2 ölçümü: yeni kayıt sonrası üretilen kart sayısı
     if (isFresh) bumpCounter('cardsGenerated').catch(() => {});
     return () => clearTimeout(t);
-  }, [id]);
+  }, [id, isFresh]);
 
   async function doDelete() {
     try {

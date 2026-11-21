@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { upper } from '../i18n/tr';
 import { CorruptDataError, normalizeEntry, parseEntries, toRelativePhoto } from './entries';
 
 const good = {
@@ -62,7 +63,6 @@ describe('fotoğraf yolu', () => {
   });
 });
 
-import { upper } from '../i18n/tr';
 describe('Türkçe büyük harf', () => {
   it('i → İ, ı → I', () => {
     expect(upper('Fincan skoru')).toBe('FİNCAN SKORU');

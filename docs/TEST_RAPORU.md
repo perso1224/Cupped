@@ -134,7 +134,27 @@ Aynı sorunu bulan ajanlar tek maddede birleştirildi. Köşeli parantez, sorunu
 - **Günlük hatırlatma (kurucu kararı):** 20:30'da gelir, açılıp kapatılabilir, ana sayfada bir kez sorulur.
 - **app.json:** mikrofon izni kaldırıldı, iPad kapatıldı, şifreleme beyanı eklendi.
 
-**Kalanlar (Paket 3):** Y9 fotoğraf küçültme, Y10 klavye, ORTA ve DÜŞÜK maddeler, ikon, TestFlight hazırlığı.
+**Paket 3 tamamlandı (21 Kas):**
+- Y9: fotoğraflar 1080 piksele küçültülüyor (fincan başına ~3 MB yerine ~250 KB).
+- Y10: klavyede "Bitti" çubuğu; Kaydet düğmesi artık ekranın normal akışında; yazılan kutu kendiliğinden görünür kalıyor.
+- Kilitli rozetler nasıl kazanılacağını ve ilerlemeyi gösteriyor ("2/5").
+- Boş ana sayfa: "İlk fincanını ekle" kartı; bugün fincan yoksa halkada "–".
+- Küçük düzeltmeler:
+  - Uzun mekan adı çipi taşmıyor.
+  - Alt menü yüksekliği artık sabit değil.
+  - Geçmişte tarih iki kez yazmıyor.
+  - Pasaport tarihleri yıllı.
+  - Tarif kutularının etiketi var.
+  - Tanıtımda geri dönünce "Devam" düğmesi çıkıyor.
+  - Damak Kartı'nda Paylaş düğmesi belirgin.
+- Geçici uygulama ikonu ve açılış ekranı (fincan izi halkaları). Marka adı kesinleşince yenilenecek.
+- Lint kuruldu ve otomatik yayına eklendi. React kurallarına göre 6 hata ve 9 uyarı temizlendi.
+
+**Hâlâ açık (düşük öncelik):**
+- Büyük yazı tipi (Dynamic Type) bazı sabit yükseklikli düğmeleri taşırabilir.
+- Uzun geçmiş listesi henüz FlatList değil.
+- Tanıtımdaki "günlük fincan" ve "hedef" cevapları henüz kullanılmıyor.
+- Geri bildirim bağlantısı için kurucunun bir form veya WhatsApp linki vermesi gerekiyor.
 
 ## Önerilen düzeltme sırası
 

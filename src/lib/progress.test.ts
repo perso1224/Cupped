@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  badgeProgress,
   brewRatio,
   currentStreak,
   discoveriesIn,
@@ -210,5 +211,20 @@ describe('dönem aralığı', () => {
   it('bu hafta / geçen hafta', () => {
     expect(periodRange('week', 0, WED)).toEqual({ start: new Date(2026, 10, 16), end: new Date(2026, 10, 23) });
     expect(periodRange('week', -1, WED)).toEqual({ start: new Date(2026, 10, 9), end: new Date(2026, 10, 16) });
+  });
+});
+
+describe('rozet ilerlemesi', () => {
+  it('kilitli rozetler ilerleme gösterir', () => {
+    const p = badgeProgress([
+      cup(at(2026, 10, 1), { venueKind: 'independent', placeName: 'A' }),
+      cup(at(2026, 10, 2), { venueKind: 'independent', placeName: 'B' }),
+      cup(at(2026, 10, 3), { method: 'filter' }),
+    ]);
+    const get = (id: string) => p.find((x) => x.badge.id === id)!;
+    expect(get('third_wave_refugee')).toMatchObject({ current: 2, target: 5, earned: false });
+    expect(get('pourover_patience')).toMatchObject({ current: 1, target: 5 });
+    expect(get('first_geisha')).toMatchObject({ current: 0, target: 1 });
+    expect(p.every((x) => x.badge.howTo.length > 0)).toBe(true);
   });
 });

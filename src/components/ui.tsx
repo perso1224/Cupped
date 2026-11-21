@@ -7,7 +7,9 @@ export function Chip({ label, selected, onPress }: { label: string; selected: bo
       onPress={onPress}
       style={({ pressed }) => [styles.chip, selected && styles.chipSelected, pressed && { opacity: 0.7 }]}
     >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+      <Text style={[styles.chipText, selected && styles.chipTextSelected]} numberOfLines={1}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -49,6 +51,7 @@ export function Card({ children, style }: { children: React.ReactNode; style?: S
 
 const styles = StyleSheet.create({
   chip: {
+    maxWidth: '100%',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: radius.pill,

@@ -58,6 +58,10 @@ export const tr = {
     goal: (done: number, goal: number) => `Bu hafta ${Math.min(done, goal)}/${goal} yeni keşif`,
     goalDone: 'Haftalık keşif hedefi tamam!',
     seeAll: 'Tümünü gör',
+    ctaTitle: 'İlk fincanını ekle',
+    ctaBody: 'Fotoğrafını çek, 2 dokunuşta kaydet; skorun ve damak tipin ortaya çıksın.',
+    ctaBodyWithType: (t: string) => `Tahminimiz ${t}. İlk fincanla gerçek damak tipin ortaya çıksın.`,
+    ctaButton: 'Fincan ekle',
   },
   capture: {
     permissionTitle: 'Fincanının fotoğrafını çekelim',
@@ -79,6 +83,7 @@ export const tr = {
     save: 'Skoru gör',
     chooseMethod: 'Önce nasıl içtiğini seç',
     addDetail: '+ Detay ekle (isteğe bağlı)',
+    keyboardDone: 'Bitti',
     hideDetail: '− Detayı gizle',
     detailHint: 'Basit kayıt da tamamen yeterli. Detay, damak tipini daha isabetli yapar ve Derinlik rozetine sayılır.',
     notesLabel: 'Tat notları (en fazla 2)',

@@ -9,7 +9,9 @@ import {
   Alert,
   Image,
   Linking,
-  KeyboardAvoidingView,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,6 +29,9 @@ import { knownPlaces, loadEntries, newId, persistPhoto, saveEntry, updateMetrics
 import { brewRatio } from '../lib/progress';
 import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from '../lib/types';
 import { colors } from '../theme';
+
+/** Klavyenin üstündeki "Bitti" çubuğu (sayı klavyesinde ve notta Return tuşu yok). */
+const KB_DONE = 'cupped-kb-done';
 
 const METHODS: Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
 const NOTES: TasteNote[] = ['fruity', 'floral', 'chocolate', 'nutty', 'caramel', 'bright', 'bold'];
@@ -68,8 +73,9 @@ export default function NewCup() {
   }
 
   // H3: ekranın açılışından kayda kadar geçen süre
-  const openedAt = useRef(Date.now());
+  const openedAt = useRef(0);
   useEffect(() => {
+    openedAt.current = Date.now();
     loadEntries().then(setHistory);
     updateMetrics((m) => {
       m.newOpened += 1;
@@ -206,10 +212,13 @@ export default function NewCup() {
   // --- 2. adım: Nasıl? + Nerede? ---
   const typedKey = normalizePlace(typed);
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 140 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
       >
         <View style={styles.topRow}>
           <Pressable onPress={() => setStep('photo')} hitSlop={12}>
@@ -251,6 +260,7 @@ export default function NewCup() {
         </View>
         <View style={styles.inputRow}>
           <TextInput
+              inputAccessoryViewID={KB_DONE}
             value={typed}
             onChangeText={(t) => {
               setTyped(t);
@@ -282,6 +292,7 @@ export default function NewCup() {
 
             <Text style={styles.label}>{tr.capture.originLabel}</Text>
             <TextInput
+              inputAccessoryViewID={KB_DONE}
               value={origin}
               onChangeText={setOrigin}
               placeholder={tr.capture.originPlaceholder}
@@ -294,7 +305,12 @@ export default function NewCup() {
               {brewRatio(parseNum(dose), parseNum(water)) ? `  ·  ${tr.capture.ratio(brewRatio(parseNum(dose), parseNum(water))!)}` : ''}
             </Text>
             <View style={{ flexDirection: 'row' }}>
+              <Text style={[styles.unit, { flex: 1, marginRight: 8 }]}>{tr.capture.doseLabel}</Text>
+              <Text style={[styles.unit, { flex: 1 }]}>{tr.capture.waterLabel}</Text>
+            </View>
+            <View style={{ flexDirection: 'row' }}>
               <TextInput
+              inputAccessoryViewID={KB_DONE}
                 value={dose}
                 onChangeText={setDose}
                 placeholder={tr.capture.doseLabel}
@@ -303,6 +319,7 @@ export default function NewCup() {
                 style={[styles.input, { flex: 1, flexBasis: 0, minWidth: 0, marginRight: 8 }]}
               />
               <TextInput
+              inputAccessoryViewID={KB_DONE}
                 value={water}
                 onChangeText={setWater}
                 placeholder={tr.capture.waterLabel}
@@ -321,6 +338,7 @@ export default function NewCup() {
 
             <Text style={styles.label}>{tr.capture.noteLabel}</Text>
             <TextInput
+              inputAccessoryViewID={KB_DONE}
               value={note}
               onChangeText={setNote}
               placeholder={tr.capture.notePlaceholder}
@@ -339,7 +357,17 @@ export default function NewCup() {
           disabled={!method || !where || saving}
         />
       </View>
-    </KeyboardAvoidingView>
+
+      {Platform.OS === 'ios' ? (
+        <InputAccessoryView nativeID={KB_DONE}>
+          <View style={styles.kbBar}>
+            <Pressable onPress={() => Keyboard.dismiss()} hitSlop={10}>
+              <Text style={styles.kbDone}>{tr.capture.keyboardDone}</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      ) : null}
+    </View>
   );
 }
 
@@ -377,6 +405,7 @@ const styles = StyleSheet.create({
   detailToggleText: { fontSize: 16, fontWeight: '800', color: colors.accent },
   detailHint: { fontSize: 14, color: colors.muted, lineHeight: 20, marginTop: 8 },
   label: { fontSize: 15, fontWeight: '800', color: colors.text, marginTop: 20, marginBottom: 10 },
+  unit: { fontSize: 12, fontWeight: '700', color: colors.muted, marginBottom: 6 },
   input: {
     height: 50,
     borderRadius: 14,
@@ -387,5 +416,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
-  saveBar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 12, backgroundColor: colors.bg },
+  saveBar: { paddingHorizontal: 20, paddingTop: 12, backgroundColor: colors.bg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
+  kbBar: { flexDirection: 'row', justifyContent: 'flex-end', backgroundColor: '#F1EEE9', paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
+  kbDone: { fontSize: 16, fontWeight: '800', color: colors.accent },
 });

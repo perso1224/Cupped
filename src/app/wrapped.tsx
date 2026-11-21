@@ -68,7 +68,13 @@ export default function Wrapped() {
       ? `${start.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} – ${addDays(end, -1).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}`
       : capitalize(start.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }));
 
-  const slides = useMemo(() => (entries ? buildWrapped(entries, start, end) : []), [entries, dayKey(start), kind]);
+  // Gün değişince (gece yarısı) dönem yeniden hesaplansın diye anahtar gün; aralık bu anahtardan türetilir.
+  const startKey = dayKey(start);
+  const slides = useMemo(() => {
+    if (!entries) return [];
+    const s = new Date(`${startKey}T00:00:00`);
+    return buildWrapped(entries, s, periodRange(kind, 0, s).end);
+  }, [entries, startKey, kind]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const progress = useRef(new Animated.Value(0)).current;
@@ -105,7 +111,7 @@ export default function Wrapped() {
   useEffect(() => {
     enter.setValue(0);
     Animated.timing(enter, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  }, [index, slides.length]);
+  }, [index, slides.length, enter]);
 
   // Otomatik ilerleme
   useEffect(() => {
@@ -125,6 +131,8 @@ export default function Wrapped() {
       anim.stop();
       progress.stopAnimation((v) => (progressValue.current = v));
     };
+    // `go` her render'da yeniden oluşur; eklenirse zamanlayıcı her render'da sıfırlanır. Sadece slayt/duraklatma değişince yeniden başlamalı.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, paused, slides.length]);
 
   function go(i: number) {
