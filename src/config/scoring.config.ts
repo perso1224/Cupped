@@ -82,17 +82,17 @@ export type PalateType = {
 };
 
 export const PALATE_TYPES: PalateType[] = [
-  { id: 'floral_explorer', name: 'Floral Explorer', tagline: 'Fincanında çiçek bahçesi ararsın ve bazen gerçekten bulursun.' },
-  { id: 'aroma_hunter', name: 'Aroma Avcısı', tagline: 'Koklamadan tek yudum almazsın; masadakiler bekler.' },
+  { id: 'floral_explorer', name: 'Meyve Kaşifi', tagline: 'Fincanında meyve bahçesi ararsın ve bazen gerçekten bulursun.' },
+  { id: 'aroma_hunter', name: 'Çiçek Avcısı', tagline: 'Koklamadan tek yudum almazsın; fincanda yasemin arayan sensin.' },
   { id: 'classic_master', name: 'Klasik Usta', tagline: 'Trendler gelip geçer, senin zevkin yerinden kıpırdamaz.' },
   { id: 'sweet_balancer', name: 'Tatlı Dengeci', tagline: 'Hayat yeterince acı, fincanın en azından tatlı olsun.' },
   { id: 'night_shift', name: 'Gece Vardiyası', tagline: 'Kahven gece kadar koyu, verimin de öyle (iddia).' },
   { id: 'acid_romantic', name: 'Asit Romantiği', tagline: 'Herkes "ekşi" der, sen "canlı asidite" dersin.' },
-  { id: 'oat_milk_diplomat', name: 'Oat Milk Diplomatı', tagline: 'Sert sözlerden de sert kahveden de kaçınırsın; her masada barışı sen korursun.' },
+  { id: 'oat_milk_diplomat', name: 'Yulaf Sütü Diplomatı', tagline: 'Sert sözlerden de sert kahveden de kaçınırsın; her masada barışı sen korursun.' },
   { id: 'pure_intensity', name: 'Saf Yoğunluk', tagline: 'Lafı uzatmazsın: tek shot, net karar.' },
   { id: 'foam_guardian', name: 'Köpük Muhafızı', tagline: 'Köpüksüz Türk kahvesi senin için küçük bir skandal.' },
   { id: 'cool_head', name: 'Soğuk Kafalı', tagline: 'Mevsim fark etmez, sen her koşulda serin kalırsın.' },
-  { id: 'pourover_philosopher', name: 'Pour-over Filozofu', tagline: 'Su sıcaklığını derecesine kadar bilirsin; sormayan da öğrenir.' },
+  { id: 'pourover_philosopher', name: 'Demleme Filozofu', tagline: 'Su sıcaklığını derecesine kadar bilirsin; sormayan da öğrenir.' },
   { id: 'third_wave_nomad', name: 'Üçüncü Dalga Gezgini', tagline: 'Menüde "single origin" görünce adımların kendiliğinden yavaşlar.' },
   { id: 'cafe_nomad', name: 'Kafe Göçebesi', tagline: 'Aynı kafeye iki kez gitmek senin için neredeyse taahhüt.' },
 ];

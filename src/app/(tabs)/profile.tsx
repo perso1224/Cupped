@@ -66,7 +66,7 @@ export default function Profile() {
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
-        <Text style={styles.nick}>{profile?.nickname ? `@${profile.nickname}` : tr.profile.noNick}</Text>
+        <Text style={styles.nick}>{profile?.nickname ? profile.nickname : tr.profile.noNick}</Text>
         {type_ ? <Text style={styles.typeLine}>{type_.name}</Text> : null}
         <PillButton label={tr.profile.showCard} onPress={() => router.push('/card')} style={{ marginTop: 14, alignSelf: 'stretch' }} />
       </View>

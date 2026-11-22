@@ -105,7 +105,7 @@ export default function PalateCard() {
                 <T style={[styles.kicker, { fontSize: u * 3.2, color: th.accent }]}>{upper(s.palateTypeId ? tr.palateCard.idTitle : tr.profile.starter)}</T>
                 <T style={[styles.kicker, { fontSize: u * 3.2, color: th.muted }]}>{tr.palateCard.no(memberNo(profile?.onboardedAt))}</T>
               </View>
-              {profile?.nickname ? <T style={[styles.nick, { fontSize: u * 4.4, color: th.fg }]}>@{profile.nickname}</T> : null}
+              {profile?.nickname ? <T style={[styles.nick, { fontSize: u * 4.4, color: th.fg }]}>{profile.nickname}</T> : null}
             </View>
 
             {/* Amblem: kişiye özel damak parmak izi + damga yazısı + tip monogramı */}
@@ -161,7 +161,7 @@ export default function PalateCard() {
   );
 }
 
-/** Tip adının baş harfleri: "Saf Yoğunluk" → "SY", "Pour-over Filozofu" → "PF". */
+/** Tip adının baş harfleri: "Saf Yoğunluk" → "SY", "Demleme Filozofu" → "DF". */
 function monogram(name: string): string {
   return name
     .split(/[\s-]+/)

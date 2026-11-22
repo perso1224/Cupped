@@ -25,12 +25,18 @@ const CUPS: CupsPerDay[] = ['one', 'few', 'many'];
 const PLACES: UsualPlace[] = ['home', 'cafe', 'office', 'mixed'];
 const GOALS: PalateGoal[] = ['explore', 'brew', 'taste', 'log'];
 
-// 0: hoş geldin · 1-6: sorular · 7: damak tipi önizlemesi
-const QUESTIONS = 6;
+// 0: hoş geldin · 1-6: sorular · 7: damak tipi önizlemesi.
+// Kısa tanıtım (dış inceleme): ilk fincana kadar yalnızca 3 soru. Günde kaç fincan, hedef ve takma ad
+// sorulmaz (varsayılanla başlar; hedef ve takma ad Ayarlar'dan değiştirilebilir).
+const FLOW = [0, 2, 3, 4, 7];
+const QUESTIONS = FLOW.length - 2;
 
 export default function Onboarding() {
   const insets = useSafeAreaInsets();
-  const [step, setStep] = useState(0);
+  const [pos, setPos] = useState(0);
+  const step = FLOW[pos];
+  const next = () => setPos((p) => Math.min(FLOW.length - 1, p + 1));
+  const back = () => setPos((p) => Math.max(0, p - 1));
   const [a, setA] = useState<Partial<OnboardingAnswers>>({ notes: [], nickname: '' });
   const [fade] = useState(() => new Animated.Value(1));
 
@@ -46,7 +52,7 @@ export default function Onboarding() {
   function set<K extends keyof OnboardingAnswers>(k: K, v: OnboardingAnswers[K], autoNext = true) {
     haptic.select();
     setA((p) => ({ ...p, [k]: v }));
-    if (autoNext) setTimeout(() => setStep((s) => s + 1), 180);
+    if (autoNext) setTimeout(next, 180);
   }
 
   function toggleNote(n: TasteNote) {
@@ -96,7 +102,7 @@ export default function Onboarding() {
         <Text style={styles.body}>{tr.onboarding.welcomeBody}</Text>
       </View>
     );
-    footer = <PillButton label={tr.onboarding.start} onPress={() => setStep(1)} />;
+    footer = <PillButton label={tr.onboarding.start} onPress={next} />;
   } else if (step === 1) {
     content = (
       <Question title={tr.onboarding.cupsQ}>
@@ -135,7 +141,7 @@ export default function Onboarding() {
       <PillButton
         label={(a.notes ?? []).length ? tr.onboarding.next : tr.onboarding.skip}
         variant={(a.notes ?? []).length ? 'dark' : 'light'}
-        onPress={() => setStep(5)}
+        onPress={next}
       />
     );
   } else if (step === 5) {
@@ -155,7 +161,7 @@ export default function Onboarding() {
           placeholder={tr.onboarding.nickPlaceholder}
           placeholderTextColor={colors.muted}
           returnKeyType="done"
-          onSubmitEditing={() => setStep(7)}
+          onSubmitEditing={next}
           style={styles.input}
           autoCapitalize="none"
         />
@@ -165,7 +171,7 @@ export default function Onboarding() {
       <PillButton
         label={(a.nickname ?? '').trim() ? tr.onboarding.next : tr.onboarding.skip}
         variant={(a.nickname ?? '').trim() ? 'dark' : 'light'}
-        onPress={() => setStep(7)}
+        onPress={next}
       />
     );
   } else {
@@ -174,7 +180,7 @@ export default function Onboarding() {
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <View style={styles.revealCard}>
           <Text style={styles.revealKicker}>{upper(tr.onboarding.revealKicker)}</Text>
-          {answers.nickname ? <Text style={styles.revealNick}>@{answers.nickname}</Text> : null}
+          {answers.nickname ? <Text style={styles.revealNick}>{answers.nickname}</Text> : null}
           <Text style={styles.revealName}>{type.name}</Text>
           <Text style={styles.revealTagline}>{type.tagline}</Text>
         </View>
@@ -187,20 +193,20 @@ export default function Onboarding() {
   // Geri dönülen ve zaten cevaplanmış tek seçimli sorularda "Devam" göster
   const answeredSingle =
     (step === 1 && a.cupsPerDay) || (step === 2 && a.usualPlace) || (step === 3 && a.favMethod) || (step === 5 && a.goal);
-  if (!footer && answeredSingle) footer = <PillButton label={tr.onboarding.next} onPress={() => setStep(step + 1)} />;
+  if (!footer && answeredSingle) footer = <PillButton label={tr.onboarding.next} onPress={next} />;
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 }}>
-        {step >= 1 && step <= QUESTIONS ? (
+        {pos >= 1 && pos <= QUESTIONS ? (
           <View style={styles.topRow}>
-            <PressScale onPress={() => setStep((s) => s - 1)} hitSlop={12} scaleTo={0.9} accessibilityLabel={tr.settings.back}>
+            <PressScale onPress={back} hitSlop={12} scaleTo={0.9} accessibilityLabel={tr.settings.back}>
               <Icon name="chevron-back" size={26} color={colors.text} />
             </PressScale>
             <View style={styles.progress}>
-              <View style={[styles.progressFill, { width: `${(step / QUESTIONS) * 100}%` }]} />
+              <View style={[styles.progressFill, { width: `${(pos / QUESTIONS) * 100}%` }]} />
             </View>
-            <Text style={styles.stepText}>{tr.onboarding.step(step, QUESTIONS)}</Text>
+            <Text style={styles.stepText}>{tr.onboarding.step(pos, QUESTIONS)}</Text>
           </View>
         ) : null}
         <Animated.View style={{ flex: 1, opacity: fade }}>{content}</Animated.View>
