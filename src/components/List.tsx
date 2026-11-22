@@ -89,7 +89,7 @@ export function ListRow({
   );
   if (!onPress) return content;
   return (
-    <PressScale onPress={onPress} scaleTo={0.985}>
+    <PressScale onPress={onPress} scaleTo={0.985} android_ripple={{ color: colors.line }}>
       {content}
     </PressScale>
   );

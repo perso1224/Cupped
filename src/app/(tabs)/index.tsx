@@ -470,6 +470,7 @@ const styles = StyleSheet.create({
     shadowOpacity: isDark ? 0.18 : 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
+    elevation: isDark ? 0 : 3, // Android gölgesi
   },
   boardTop: { flexDirection: 'row', alignItems: 'center' },
   boardKicker: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: BOARD.muted },
@@ -515,6 +516,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   typeIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   typeName: { ...type.title3, marginTop: 1 },

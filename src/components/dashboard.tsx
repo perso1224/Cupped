@@ -147,6 +147,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
+    elevation: 2, // Android gölgesi (iOS yok sayar)
   },
   tileTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
   tileValue: { fontSize: 22, fontFamily: fonts.display, color: colors.text, flexShrink: 1 },

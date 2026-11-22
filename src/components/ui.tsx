@@ -100,7 +100,7 @@ export function Card({ children, style }: { children: React.ReactNode; style?: S
 const styles = StyleSheet.create({
   segment: { flexDirection: 'row', backgroundColor: colors.line, borderRadius: 10, padding: 2 },
   segmentItem: { flex: 1, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  segmentOn: { backgroundColor: colors.card, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } },
+  segmentOn: { backgroundColor: colors.card, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   segmentText: { fontSize: 14, fontWeight: '600', color: colors.muted },
   chip: {
     maxWidth: '100%',
@@ -134,5 +134,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
+    elevation: 2, // Android gölgesi (iOS yok sayar)
   },
 });
