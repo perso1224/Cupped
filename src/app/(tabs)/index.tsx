@@ -8,7 +8,7 @@ import { WeekChart } from '../../components/WeekChart';
 import { WeekStrip } from '../../components/WeekStrip';
 import { Bean, CupGauge } from '../../components/coffee';
 import { Pager } from '../../components/dashboard';
-import { FadeIn, GrowBar, Pop, PressScale, animateLayout, haptic } from '../../components/motion';
+import { FadeIn, GrowBar, Pop, PressScale, animateLayout, haptic, useAnimatedRemovals, useIntroDone } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
 import { tr, upper } from '../../i18n/tr';
@@ -37,7 +37,8 @@ export default function Home() {
   const { width: screenW } = useWindowDimensions();
   const tabSpace = useTabBarSpace();
   const scrollRef = useTabScrollRef();
-  const entries = useEntries();
+  const introDone = useIntroDone();
+  const entries = useAnimatedRemovals(useEntries()); // silinen fincan "Son fincanlar"dan kayarak çıkar
   const list = entries ?? [];
   const profile = useProfile();
   const settings = useSettings();
@@ -248,7 +249,11 @@ export default function Home() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: tabSpace }}
     >
+      {/* Açılış logosu bitene kadar boş: sonra başlık ve kartlar sırayla süzülür */}
+      {introDone ? (
+        <>
       {/* Başlık: tarih + büyük "Özet" (Apple Fitness gibi) */}
+      <FadeIn index={0}>
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.date}>{dateLabel}</Text>
@@ -261,24 +266,31 @@ export default function Home() {
           <Text style={styles.streakText}>{streak}</Text>
         </View>
       </View>
+      </FadeIn>
 
-      <WeekStrip days={weekStrip(list, now)} />
+      <FadeIn index={0}>
+        <WeekStrip days={weekStrip(list, now)} />
+      </FadeIn>
 
-      {entries && list.length === 0 ? (
+      {/* Kayıtlar okunana kadar (çok kısa) gövde çizilmez; böylece kartlar veriyle birlikte sırayla süzülür */}
+      {entries === null ? null : list.length === 0 ? (
+        <FadeIn index={1}>
         <Card style={[styles.ctaCard, { marginTop: 20 }]}>
           <Text style={styles.ctaTitle}>{tr.home.ctaTitle}</Text>
           <Text style={styles.ctaBody}>{type_ ? tr.home.ctaBodyWithType(type_.name) : tr.home.ctaBody}</Text>
           <PillButton label={tr.home.ctaButton} variant="light" onPress={() => router.push('/new')} style={{ marginTop: 16 }} />
         </Card>
+        </FadeIn>
       ) : (
         <>
           {/* BUGÜN */}
           <View style={{ height: 16 }} />
-          <FadeIn index={0}>
+          <FadeIn index={1}>
             <Pager key={pages.length} width={pageW} pages={pages} />
           </FadeIn>
 
           {askBackup ? (
+            <FadeIn index={2}>
             <Card style={{ marginTop: 14 }}>
               <View style={styles.inlineTitle}>
                 <Icon name="cloud-upload" size={18} color={tint.sky} />
@@ -290,9 +302,11 @@ export default function Home() {
                 <PillButton label={tr.homePrompt.backupYes} onPress={() => answerBackup(true)} style={{ flex: 2, height: 46 }} />
               </View>
             </Card>
+            </FadeIn>
           ) : null}
 
           {askReminder ? (
+            <FadeIn index={2}>
             <Card style={{ marginTop: 14 }}>
               <View style={styles.inlineTitle}>
                 <Icon name="notifications" size={18} color={tint.cherry} />
@@ -304,11 +318,12 @@ export default function Home() {
                 <PillButton label={tr.homePrompt.yes} onPress={() => answerReminder(true)} style={{ flex: 2, height: 46 }} />
               </View>
             </Card>
+            </FadeIn>
           ) : null}
 
           {/* BU HAFTA */}
-          <SectionHeader title={tr.home.thisWeek} />
-          <FadeIn index={0}>
+          <FadeIn index={3}>
+            <SectionHeader title={tr.home.thisWeek} />
             <Card>
               <View style={styles.chartHeader}>
                 <View>
@@ -336,7 +351,7 @@ export default function Home() {
           </FadeIn>
 
           {type_ ? (
-            <FadeIn index={1}>
+            <FadeIn index={4}>
               <PressScale
                 onPress={() => {
                   haptic.light();
@@ -370,7 +385,7 @@ export default function Home() {
           ) : null}
 
           {banner ? (
-            <FadeIn index={2}>
+            <FadeIn index={5}>
             <PressScale
               onPress={() => {
                 haptic.light();
@@ -392,7 +407,7 @@ export default function Home() {
 
           {/* Fincan Duvarı: Aralık boyunca "hazırlanıyor", yıl sonunda "tamamlandı" */}
           {wall ? (
-            <FadeIn index={2}>
+            <FadeIn index={5}>
               <PressScale
                 onPress={() => {
                   haptic.light();
@@ -419,8 +434,8 @@ export default function Home() {
           {/* ÖNE ÇIKANLAR */}
           {nudge || highlights.length ? (
             <>
+              <FadeIn index={6}>
               <SectionHeader title={tr.home.highlights} />
-              <FadeIn index={2}>
                 <View style={styles.group}>
                   {nudge ? (
                     <HighlightRow icon="bulb" color={tint.amber} title={tr.home.nudgeTitle} text={nudge.text} />
@@ -442,6 +457,7 @@ export default function Home() {
           ) : null}
 
           {/* SON FİNCANLAR */}
+          <FadeIn index={7}>
           <View style={styles.sectionRow}>
             <Text style={styles.sectionTitle}>{tr.home.recent}</Text>
             {list.length > 5 ? (
@@ -450,7 +466,6 @@ export default function Home() {
               </PressScale>
             ) : null}
           </View>
-          <FadeIn index={3}>
             <View style={styles.group}>
               {list.slice(0, 5).map((e, i) => (
                 <Fragment key={e.id}>
@@ -462,6 +477,8 @@ export default function Home() {
           </FadeIn>
         </>
       )}
+        </>
+      ) : null}
     </ScrollView>
   );
 }

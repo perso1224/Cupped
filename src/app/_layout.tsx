@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
 import { Appearance, AppState, View } from 'react-native';
 import { BrandIntro } from '../components/BrandIntro';
+import { setIntroPlaying } from '../components/motion';
 import { refreshReminder } from '../lib/reminders';
 import { recordActiveDay } from '../lib/storage';
 import { useProfile } from '../lib/useProfile';
@@ -16,6 +17,8 @@ export const unstable_settings = { anchor: '(tabs)' };
 
 /** Açılış animasyonu bu oturumda gösterildi mi (modül düzeyi: ekranlar arası gezinmede tekrar çıkmasın). */
 let introShown = false;
+// Logo oynarken ana sayfa giriş animasyonlarını bekletsin
+setIntroPlaying(true);
 
 /** Tema değişince yeniden yüklemenin güvenli olduğu ekranlar (yarım kalan giriş yok): ana sekmeler. */
 const SAFE_TO_RELOAD = new Set(['/', '/progress', '/passport', '/profile']);
@@ -75,6 +78,7 @@ export default function RootLayout() {
   const endIntro = useCallback(() => {
     introShown = true;
     setShowIntro(false);
+    setIntroPlaying(false);
   }, []);
   const ready = profile !== undefined && (fontsLoaded || !!fontError);
   const intro = showIntro ? <BrandIntro ready={ready} onDone={endIntro} /> : null;

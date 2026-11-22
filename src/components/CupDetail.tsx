@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { placeLabel, ShareCard, type CardHandle } from './ShareCard';
 import { CupGauge } from './coffee';
 import { MetricTile } from './dashboard';
-import { BadgeArt } from './BadgeArt';
+import { BadgeArt, CelebratedBadge } from './BadgeArt';
 import { Stars } from './Stars';
 import { Icon, type IconName } from './Icon';
 import { ListRow, ListSection } from './List';
@@ -207,8 +207,9 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
 
           {newBadges.map((b, i) => (
             <Pop key={b.id} delay={1300 + i * 250} style={styles.newBadge}>
-              <View style={{ marginRight: 12 }}>
-                <BadgeArt id={b.id} earned size={64} />
+              {/* Rozet büyüyerek gelir, arkasında dönen ışıltı (yalnızca yeni kayıtta) */}
+              <View style={{ marginRight: 16, marginLeft: 4 }}>
+                {isFresh ? <CelebratedBadge id={b.id} size={64} delay={1450 + i * 250} /> : <BadgeArt id={b.id} earned size={64} />}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.newBadgeKicker}>{tr.result.newBadge}</Text>

@@ -4,7 +4,7 @@ import { BackButton } from '../components/NavButtons';
 import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../components/CupRow';
-import { FadeIn } from '../components/motion';
+import { FadeIn, useAnimatedRemovals } from '../components/motion';
 import { tr, upper } from '../i18n/tr';
 import { useEntries } from '../lib/useEntries';
 import { filterEntries } from '../lib/progress';
@@ -26,7 +26,8 @@ export default function History() {
   const insets = useSafeAreaInsets();
   // ?place=<mekan anahtarı>&title=<ad> ya da ?method=<yöntem>: Pasaport'tan gelen filtre
   const { place, method, title } = useLocalSearchParams<{ place?: string; method?: Method; title?: string }>();
-  const all = useEntries();
+  // Silinen fincan geri dönünce listeden kayarak çıkar
+  const all = useAnimatedRemovals(useEntries());
   const filtered = !!(place || method);
   const entries = useMemo(() => (all && filtered ? filterEntries(all, { place, method }) : all), [all, filtered, place, method]);
   const list = entries ?? [];

@@ -295,3 +295,56 @@ export function Confetti({ play, count = 36 }: { play: boolean; count?: number }
     </View>
   );
 }
+
+/**
+ * Listeden bir kayıt silinince (ör. fincan detayında Sil → geri dönüş) satır hemen kaybolmaz:
+ * ekran göründükten kısa süre sonra solarak çıkar, alttakiler yukarı kayar.
+ * Diğer değişiklikler (ekleme, ilk yükleme) anında uygulanır.
+ */
+export function useAnimatedRemovals<T extends { id: string }>(list: T[] | null): T[] | null {
+  const [shown, setShown] = useState(list);
+  const prev = useRef(list);
+  useEffect(() => {
+    const before = prev.current;
+    prev.current = list;
+    const ids = new Set((list ?? []).map((e) => e.id));
+    const removed = !!before && !!list && before.some((e) => !ids.has(e.id));
+    if (!removed || reduceMotion) {
+      setShown(list);
+      return;
+    }
+    // Geri dönüş geçişi bitsin, sonra satır gözle görülerek kaybolsun
+    const t = setTimeout(() => {
+      LayoutAnimation.configureNext({
+        duration: 320,
+        update: { type: 'easeInEaseOut' },
+        delete: { type: 'easeInEaseOut', property: 'opacity' },
+      });
+      setShown(list);
+    }, 380);
+    return () => clearTimeout(t);
+  }, [list]);
+  return shown;
+}
+
+/**
+ * Açılış logosu (BrandIntro) oynarken arkadaki ekranların giriş animasyonları görünmez.
+ * Ana sayfa bu bayrağı bekler; kartlar logo kaybolunca sırayla süzülür.
+ */
+let introPlaying = false;
+const introListeners = new Set<() => void>();
+export function setIntroPlaying(v: boolean) {
+  if (introPlaying === v) return;
+  introPlaying = v;
+  introListeners.forEach((fn) => fn());
+}
+const subscribeIntro = (cb: () => void) => {
+  introListeners.add(cb);
+  return () => {
+    introListeners.delete(cb);
+  };
+};
+const introDoneNow = () => !introPlaying;
+export function useIntroDone(): boolean {
+  return useSyncExternalStore(subscribeIntro, introDoneNow, introDoneNow);
+}

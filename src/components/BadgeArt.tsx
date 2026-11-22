@@ -1,6 +1,9 @@
-import { Image, View, type ImageSourcePropType } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Easing, Image, View, type ImageSourcePropType } from 'react-native';
+import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 import { colors } from '../theme';
 import { Icon } from './Icon';
+import { haptic, reduceMotionNow } from './motion';
 
 // Metro görselleri require ile pakete ekler
 const ART: Record<string, ImageSourcePropType> = {
@@ -39,6 +42,83 @@ export function BadgeArt({ id, earned, size = 56 }: { id: string; earned: boolea
           <Icon name="lock-closed" size={size * 0.2} color={colors.muted} />
         </View>
       )}
+    </View>
+  );
+}
+
+/** Altın ışıltı rengi (koyu kart üstünde parlak görünür). */
+const GOLD = '#F2C66D';
+
+/** Işıltı: rozetin arkasında yavaşça dönen ışın demeti + yumuşak parıltı. */
+function Rays({ size }: { size: number }) {
+  const n = 12;
+  const c = size / 2;
+  const r = size / 2;
+  const d = Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2;
+    const w = Math.PI / n / 1.6;
+    const p1 = [c + Math.cos(a - w) * r, c + Math.sin(a - w) * r];
+    const p2 = [c + Math.cos(a + w) * r, c + Math.sin(a + w) * r];
+    return `M${c} ${c} L${p1[0].toFixed(1)} ${p1[1].toFixed(1)} L${p2[0].toFixed(1)} ${p2[1].toFixed(1)} Z`;
+  }).join(' ');
+  return (
+    <Svg width={size} height={size}>
+      <Defs>
+        <RadialGradient id="glow" cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor={GOLD} stopOpacity={0.7} />
+          <Stop offset="1" stopColor={GOLD} stopOpacity={0} />
+        </RadialGradient>
+        <RadialGradient id="rays" cx="50%" cy="50%" r="50%">
+          <Stop offset="0.45" stopColor={GOLD} stopOpacity={0.75} />
+          <Stop offset="1" stopColor={GOLD} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Path d={d} fill="url(#rays)" />
+      <Circle cx={c} cy={c} r={r} fill="url(#glow)" />
+    </Svg>
+  );
+}
+
+/**
+ * Yeni kazanılan rozet: `delay` sonra büyüyerek yerine oturur, arkasında ışıltı belirip yavaşça döner,
+ * telefon "başarı" titreşimi verir. "Hareketi azalt" açıksa ışıltı durağan, rozet doğrudan görünür.
+ */
+export function CelebratedBadge({ id, size = 64, delay = 0 }: { id: string; size?: number; delay?: number }) {
+  const still = reduceMotionNow();
+  const [pop] = useState(() => new Animated.Value(still ? 1 : 0));
+  const [spin] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    const t = setTimeout(() => haptic.success(), delay + 120);
+    if (still) return () => clearTimeout(t);
+    Animated.sequence([
+      Animated.delay(delay),
+      Animated.spring(pop, { toValue: 1, useNativeDriver: true, speed: 9, bounciness: 16 }),
+    ]).start();
+    const loop = Animated.loop(Animated.timing(spin, { toValue: 1, duration: 9000, easing: Easing.linear, useNativeDriver: true }));
+    loop.start();
+    return () => {
+      clearTimeout(t);
+      loop.stop();
+    };
+  }, [pop, spin, delay, still]);
+  const raySize = size * 1.5; // kartın iç boşluğuna sığsın
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          width: raySize,
+          height: raySize,
+          opacity: pop.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }),
+          transform: [{ rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }],
+        }}
+      >
+        <Rays size={raySize} />
+      </Animated.View>
+      <Animated.View style={{ transform: [{ scale: pop }] }}>
+        <BadgeArt id={id} earned size={size} />
+      </Animated.View>
     </View>
   );
 }

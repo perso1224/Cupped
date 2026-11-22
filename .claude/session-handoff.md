@@ -92,3 +92,10 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - new.tsx: the form fades in after the photo step, the details block fades in, and the save button pops when it becomes ready (`Pop skipInitial`).
   - Not yet verified on device.
 - Verified by the owner on device: the new-cup flow animations (confetti, staggered result, details fade).
+- Badge celebration: `CelebratedBadge` (BadgeArt.tsx) on the fresh result screen. The badge springs in, gold rays rotate behind it, and `haptic.success` fires.
+- Delete animation: `useAnimatedRemovals` (motion.tsx) in history and home. A removed cup fades out about 380 ms after returning, and the rows below slide up (LayoutAnimation).
+- Home entrance:
+  - `setIntroPlaying`/`useIntroDone` (motion.tsx) hold home content until BrandIntro ends.
+  - Then the header, week strip, pager, cards and recent cups stagger in.
+  - The body is not rendered while entries is null.
+- Not yet verified on device.
