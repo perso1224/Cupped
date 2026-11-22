@@ -95,7 +95,9 @@ function splitStyle(style: StyleProp<ViewStyle>): [ViewStyle, ViewStyle] {
   const outer: Record<string, unknown> = {};
   const inner: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(flat)) (OUTER_KEYS.has(k) ? outer : inner)[k] = v;
-  if ('flex' in outer || 'width' in outer || 'alignSelf' in outer) inner.flexGrow = 1; // iç kutu dışı doldursun
+  // İç kutu dış kutuyu doldursun (yan yana kutularda eşit yükseklik için). Yalnızca alignSelf için gerekmez:
+  // genişliği zaten yanlara yayılma doldurur; flexGrow ise iPhone'da Geri düğmesini dikey olarak uzatabiliyordu.
+  if ('flex' in outer || 'flexGrow' in outer || 'width' in outer) inner.flexGrow = 1;
   return [outer as ViewStyle, inner as ViewStyle];
 }
 

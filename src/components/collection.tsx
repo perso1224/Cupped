@@ -11,21 +11,23 @@ import { Card } from './ui';
 
 export const ALL_METHODS: readonly Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
 
-/** Profil > Koleksiyon altındaki sayfaların ortak iskeleti: Geri (Profil), büyük başlık, kısa özet. */
+/**
+ * Profil > Koleksiyon altındaki sayfaların ortak iskeleti.
+ * Geri düğmesi kaydırılan alanın DIŞINDA, sabit üst çubukta durur (iPhone'da kaydırma içinde uzayıp başlığı itiyordu).
+ */
 export function CollectionScreen({ title, summary, children }: { title: string; summary?: string; children: ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 48 }}
-    >
-      <BackButton label={tr.profile.title} />
-      <Text style={styles.title} accessibilityRole="header">
-        {title}
-      </Text>
-      {summary ? <Text style={styles.summary}>{summary}</Text> : null}
-      {children}
-    </ScrollView>
+    <View style={styles.screen}>
+      <View style={[styles.topBar, { paddingTop: insets.top + layout.topPad }]}>
+        <BackButton label={tr.profile.title} />
+      </View>
+      <ScrollView style={styles.screen} contentContainerStyle={{ paddingHorizontal: layout.screenPad, paddingBottom: insets.bottom + 48 }}>
+        <Text style={styles.title}>{title}</Text>
+        {summary ? <Text style={styles.summary}>{summary}</Text> : null}
+        {children}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -65,7 +67,9 @@ export function BadgeCard({ progress: { badge: b, current, target, earned } }: {
 }
 
 const styles = StyleSheet.create({
-  title: { ...type.largeTitle, marginTop: 6 },
+  screen: { flex: 1, backgroundColor: colors.bg },
+  topBar: { paddingHorizontal: layout.screenPad, paddingBottom: 4, backgroundColor: colors.bg, alignItems: 'flex-start' },
+  title: { ...type.largeTitle, marginTop: 2 },
   summary: { ...type.headline, color: colors.accentText, marginTop: 4 },
   track: { backgroundColor: colors.line, overflow: 'hidden' },
   fill: { backgroundColor: colors.accent },
