@@ -100,7 +100,7 @@ export default function Home() {
   const todayPage = (
     <View key="today" style={styles.board}>
       <View style={styles.boardTop}>
-        <CupGauge size={104} fraction={todays.length ? todayScore / 100 : 0} onDark />
+        <CupGauge size={104} fraction={todays.length ? todayScore / 100 : 0} onDark={isDark} />
         <View style={{ flex: 1, marginLeft: 16 }}>
           <Text style={styles.boardKicker}>{upper(tr.home.todayScore)}</Text>
           <Text style={styles.boardScore}>{todays.length ? todayScore : '–'}</Text>
@@ -154,7 +154,7 @@ export default function Home() {
   const streakPage = (
     <View key="streak" style={styles.board}>
       <View style={styles.boardTop}>
-        <Bean size={64} color="#7A4A2A" line={BOARD.text} />
+        <Bean size={64} color={BOARD.bean} line={isDark ? BOARD.text : colors.onColor} />
         <View style={{ flex: 1, marginLeft: 16 }}>
           <Text style={styles.boardKicker}>{upper(tr.home.board.streak)}</Text>
           <Text style={styles.boardScore}>
@@ -396,8 +396,14 @@ export default function Home() {
 }
 
 /** Menü tahtası renkleri: koyu kahve zemin, krem yazı. Tema değişse de sabit. */
-const BOARD = { bg: '#2B1A12', text: '#F6EBDD', muted: '#CDBBA6', rule: 'rgba(246,235,221,0.18)' };
-const SAGE_ON_DARK = '#8FB08A';
+/**
+ * Tahta renkleri: açık temada beyaz kart + koyu yazı (eski açık görünüm),
+ * koyu temada koyu kahve zemin + krem yazı.
+ */
+const BOARD = isDark
+  ? { bg: '#2B1A12', text: '#F6EBDD', muted: '#CDBBA6', rule: 'rgba(246,235,221,0.18)', track: 'rgba(246,235,221,0.14)', faint: 'rgba(246,235,221,0.25)', bean: '#7A4A2A' }
+  : { bg: colors.card, text: colors.text, muted: colors.muted, rule: colors.line, track: colors.line, faint: colors.line, bean: tint.espresso };
+const SAGE_ON_DARK = isDark ? '#8FB08A' : tint.sage;
 const NOTE_COLORS = ['#D98B2B', '#C9604C', '#8FB08A', '#B99A7A'];
 
 /** Kafe menüsü satırı: renkli nokta, ad, noktalı çizgi, değer. */
@@ -461,7 +467,7 @@ const styles = StyleSheet.create({
     flex: 1, // kaydırmalı sayfalar aynı yükseklikte
     minHeight: 300,
     shadowColor: '#2B1A12',
-    shadowOpacity: 0.18,
+    shadowOpacity: isDark ? 0.18 : 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
   },
@@ -472,15 +478,15 @@ const styles = StyleSheet.create({
   boardRule: { height: 1, backgroundColor: BOARD.rule, marginTop: 16, marginBottom: 6 },
   boardUnit: { fontSize: 20, fontFamily: fonts.semibold, color: BOARD.muted },
   boardTitle: { fontSize: 24, fontFamily: fonts.display, color: BOARD.text, marginTop: 6 },
-  boardTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(246,235,221,0.14)', overflow: 'hidden', marginTop: 8 },
+  boardTrack: { height: 8, borderRadius: 4, backgroundColor: BOARD.track, overflow: 'hidden', marginTop: 8 },
   boardFill: { height: 8, borderRadius: 4 },
   timeline: { height: 16, marginTop: 18, justifyContent: 'center' },
-  timelineLine: { height: 2, backgroundColor: 'rgba(246,235,221,0.2)', borderRadius: 1 },
-  timelineDot: { position: 'absolute', width: 12, height: 12, borderRadius: 6, marginLeft: -6, backgroundColor: '#D98B2B', borderWidth: 2, borderColor: '#2B1A12' },
+  timelineLine: { height: 2, backgroundColor: BOARD.faint, borderRadius: 1 },
+  timelineDot: { position: 'absolute', width: 12, height: 12, borderRadius: 6, marginLeft: -6, backgroundColor: '#D98B2B', borderWidth: 2, borderColor: BOARD.bg },
   timelineLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, marginBottom: 6 },
   timelineLabel: { fontSize: 11, fontWeight: '600', color: BOARD.muted },
   weekDots: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  weekDot: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: 'rgba(246,235,221,0.25)' },
+  weekDot: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: BOARD.faint },
   weekDotOn: { backgroundColor: '#D98B2B', borderColor: '#D98B2B' },
   weekDotToday: { borderColor: BOARD.text, borderWidth: 2 },
   noteHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
