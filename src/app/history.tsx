@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { Fragment, useMemo } from 'react';
 import { BackButton } from '../components/NavButtons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../components/CupRow';
 import { FadeIn } from '../components/motion';
@@ -35,16 +35,26 @@ export default function History() {
   const avg = list.length ? Math.round(list.reduce((s, e) => s + e.score, 0) / list.length) : 0;
 
   return (
-    <ScrollView
+    // Uzun geçmişte sadece ekranda görünen günler çizilir (yüzlerce fincanda da akıcı kalsın)
+    <FlatList
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 40 }}
-    >
-      <BackButton label={tr.settings.back} />
-      <Text style={styles.title}>{heading}</Text>
-      {filtered && list.length ? <Text style={styles.summary}>{tr.history.filterSummary(list.length, avg)}</Text> : null}
-      {entries && list.length === 0 ? <Text style={styles.empty}>{tr.history.empty}</Text> : null}
-      {groups.map((g, gi) => (
-        <FadeIn key={g.label} index={gi}>
+      data={groups}
+      keyExtractor={(g) => g.label}
+      initialNumToRender={6}
+      maxToRenderPerBatch={6}
+      windowSize={7}
+      removeClippedSubviews={Platform.OS === 'android'}
+      ListHeaderComponent={
+        <>
+          <BackButton label={tr.settings.back} />
+          <Text style={styles.title}>{heading}</Text>
+          {filtered && list.length ? <Text style={styles.summary}>{tr.history.filterSummary(list.length, avg)}</Text> : null}
+          {entries && list.length === 0 ? <Text style={styles.empty}>{tr.history.empty}</Text> : null}
+        </>
+      }
+      renderItem={({ item: g, index: gi }) => (
+        <FadeIn index={gi < 8 ? gi : 0}>
           <Text style={styles.day}>{upper(g.label)}</Text>
           <View style={styles.group}>
             {g.items.map((e, i) => (
@@ -55,8 +65,8 @@ export default function History() {
             ))}
           </View>
         </FadeIn>
-      ))}
-    </ScrollView>
+      )}
+    />
   );
 }
 
