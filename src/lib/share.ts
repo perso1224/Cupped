@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
-import { PixelRatio, Share } from 'react-native';
+import * as Sharing from 'expo-sharing';
+import { PixelRatio, Platform, Share } from 'react-native';
 import { captureRef, releaseCapture } from 'react-native-view-shot';
 import type { ShareSource } from './metrics';
 import { bumpCounter, recordShare } from './storage';
@@ -27,9 +28,9 @@ export async function shareViewAsImage(ref: RefObject<any>, source: ShareSource,
   });
   recordShare(source, 'tap').catch(() => {});
   try {
-    const res = await Share.share({ url: asFileUrl(uri) });
-    if (res.action === Share.sharedAction) {
-      await recordShare(source, 'completed', res.activityType, cupId).catch(() => {});
+    const done = await shareFileUrl(asFileUrl(uri), 'image/jpeg');
+    if (done.shared) {
+      await recordShare(source, 'completed', done.activityType, cupId).catch(() => {});
       bumpCounter('shares').catch(() => {});
       return true;
     }
@@ -44,7 +45,20 @@ export async function shareViewAsImage(ref: RefObject<any>, source: ShareSource,
 }
 
 /** Herhangi bir dosyayı (ör. veri yedeği) paylaşım sayfasıyla gönderir. */
-export async function shareFile(uri: string): Promise<boolean> {
-  const res = await Share.share({ url: asFileUrl(uri) });
-  return res.action === Share.sharedAction;
+export async function shareFile(uri: string, mimeType = 'application/json'): Promise<boolean> {
+  return (await shareFileUrl(asFileUrl(uri), mimeType)).shared;
+}
+
+/**
+ * Dosya paylaşımı. iOS: sistem paylaşım sayfası (hangi uygulamaya gittiği de öğrenilir).
+ * Android: React Native'in Share'i dosya göndermez (yalnızca metin), bu yüzden expo-sharing.
+ * Android paylaşımın tamamlanıp tamamlanmadığını bildirmez; pencere kapanınca paylaşıldı sayılır.
+ */
+async function shareFileUrl(url: string, mimeType: string): Promise<{ shared: boolean; activityType?: string | null }> {
+  if (Platform.OS === 'android') {
+    await Sharing.shareAsync(url, { mimeType });
+    return { shared: true, activityType: null };
+  }
+  const res = await Share.share({ url });
+  return { shared: res.action === Share.sharedAction, activityType: res.activityType };
 }
