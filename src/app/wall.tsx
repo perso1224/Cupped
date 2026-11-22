@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, useWindowDimensions, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +34,12 @@ export default function Wall() {
     ys.add(now.getFullYear());
     return [...ys].sort((a, b) => b - a).slice(0, 3);
   }, [entries]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [year, setYear] = useState(now.getFullYear());
+  // Afişten gelince afişteki yıl (Ocak'ta geçen yıl); yoksa bu yıl
+  const { year: yearParam } = useLocalSearchParams<{ year?: string }>();
+  const [year, setYear] = useState(() => {
+    const y = Number(yearParam);
+    return Number.isInteger(y) && y > 2000 && y <= now.getFullYear() ? y : now.getFullYear();
+  });
   const cardRef = useRef<CardHandle>(null);
   const [sharing, setSharing] = useState(false);
 

@@ -9,6 +9,10 @@ const GRINDS: Grind[] = ['fine', 'medium', 'coarse'];
 /** Metin alanları için üst sınır (bozuk/elle düzenlenmiş yedeklerde aşırı uzun değerler ekranı bozmasın). */
 const MAX_TEXT = 500;
 const MAX_NAME = 80;
+/** Bu sürümün bildiği kayıt alanları (gerisi olduğu gibi saklanır). */
+const KNOWN_KEYS = new Set([
+  'id', 'createdAt', 'photoUri', 'method', 'placeName', 'venueKind', 'notes', 'origin', 'brew', 'note', 'rating', 'captureMs', 'score', 'parts', 'palateTypeId',
+]);
 const ZERO_PARTS: ScoreParts = { base: 0, effort: 0, depth: 0, discovery: 0, selectivity: 0 };
 
 export class CorruptDataError extends Error {}
@@ -51,7 +55,11 @@ export function normalizeEntry(raw: unknown): CupEntry | null {
   const grind = r.brew && typeof r.brew === 'object' && GRINDS.includes(r.brew.grind) ? (r.brew.grind as Grind) : null;
   const parts = { ...ZERO_PARTS };
   if (r.parts && typeof r.parts === 'object') for (const k of Object.keys(ZERO_PARTS) as (keyof ScoreParts)[]) parts[k] = num(r.parts[k]);
+  // Bilinmeyen alanlar (ör. daha yeni bir sürümün eklediği alan) korunur: eski bir sürüm kaydederken silinmesin.
+  const extra: Record<string, unknown> = {};
+  for (const k of Object.keys(r)) if (!KNOWN_KEYS.has(k)) extra[k] = r[k];
   return {
+    ...extra,
     id: r.id,
     // Tüm uygulama ISO-UTC metin karşılaştırmasıyla sıralar; "+03:00" gibi biçimleri tek biçime çevir.
     createdAt: new Date(r.createdAt).toISOString(),

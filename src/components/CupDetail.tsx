@@ -58,6 +58,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
   // Kayıt değişmediyse kartı yeniden çizme (skor animasyonu baştan başlamasın);
   // fotoğraf değiştiyse yeni fotoğraf yüklenene kadar paylaşımı kilitle.
   const shown = useRef<string | null>(null);
+  const unlockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useFocusEffect(
     useCallback(() => {
       let alive = true;
@@ -71,8 +72,10 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
         if (!e?.photoUri) setImageDone(true);
         else if (e.photoUri !== prevPhoto) {
           setImageDone(false);
-          // Fotoğraf hiç yüklenmezse bile paylaşım sonsuza kadar kilitli kalmasın.
-          setTimeout(() => setImageDone(true), 2500);
+          // Fotoğraf hiç yüklenmezse bile paylaşım sonsuza kadar kilitli kalmasın. Fotoğraf yine değişirse
+          // önceki zamanlayıcı iptal edilir (yeni fotoğraf yüklenmeden paylaşım açılmasın).
+          if (unlockTimer.current) clearTimeout(unlockTimer.current);
+          unlockTimer.current = setTimeout(() => setImageDone(true), 2500);
         }
       });
       return () => {

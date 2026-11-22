@@ -35,6 +35,19 @@ export async function saveThemePref(p: ThemePref): Promise<void> {
   await f.write(p);
 }
 
+/** "Tüm verileri sil" için: tercih dosyasını siler (bir sonraki açılışta "telefonu izle"). */
+export function clearThemePref() {
+  try {
+    if (Platform.OS === 'web') globalThis.localStorage?.removeItem(THEME_WEB_KEY);
+    else {
+      const f = new File(Paths.document, THEME_FILE);
+      if (f.exists) f.delete();
+    }
+  } catch {
+    // silinemese de veriler silinmiş olur
+  }
+}
+
 export const themePref = readThemePref();
 // Sistem bileşenleri (anahtarlar, uyarılar, klavye, cam) da aynı temayı kullansın.
 try {

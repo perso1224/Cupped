@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { nextReminder, reminderPlan, REMINDER_FOLLOWUPS } from './reminderTime';
+import { dayKey } from './progress';
 
 describe('hatırlatma zamanı', () => {
   const morning = new Date(2026, 10, 21, 9, 0);
@@ -29,5 +30,20 @@ describe('reminderPlan', () => {
     expect(plan[1].at).toEqual(new Date(2026, 10, 23, 20, 30));
     expect(plan[0].body).toContain('3 gün');
     expect(plan[1].body).not.toContain('Serin');
+  });
+});
+
+describe('seri metni bozulmuş seriyi vaat etmez', () => {
+  it('bugün fincan yokken saat geçtiyse yarınki hatırlatma genel metindir', () => {
+    const now = new Date(2026, 10, 22, 21, 0);
+    const days = new Set([dayKey(new Date(2026, 10, 19)), dayKey(new Date(2026, 10, 20)), dayKey(new Date(2026, 10, 21))]);
+    const r = nextReminder(days, 3, now);
+    expect(r.at.getDate()).toBe(23);
+    expect(r.body).not.toContain('Serin');
+  });
+  it('bugün fincan eklendiyse yarınki hatırlatma seriyi söyler', () => {
+    const now = new Date(2026, 10, 22, 10, 0);
+    const days = new Set([dayKey(new Date(2026, 10, 21)), dayKey(now)]);
+    expect(nextReminder(days, 2, now).body).toContain('Serin 2 gün');
   });
 });

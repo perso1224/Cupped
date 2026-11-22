@@ -4,11 +4,12 @@ import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
-import { Appearance, AppState, View } from 'react-native';
+import { Alert, Appearance, AppState, View } from 'react-native';
 import { BrandIntro } from '../components/BrandIntro';
 import { setIntroPlaying } from '../components/motion';
 import { refreshReminder } from '../lib/reminders';
-import { recordActiveDay } from '../lib/storage';
+import { consumeRecoveryNotice, recordActiveDay } from '../lib/storage';
+import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
 import { colors, isDark, themePref } from '../theme';
 
@@ -38,6 +39,8 @@ export default function RootLayout() {
       refreshReminder();
     };
     onActive();
+    // Kayıtlar okunamayacak kadar bozulduysa (çok nadir) kullanıcıya bir kez söyle
+    consumeRecoveryNotice().then((v) => v && Alert.alert(tr.recovered.title, tr.recovered.body));
     const sub = AppState.addEventListener('change', (s) => s === 'active' && onActive());
     return () => sub.remove();
   }, []);

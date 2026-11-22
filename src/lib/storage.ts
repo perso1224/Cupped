@@ -5,9 +5,10 @@ import { parseEntries, parseEntriesDetailed } from './entries';
 import { rescoreAfter } from './rescore';
 import { appLabel, normalizeMetrics, type Metrics, type ShareSource } from './metrics';
 import { normalizeSettings, type Settings } from './settings';
-import { normalizePlace } from './scoring';
-import type { Profile } from './onboarding';
+import { placeNameKey } from './scoring';
+import { normalizeProfile, type Profile } from './onboarding';
 import type { CupEntry } from './types';
+import { clearThemePref } from '../theme';
 
 // Tüm veriler sadece telefonda tutulur (sunucu yok).
 const ENTRIES_KEY = 'cupped.entries.v1';
@@ -16,6 +17,7 @@ const COUNTERS_KEY = 'cupped.counters.v1';
 const PROFILE_KEY = 'cupped.profile.v1';
 const METRICS_KEY = 'cupped.metrics.v1';
 const SETTINGS_KEY = 'cupped.settings.v1';
+const RECOVERED_KEY = 'cupped.recovered';
 
 export type Counters = {
   cardsGenerated: number;
@@ -39,18 +41,43 @@ async function readEntriesStrict(): Promise<CupEntry[]> {
   try {
     const { entries, dropped } = parseEntriesDetailed(raw);
     // Bazı kayıtlar okunamadıysa (ör. gelecekteki bir sürümün yeni alanı), üzerine yazmadan önce ham hali sakla.
-    if (dropped > 0 && raw) await AsyncStorage.setItem(`${ENTRIES_KEY}.corrupt.${Date.now()}`, raw);
+    if (dropped > 0 && raw) await keepCorrupt(raw);
     return entries;
   } catch (err) {
     // Ana veri bozuksa: bozuk hali ayrı bir yere kaydet, yedekten devam et.
-    // Bozuk ham veri HER ZAMAN önce ayrı anahtara saklanır (kaybolmaz). Yedek yoksa boş listeyle devam
-    // (yoksa kullanıcı hiç fincan ekleyemez); yedek de bozuksa yazma iptal.
+    // Bozuk ham veri HER ZAMAN önce ayrı anahtara saklanır (kaybolmaz).
     void err;
+    if (raw) await keepCorrupt(raw);
     const backupRaw = await AsyncStorage.getItem(ENTRIES_BACKUP_KEY);
-    const backup = backupRaw ? parseEntries(backupRaw) : []; // bozuksa fırlatır
-    if (raw) await AsyncStorage.setItem(`${ENTRIES_KEY}.corrupt.${Date.now()}`, raw);
+    let backup: CupEntry[] = [];
+    try {
+      backup = backupRaw ? parseEntries(backupRaw) : [];
+    } catch {
+      // Yedek de bozuk: onu da sakla, boş listeyle devam et (yoksa hiç fincan eklenemez). Kullanıcıya bir kez söylenir.
+      if (backupRaw) await keepCorrupt(backupRaw);
+      await AsyncStorage.setItem(RECOVERED_KEY, String(Date.now()));
+    }
     await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(backup));
     return backup;
+  }
+}
+
+/** Okunamayan ham veriyi ayrı anahtarda saklar; en yeni 3 kopya tutulur (telefon hafızası dolmasın). */
+async function keepCorrupt(raw: string) {
+  await AsyncStorage.setItem(`${ENTRIES_KEY}.corrupt.${Date.now()}`, raw);
+  const old = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(`${ENTRIES_KEY}.corrupt.`)).sort();
+  if (old.length > 3) await AsyncStorage.multiRemove(old.slice(0, old.length - 3));
+}
+
+/** Veri bozulup boş listeyle devam edildiyse bir kez true döner (ekranda haber vermek için). */
+export async function consumeRecoveryNotice(): Promise<boolean> {
+  try {
+    const v = await AsyncStorage.getItem(RECOVERED_KEY);
+    if (!v) return false;
+    await AsyncStorage.removeItem(RECOVERED_KEY);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -58,14 +85,38 @@ async function writeEntries(list: CupEntry[]): Promise<void> {
   const current = await AsyncStorage.getItem(ENTRIES_KEY);
   if (current) await AsyncStorage.setItem(ENTRIES_BACKUP_KEY, current); // son sağlam hali yedekle
   await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(list));
+  // Bellekteki liste de güncellenir (en yeni önce), ekranlar haberdar edilir
+  setEntriesCache([...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+}
+
+// Fincanlar bellekte de tutulur: her ekran açılışında tüm liste telefondan yeniden okunup çözülmesin.
+// Yazmalar yalnızca bu dosyadan yapıldığı için bellekteki liste her zaman günceldir.
+let entriesCache: CupEntry[] | null = null;
+const entriesListeners = new Set<(list: CupEntry[]) => void>();
+function setEntriesCache(list: CupEntry[] | null) {
+  entriesCache = list;
+  if (list) entriesListeners.forEach((fn) => fn(list));
+}
+export function cachedEntries(): CupEntry[] | null {
+  return entriesCache;
+}
+export function subscribeEntries(fn: (list: CupEntry[]) => void): () => void {
+  entriesListeners.add(fn);
+  return () => {
+    entriesListeners.delete(fn);
+  };
 }
 
 /** Ekranlar için okuma: hata olursa yedekten dener, o da olmazsa boş liste (ama hiçbir şey silinmez). */
 export async function loadEntries(): Promise<CupEntry[]> {
+  if (entriesCache) return entriesCache;
   // Salt okunur: onarım yazmaları yalnızca kuyruktaki yazmalarda yapılır (yarış durumunda yeni kayıt ezilmesin).
   try {
-    return parseEntries(await AsyncStorage.getItem(ENTRIES_KEY));
+    const list = parseEntries(await AsyncStorage.getItem(ENTRIES_KEY));
+    if (!entriesCache) entriesCache = list;
+    return entriesCache;
   } catch {
+    // Bozuk veri bellekte tutulmaz (bir sonraki yazma onarır)
     try {
       return parseEntries(await AsyncStorage.getItem(ENTRIES_BACKUP_KEY));
     } catch {
@@ -77,7 +128,11 @@ export async function loadEntries(): Promise<CupEntry[]> {
 export function saveEntry(entry: CupEntry): Promise<void> {
   return enqueue(async () => {
     const list = await readEntriesStrict();
-    await writeEntries([entry, ...list.filter((e) => e.id !== entry.id)]);
+    const next = [entry, ...list.filter((e) => e.id !== entry.id)];
+    // Geçmişe eklenen fincan ("dün"): sonraki fincanların keşif puanı ve damak tipi buna göre yenilenir
+    // (aynı mekana iki fincan birden "ilk ziyaret" puanı almasın).
+    const later = list.some((e) => e.createdAt > entry.createdAt);
+    await writeEntries(later ? rescoreAfter(next, entry.createdAt) : next);
   });
 }
 
@@ -91,8 +146,12 @@ export function updateEntry(entry: CupEntry): Promise<void> {
     const old = list.find((e) => e.id === entry.id);
     if (!old) throw new Error('entry not found');
     let next = list.map((e) => (e.id === entry.id ? entry : e));
-    // Yöntem/mekan değiştiyse sonraki fincanların keşif puanı ve damak tipi güncellenir
-    const scoringChanged = old.method !== entry.method || old.placeName !== entry.placeName || old.venueKind !== entry.venueKind;
+    // Yöntem/mekan/tat notu değiştiyse sonraki fincanların keşif puanı ve damak tipi güncellenir
+    const scoringChanged =
+      old.method !== entry.method ||
+      old.placeName !== entry.placeName ||
+      old.venueKind !== entry.venueKind ||
+      old.notes.join(',') !== entry.notes.join(',');
     if (scoringChanged) next = rescoreAfter(next, entry.createdAt);
     await writeEntries(next);
     if (old.photoUri && old.photoUri !== entry.photoUri) deletePhoto(old.photoUri);
@@ -214,7 +273,7 @@ export function knownPlaces(entries: CupEntry[]): string[] {
   const groups = new Map<string, { name: string; count: number }>();
   for (const e of entries) {
     if (e.placeName && (e.venueKind === 'chain' || e.venueKind === 'independent')) {
-      const key = normalizePlace(e.placeName);
+      const key = placeNameKey(e.placeName);
       const g = groups.get(key);
       if (g) g.count++;
       else groups.set(key, { name: e.placeName.trim(), count: 1 }); // entries en yeni önce geldiği için ilk görülen = en son yazım
@@ -245,7 +304,7 @@ export async function loadProfile(): Promise<Profile | null> {
   if (profileCache !== undefined) return profileCache;
   try {
     const raw = await AsyncStorage.getItem(PROFILE_KEY);
-    profileCache = raw ? (JSON.parse(raw) as Profile) : null;
+    profileCache = raw ? normalizeProfile(JSON.parse(raw)) : null;
   } catch {
     profileCache = null;
   }
@@ -405,7 +464,12 @@ export function importBackup(json: string): Promise<number> {
     const ids = new Set(current.map((e) => e.id));
     // Yedekteki fotoğraflar bu telefonda yok: fotoğrafsız eklenir
     const added = incoming.filter((e) => !ids.has(e.id)).map((e) => ({ ...e, photoUri: null }));
-    await writeEntries([...added, ...current]);
+    const merged = [...added, ...current];
+    // Eklenen en eski fincandan sonrası yeniden puanlanır (aynı mekana iki "ilk ziyaret" puanı kalmasın)
+    const oldest = added.reduce<string | null>((m, e) => (m === null || e.createdAt < m ? e.createdAt : m), null);
+    // rescoreAfter "fromIso"dan SONRAKİLERİ yeniler; en eski eklenen fincanın kendisi de dahil olsun diye 1 ms önce
+    const from = oldest ? new Date(Date.parse(oldest) - 1).toISOString() : null;
+    await writeEntries(from ? rescoreAfter(merged, from) : merged);
     // Hatırlatma açık/kapalı bilgisi ölçümlerde duruyor: bu telefonda henüz seçilmediyse yedektekini al
     const backupReminder = (data as { metrics?: { reminderEnabled?: unknown } }).metrics?.reminderEnabled;
     if (typeof backupReminder === 'boolean') {
@@ -446,6 +510,8 @@ export function deleteAllData(): Promise<void> {
     } catch {
       // önbellek temizlenemese de veriler silinmiş olur
     }
+    clearThemePref(); // tema tercihi de ayardır
+    setEntriesCache([]);
     settingsCache = normalizeSettings(null);
     settingsListeners.forEach((fn) => fn(settingsCache));
     setProfileCache(null);

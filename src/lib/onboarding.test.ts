@@ -14,3 +14,15 @@ describe('başlangıç damak tipi', () => {
     expect(starterPalateTypeId({ usualPlace: 'home', favMethod: 'espresso', notes: ['chocolate', 'nutty', 'bold'] })).toBe('classic_master');
   });
 });
+
+describe('profil doğrulama', () => {
+  it('bozuk alanları varsayılanla doldurur, okunamayanı null yapar', async () => {
+    const { normalizeProfile } = await import('./onboarding');
+    expect(normalizeProfile(null)).toBeNull();
+    expect(normalizeProfile([1])).toBeNull();
+    const p = normalizeProfile({ nickname: 5, goal: 'x', notes: ['bold', 'zzz'] })!;
+    expect(p.nickname).toBe('');
+    expect(p.goal).toBe('explore');
+    expect(p.notes).toEqual(['bold']);
+  });
+});

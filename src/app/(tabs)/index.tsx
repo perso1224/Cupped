@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
@@ -39,30 +39,42 @@ export default function Home() {
   const scrollRef = useTabScrollRef();
   const introDone = useIntroDone();
   const entries = useAnimatedRemovals(useEntries()); // silinen fincan "Son fincanlar"dan kayarak çıkar
-  const list = entries ?? [];
+  const list = useMemo(() => entries ?? [], [entries]);
   const profile = useProfile();
   const settings = useSettings();
   const [metrics, reloadMetrics] = useMetrics();
-  const now = new Date();
+  const todayKey = dayKey(new Date());
 
-  const todayKey = dayKey(now);
-  const todays = list.filter((e) => dayKey(new Date(e.createdAt)) === todayKey);
-  const bestToday = todays.reduce<(typeof todays)[number] | null>((b, e) => (!b || e.score > b.score ? e : b), null);
+  // Tüm geçmişe bakan hesaplar yalnızca fincanlar ya da gün değişince yapılır (her çizimde değil;
+  // binlerce fincanda ana sayfa akıcı kalsın).
+  const model = useMemo(() => {
+    const at = new Date();
+    const ws = startOfWeek(at);
+    const todays = list.filter((e) => dayKey(new Date(e.createdAt)) === todayKey);
+    const disc = discoveriesIn(list, ws, addDays(ws, 7));
+    return {
+      todays,
+      bestToday: todays.reduce<(typeof todays)[number] | null>((b, e) => (!b || e.score > b.score ? e : b), null),
+      streak: currentStreak(list, at),
+      weekEntries: list.filter((e) => inRange(e, ws, addDays(ws, 7))),
+      discoveries: disc.places.length + disc.methods.length,
+      parts: weekPartAverages(list, at),
+      caffeine: caffeineToday(list, at),
+      level: levelProgress(list),
+      nudge: dailyNudge(list, at),
+      insights: insights(list, at),
+      typeId: list.length ? computePalateTypeId(list) : null,
+      wall: wallBanner(list, at),
+      longest: longestStreak(list),
+      notesMap: noteShares(list).slice(0, 4),
+      fav: favorites(list),
+    };
+  }, [list, todayKey]);
+  const { todays, bestToday, streak, weekEntries, discoveries, parts, caffeine, level, nudge, wall, longest, notesMap, fav } = model;
   const todayScore = bestToday?.score ?? 0;
-  const streak = currentStreak(list, now);
-  const ws = startOfWeek(now);
-  const weekEntries = list.filter((e) => inRange(e, ws, addDays(ws, 7)));
-  const disc = discoveriesIn(list, ws, addDays(ws, 7));
-  const discoveries = disc.places.length + disc.methods.length;
-  const parts = weekPartAverages(list, now);
-  const caffeine = caffeineToday(list, now);
-  const level = levelProgress(list);
-  const nudge = dailyNudge(list, now);
-  const highlights = insights(list, now)
-    .filter((h) => settings.showCaffeine || h.id !== 'caffeine')
-    .slice(0, 3);
-  const type_ = list.length ? getPalateType(computePalateTypeId(list)) : profile ? getPalateType(profile.starterTypeId) : null;
-  const wall = wallBanner(list, now);
+  const highlights = model.insights.filter((h) => settings.showCaffeine || h.id !== 'caffeine').slice(0, 3);
+  const now = new Date();
+  const type_ = model.typeId ? getPalateType(model.typeId) : profile ? getPalateType(profile.starterTypeId) : null;
   const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
   // Yedek hatırlatması: 10+ fincan ve 30 gündür yedek yok (hatırlatma sorusuyla aynı anda çıkmaz)
   const askBackup = !!metrics && !askReminder && needsBackupNudge(metrics, list.length, now);
@@ -120,9 +132,6 @@ export default function Home() {
 
   const over = caffeine.mg > settings.caffeineRef;
   const pageW = screenW - 40;
-  const longest = longestStreak(list);
-  const notesMap = noteShares(list).slice(0, 4);
-  const fav = favorites(list);
 
   // Ana sayfanın kaydırmalı "menü tahtası": en fazla 5 sayfa, hepsi aynı koyu kahve zeminde.
   const todayPage = (
@@ -411,7 +420,7 @@ export default function Home() {
               <PressScale
                 onPress={() => {
                   haptic.light();
-                  router.push('/wall');
+                  router.push({ pathname: '/wall', params: { year: String(wall.year) } }); // Ocak'ta geçen yılın duvarı
                 }}
                 scaleTo={0.97}
                 style={[styles.banner, { backgroundColor: tint.espresso }]}

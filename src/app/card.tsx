@@ -1,7 +1,7 @@
 import * as Brightness from 'expo-brightness';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, AppState, StyleSheet, Text, useWindowDimensions, View, type TextProps } from 'react-native';
+import { Alert, AppState, Platform, StyleSheet, Text, useWindowDimensions, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CardHandle } from '../components/ShareCard';
 import { BRAND } from '../config/brand';
@@ -44,7 +44,9 @@ export default function PalateCard() {
       }
     };
     const restore = () => {
-      if (original.current !== null) Brightness.setBrightnessAsync(original.current).catch(() => {});
+      // Android: sabit değer yazmak pencereyi o parlaklığa kilitler (otomatik parlaklık durur); sisteme geri bırak.
+      if (Platform.OS === 'android') Brightness.restoreSystemBrightnessAsync().catch(() => {});
+      else if (original.current !== null) Brightness.setBrightnessAsync(original.current).catch(() => {});
     };
     raise();
     const sub = AppState.addEventListener('change', (state) => {

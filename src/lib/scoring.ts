@@ -16,6 +16,14 @@ export function normalizePlace(name: string): string {
     .replace(/[^a-z0-9]/g, '');
 }
 
+/**
+ * Yazılan mekan adının kimliği (aynı mekanın farklı yazımları tek çip olsun). Zincir şubelerini AYIRIR.
+ * Latin harfi olmayan adlarda (ör. "Кофе", "☕") boş kalmasın diye ada düşer.
+ */
+export function placeNameKey(name: string): string {
+  return normalizePlace(name) || name.trim().toLocaleLowerCase('tr-TR');
+}
+
 /** Kelimeleri koruyarak sadeleştirir: "Starbucks, Kadıköy!" → "starbucks kadikoy". */
 function words(name: string): string {
   return name
@@ -66,9 +74,16 @@ export function classifyPlace(placeName: string): VenueKind {
  */
 export function placeKey(entry: Pick<CupEntry, 'placeName' | 'venueKind'>): string | null {
   if (entry.venueKind === 'home' || entry.venueKind === 'office' || !entry.placeName) return null;
+  // Aynı ad için tekrar tekrar zincir taraması yapılmasın (binlerce fincanda pahalı)
+  const cached = keyCache.get(entry.placeName);
+  if (cached !== undefined) return cached;
   const chain = matchChain(entry.placeName);
-  return chain ? `chain:${chain}` : normalizePlace(entry.placeName) || entry.placeName.trim().toLocaleLowerCase('tr-TR');
+  const key = chain ? `chain:${chain}` : normalizePlace(entry.placeName) || entry.placeName.trim().toLocaleLowerCase('tr-TR');
+  if (keyCache.size > 5000) keyCache.clear();
+  keyCache.set(entry.placeName, key);
+  return key;
 }
+const keyCache = new Map<string, string>();
 
 /** Yerel saatle ay anahtarı. */
 function monthKey(iso: string): string {
@@ -84,6 +99,71 @@ function weekKey(iso: string): string {
 }
 
 /**
+ * Geçmişin skor için gereken özeti. Fincanlar tarih sırasıyla eklenir (`add`).
+ * Hem tek fincan skorunda hem toplu yeniden puanlamada kullanılır: toplu işte geçmiş her fincan için
+ * baştan taranmaz, özet adım adım büyür (binlerce fincanda da hızlı).
+ */
+export type HistoryIndex = {
+  /** Gidilmiş mekanlar. */
+  seen: Set<string>;
+  /** Hafta → o hafta ilk kez gidilen mekan sayısı. */
+  newPlacesByWeek: Map<string, number>;
+  /** Mekan → son ziyaret zamanı (ISO). */
+  lastVisit: Map<string, string>;
+  /** Denenmiş yöntemler ve "yöntem|ay" çiftleri. */
+  methods: Set<string>;
+  methodMonths: Set<string>;
+  /** Sondaki art arda aynı zincir ziyaretleri. */
+  chain: string | null;
+  chainRun: number;
+};
+
+export function createHistoryIndex(): HistoryIndex {
+  return { seen: new Set(), newPlacesByWeek: new Map(), lastVisit: new Map(), methods: new Set(), methodMonths: new Set(), chain: null, chainRun: 0 };
+}
+
+/** Özete bir fincan ekler (tarih sırasıyla çağrılmalı). `before` verilirse son ziyaret yalnızca ondan önceki fincanlardan tutulur. */
+export function addToIndex(ix: HistoryIndex, e: Pick<CupEntry, 'placeName' | 'venueKind' | 'method' | 'createdAt'>, before?: string) {
+  const k = placeKey(e);
+  if (k) {
+    if (!ix.seen.has(k)) {
+      ix.seen.add(k);
+      const wk = weekKey(e.createdAt);
+      ix.newPlacesByWeek.set(wk, (ix.newPlacesByWeek.get(wk) ?? 0) + 1);
+    }
+    if (before === undefined || e.createdAt < before) ix.lastVisit.set(k, e.createdAt);
+  }
+  ix.methods.add(e.method);
+  ix.methodMonths.add(`${e.method}|${monthKey(e.createdAt)}`);
+  const c = e.venueKind === 'chain' && e.placeName ? matchChain(e.placeName) : null;
+  if (c && c === ix.chain) ix.chainRun++;
+  else {
+    ix.chain = c;
+    ix.chainRun = c ? 1 : 0;
+  }
+}
+
+/** Keşif puanı: ilk kez gidilen mekan (haftalık sınırla), uzun aradan dönüş, yeni yöntem / bu ay ilk kez. */
+export function discoveryPoints(input: Pick<CupInput, 'placeName' | 'venueKind' | 'method'>, ix: HistoryIndex, at: string): number {
+  let discovery = 0;
+  const key = placeKey(input);
+  if (key) {
+    const newThisWeek = ix.newPlacesByWeek.get(weekKey(at)) ?? 0;
+    if (!ix.seen.has(key) && newThisWeek < SCORING.discovery.newPlacePerWeek) discovery += SCORING.discovery.newPlace;
+    else if (ix.seen.has(key)) {
+      // Uzun aradan sonra dönülen mekan: küçük "yeniden keşif" puanı
+      const last = ix.lastVisit.get(key);
+      if (last && last < at && Date.parse(at) - Date.parse(last) >= SCORING.discovery.returnAfterDays * 86400000) {
+        discovery += SCORING.discovery.returnPlace;
+      }
+    }
+  }
+  if (!ix.methods.has(input.method)) discovery += SCORING.discovery.newMethod;
+  else if (!ix.methodMonths.has(`${input.method}|${monthKey(at)}`)) discovery += SCORING.discovery.methodThisMonth; // bu ay ilk kez bu yöntem
+  return discovery;
+}
+
+/**
  * Fincan Skoru (0-100, mutlak).
  * @param input  yeni fincan
  * @param history  daha önceki kayıtlar (sıra önemsiz; tarihe göre sıralanır)
@@ -91,6 +171,8 @@ function weekKey(iso: string): string {
  */
 export function scoreCup(input: CupInput, history: CupEntry[], at: string = new Date().toISOString()): ScoreResult {
   const past = [...history].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const ix = createHistoryIndex();
+  for (const e of past) addToIndex(ix, e, at);
 
   const base = SCORING.base;
   const effort = SCORING.effort[input.venueKind];
@@ -99,43 +181,13 @@ export function scoreCup(input: CupInput, history: CupEntry[], at: string = new 
   if (new Set(input.notes).size >= 2) depth += SCORING.depth.twoNotes;
   if (input.origin && input.origin.trim()) depth += SCORING.depth.origin;
 
-  let discovery = 0;
-  const key = placeKey(input);
-  if (key) {
-    // Geçmişte ilk kez gidilen mekanlar; bu hafta kaç tane oldu?
-    const seen = new Set<string>();
-    let newThisWeek = 0;
-    const wk = weekKey(at);
-    for (const e of past) {
-      const k = placeKey(e);
-      if (!k || seen.has(k)) continue;
-      seen.add(k);
-      if (weekKey(e.createdAt) === wk) newThisWeek++;
-    }
-    if (!seen.has(key) && newThisWeek < SCORING.discovery.newPlacePerWeek) discovery += SCORING.discovery.newPlace;
-    else if (seen.has(key)) {
-      // Uzun aradan sonra dönülen mekan: küçük "yeniden keşif" puanı
-      const last = [...past].reverse().find((e) => placeKey(e) === key && e.createdAt < at);
-      if (last && Date.parse(at) - Date.parse(last.createdAt) >= SCORING.discovery.returnAfterDays * 86400000) {
-        discovery += SCORING.discovery.returnPlace;
-      }
-    }
-  }
-  if (!past.some((e) => e.method === input.method)) discovery += SCORING.discovery.newMethod;
-  else if (!past.some((e) => e.method === input.method && monthKey(e.createdAt) === monthKey(at))) {
-    discovery += SCORING.discovery.methodThisMonth; // bu ay ilk kez bu yöntem
-  }
+  const discovery = discoveryPoints(input, ix, at);
 
   let selectivity = 0;
   if (input.venueKind === 'chain' && input.placeName) {
     const chain = matchChain(input.placeName);
-    // Sondan geriye, aynı zincire art arda kaç ziyaret var?
-    let streak = 1; // bu fincan dahil
-    for (let i = past.length - 1; i >= 0; i--) {
-      const e = past[i];
-      if (e.venueKind === 'chain' && e.placeName && matchChain(e.placeName) === chain) streak++;
-      else break;
-    }
+    // Sondan geriye, aynı zincire art arda kaç ziyaret var? (bu fincan dahil)
+    const streak = 1 + (chain && ix.chain === chain ? ix.chainRun : 0);
     if (streak >= SCORING.selectivity.sameChainStreakFrom) selectivity = SCORING.selectivity.penalty;
   }
 

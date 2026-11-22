@@ -1,11 +1,15 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { loadEntries } from './storage';
+import { useCallback, useEffect, useState } from 'react';
+import { cachedEntries, loadEntries, subscribeEntries } from './storage';
 import type { CupEntry } from './types';
 
-/** Ekran her görünür olduğunda kayıtları telefondan yeniden okur. */
+/**
+ * Fincan listesi. Bellekteki listeden hemen gelir; kayıt/silme/düzenleme olunca kendiliğinden güncellenir.
+ * Ekran görünür olduğunda da (ilk açılışta liste henüz okunmadıysa) telefondan okunur.
+ */
 export function useEntries() {
-  const [entries, setEntries] = useState<CupEntry[] | null>(null);
+  const [entries, setEntries] = useState<CupEntry[] | null>(cachedEntries);
+  useEffect(() => subscribeEntries(setEntries), []);
   useFocusEffect(
     useCallback(() => {
       let alive = true;

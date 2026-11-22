@@ -220,18 +220,34 @@ export function Pop({
   return <Animated.View style={[style, { transform: [{ scale: s }] }]}>{children}</Animated.View>;
 }
 
-/** İlerleme çubuğunun dolu kısmı: açılışta 0'dan, sonra değer değişince yumuşakça dolar. fraction 0–1. */
+/**
+ * İlerleme çubuğunun dolu kısmı: açılışta 0'dan, sonra değer değişince yumuşakça dolar. fraction 0–1.
+ * Çubuk tam genişlikte çizilip soldan kaydırılır (native animasyon, JS meşgulken de akıcı; uçlar yuvarlak kalır).
+ * Kabın `overflow: 'hidden'` olması gerekir.
+ */
 export function GrowBar({ fraction, style }: { fraction: number; style?: StyleProp<ViewStyle> }) {
   const target = Math.max(0, Math.min(1, fraction));
   const [v] = useState(() => new Animated.Value(reduceMotion ? target : 0));
+  const [w, setW] = useState(0);
   useEffect(() => {
     if (reduceMotion) {
       v.setValue(target);
       return;
     }
-    Animated.timing(v, { toValue: target, duration: 700, delay: 120, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    Animated.timing(v, { toValue: target, duration: 700, delay: 120, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [v, target]);
-  return <Animated.View style={[style, { width: v.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} />;
+  return (
+    <View style={StyleSheet.absoluteFill} onLayout={(e) => setW(e.nativeEvent.layout.width)} pointerEvents="none">
+      {w ? (
+        <Animated.View
+          style={[
+            style,
+            { position: 'absolute', left: 0, top: 0, bottom: 0, width: w, transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [-w, 0] }) }] },
+          ]}
+        />
+      ) : null}
+    </View>
+  );
 }
 
 /** Konfeti parçası: başlangıç konumu, sapma, dönüş, renk ve şekil (önceden rastgele seçilir). */
@@ -310,7 +326,7 @@ export function useAnimatedRemovals<T extends { id: string }>(list: T[] | null):
     const ids = new Set((list ?? []).map((e) => e.id));
     const removed = !!before && !!list && before.some((e) => !ids.has(e.id));
     if (!removed || reduceMotion) {
-      setShown(list);
+      setShown((cur) => (cur === list ? cur : list)); // aynı listeyse yeniden çizim yok
       return;
     }
     // Geri dönüş geçişi bitsin, sonra satır gözle görülerek kaybolsun

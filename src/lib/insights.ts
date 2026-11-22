@@ -1,6 +1,6 @@
 import { CAFFEINE_MG } from '../config/scoring.config';
 import { addDays, coffeeTime, inRange, startOfWeek, type DayPart } from './progress';
-import { normalizePlace } from './scoring';
+import { matchChain, placeKey } from './scoring';
 import type { CupEntry } from './types';
 
 /** "Öne Çıkanlar" (Apple Sağlık'taki gibi): geçmişten otomatik çıkarılan kısa içgörüler. Saf, testli. */
@@ -49,10 +49,11 @@ export function insights(entries: CupEntry[], now: Date = new Date()): Insight[]
   const places = new Map<string, { name: string; n: number }>();
   for (const e of entries) {
     if (!e.placeName || e.venueKind === 'home' || e.venueKind === 'office') continue;
-    const k = normalizePlace(e.placeName);
+    // Skor ve Favoriler kartıyla aynı mekan kimliği: zincirin şubeleri tek mekan sayılır
+    const k = placeKey(e)!;
     const p = places.get(k);
     if (p) p.n++;
-    else places.set(k, { name: e.placeName.trim(), n: 1 });
+    else places.set(k, { name: matchChain(e.placeName) ?? e.placeName.trim(), n: 1 });
   }
   const top = [...places.values()].sort((a, b) => b.n - a.n)[0];
   if (top && top.n >= 2) {

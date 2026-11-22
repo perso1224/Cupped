@@ -2,7 +2,7 @@ import { CUP_VOLUME_ML, WRAPPED_RULES } from '../config/scoring.config';
 import { computePalateTypeId, mostCommon } from './palate';
 import { discoveriesIn, inRange } from './progress';
 import { levelForXp } from './home';
-import { normalizePlace } from './scoring';
+import { matchChain, placeKey } from './scoring';
 import type { CupEntry, Method } from './types';
 
 /** Damak Özeti (Spotify Wrapped tarzı) hikayesinin slaytları. Sadece veri; görünüm ekranda. */
@@ -51,7 +51,7 @@ export function buildWrapped(entries: CupEntry[], start: Date, end: Date): Wrapp
   const topMethod = mostCommon(list.map((e) => e.method))[0];
   const method = { item: { method: topMethod }, count: list.filter((e) => e.method === topMethod).length };
   const outside = list.filter((e) => e.placeName && (e.venueKind === 'chain' || e.venueKind === 'independent'));
-  const place = topBy(outside, (e) => normalizePlace(e.placeName!));
+  const place = topBy(outside, (e) => placeKey(e)!); // zincir şubeleri tek mekan
   const homeCount = list.filter((e) => e.venueKind === 'home').length;
   const disc = discoveriesIn(entries, start, end);
   const best = list.reduce((b, e) => (e.score > b.score ? e : b));
@@ -66,7 +66,7 @@ export function buildWrapped(entries: CupEntry[], start: Date, end: Date): Wrapp
   if (homeCount / cups >= WRAPPED_RULES.homeShare) {
     slides.push({ kind: 'home', count: homeCount, pct: Math.round((homeCount / cups) * 100) });
   } else if (place) {
-    slides.push({ kind: 'place', name: place.item.placeName!, visits: place.count });
+    slides.push({ kind: 'place', name: matchChain(place.item.placeName!) ?? place.item.placeName!, visits: place.count });
   }
   // Keşif yoksa (0 yeni mekan, 0 yeni yöntem) slayt hiç gösterilmez.
   if (disc.places.length + disc.methods.length > 0) {

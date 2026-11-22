@@ -29,7 +29,7 @@ import { FadeIn, Pop, PressScale, animateLayout, haptic, reduceMotionNow } from 
 import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
 import { computePalateTypeId } from '../lib/palate';
-import { classifyPlace, normalizePlace, scoreCup } from '../lib/scoring';
+import { classifyPlace, placeNameKey, scoreCup } from '../lib/scoring';
 import { refreshReminder } from '../lib/reminders';
 import { discardPhoto, getEntry, knownPlaces, loadEntries, newId, persistPhoto, photoUrl, saveEntry, updateEntry, updateMetrics } from '../lib/storage';
 import { brewRatio, earnedBadges } from '../lib/progress';
@@ -44,9 +44,11 @@ const METHODS: Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
 const NOTES: TasteNote[] = ['fruity', 'floral', 'chocolate', 'nutty', 'caramel', 'bright', 'bold'];
 const GRINDS: Grind[] = ['fine', 'medium', 'coarse'];
 
-/** "15,5" ya da "15.5" → 15.5; boş/geçersiz → null */
+/** "15,5" ya da "15.5" → 15.5; "1.000" / "1,000" → 1000 (binlik ayırıcı); boş/geçersiz → null */
 function parseNum(t: string): number | null {
-  const n = parseFloat(t.replace(',', '.'));
+  const s = t.trim();
+  const thousands = /^\d{1,3}([.,]\d{3})+$/.test(s);
+  const n = parseFloat(thousands ? s.replace(/[.,]/g, '') : s.replace(',', '.'));
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
@@ -265,6 +267,8 @@ export default function NewCup() {
     if (!method || !where || savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
+    let photoUri: string | null = null;
+    let saved = false;
     try {
       // Geçmişi kaydetme anında taze oku: ekran açılır açılmaz kaydedilirse yanlış "keşif" puanı verilmesin.
       const history = await loadEntries();
@@ -281,7 +285,6 @@ export default function NewCup() {
       const earlier = history.filter((e) => e.createdAt < createdAt);
       const { total, parts } = scoreCup(input, earlier, createdAt);
       const palateTypeId = computePalateTypeId([...earlier, { ...input, createdAt }]);
-      let photoUri: string | null = null;
       if (photo) {
         try {
           photoUri = await persistPhoto(photo, id, { width: photoWidth.current });
@@ -292,6 +295,7 @@ export default function NewCup() {
       const captureMs = Date.now() - openedAt.current;
       const newEntry: CupEntry = { id, createdAt, photoUri, ...input, brew, note: noteText, rating, captureMs, score: total, parts, palateTypeId };
       await saveEntry(newEntry);
+      saved = true;
       // Bu fincanla yeni kazanılan rozetler (sonuç ekranında kutlanır)
       const before = new Set(earnedBadges(history).map((b) => b.id));
       const newBadges = earnedBadges([...history, newEntry])
@@ -309,6 +313,8 @@ export default function NewCup() {
       const evolved = typeBefore && typeBefore !== typeAfter ? { evolvedFrom: typeBefore, evolvedTo: typeAfter } : {};
       router.replace({ pathname: '/result/[id]', params: { id, fresh: '1', ...(newBadges ? { badges: newBadges } : {}), ...evolved } });
     } catch {
+      // Kayıt yazılamadıysa kopyalanan fotoğraf dosyası sahipsiz kalmasın
+      if (photoUri && !saved) discardPhoto(photoUri);
       Alert.alert(tr.capture.saveError);
     } finally {
       savingRef.current = false;
@@ -425,7 +431,7 @@ export default function NewCup() {
   }
 
   // --- 2. adım: Nasıl? + Nerede? ---
-  const typedKey = normalizePlace(typed);
+  const typedKey = placeNameKey(typed);
   return (
     // Android'de klavye formun altındaki alanları örtmesin (iOS'ta ScrollView kendisi ayarlıyor)
     <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -473,7 +479,7 @@ export default function NewCup() {
             <Chip
               key={p}
               label={p}
-              selected={where?.kind === 'place' && normalizePlace(where.name) === normalizePlace(p)}
+              selected={where?.kind === 'place' && placeNameKey(where.name) === placeNameKey(p)}
               onPress={() => {
                 setTyped('');
                 setWhere({ kind: 'place', name: p });
@@ -488,7 +494,7 @@ export default function NewCup() {
             onChangeText={(t) => {
               setTyped(t);
               if (t.trim()) setWhere({ kind: 'place', name: t.trim() });
-              else if (where?.kind === 'place' && normalizePlace(where.name) === typedKey) setWhere(null);
+              else if (where?.kind === 'place' && placeNameKey(where.name) === typedKey) setWhere(null);
             }}
             onSubmitEditing={selectTyped}
             placeholder={tr.capture.placePlaceholder}

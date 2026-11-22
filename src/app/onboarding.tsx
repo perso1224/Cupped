@@ -36,7 +36,17 @@ export default function Onboarding() {
   const [pos, setPos] = useState(0);
   const step = FLOW[pos];
   const next = () => setPos((p) => Math.min(FLOW.length - 1, p + 1));
-  const back = () => setPos((p) => Math.max(0, p - 1));
+  // Otomatik ilerleme: hızlı çift dokunuş soru atlatmasın (tek zamanlayıcı, yalnızca aynı sorudaysa ilerler)
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearAuto = () => {
+    if (autoTimer.current) clearTimeout(autoTimer.current);
+    autoTimer.current = null;
+  };
+  useEffect(() => clearAuto, []);
+  const back = () => {
+    clearAuto();
+    setPos((p) => Math.max(0, p - 1));
+  };
   const [a, setA] = useState<Partial<OnboardingAnswers>>({ notes: [], nickname: '' });
   const [fade] = useState(() => new Animated.Value(1));
 
@@ -52,7 +62,11 @@ export default function Onboarding() {
   function set<K extends keyof OnboardingAnswers>(k: K, v: OnboardingAnswers[K], autoNext = true) {
     haptic.select();
     setA((p) => ({ ...p, [k]: v }));
-    if (autoNext) setTimeout(next, 180);
+    if (autoNext) {
+      clearAuto();
+      const at = pos;
+      autoTimer.current = setTimeout(() => setPos((p) => (p === at ? Math.min(FLOW.length - 1, p + 1) : p)), 180);
+    }
   }
 
   function toggleNote(n: TasteNote) {

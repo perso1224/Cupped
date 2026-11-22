@@ -6,7 +6,7 @@ import {
   SINGLE_NOTE_TYPES,
   type PalateType,
 } from '../config/scoring.config';
-import { normalizePlace } from './scoring';
+import { placeKey } from './scoring';
 import type { CupEntry, Method, TasteNote } from './types';
 
 type PalateSource = Pick<CupEntry, 'method' | 'venueKind' | 'placeName' | 'notes' | 'createdAt'>;
@@ -47,7 +47,7 @@ export function computePalateTypeId(entries: PalateSource[], opts: { wholePeriod
   // 2) Çok farklı mekan → Kafe Göçebesi
   const nomadSlice = recent.slice(-PALATE_RULES.nomadWindow);
   const places = new Set(
-    nomadSlice.filter((e) => e.placeName && e.venueKind !== 'home' && e.venueKind !== 'office').map((e) => normalizePlace(e.placeName!)),
+    nomadSlice.map((e) => placeKey(e)).filter((k): k is string => !!k), // zincirin şubeleri tek mekan
   );
   if (places.size >= PALATE_RULES.nomadDistinctPlaces) return 'cafe_nomad';
 

@@ -350,7 +350,8 @@ export const tr = {
     shareCode: 'Kodumu gönder',
     shareMessage: (code: string) => `Cupped damak kodum: ${code}\nUygulamada Profil > Damak Uyumu'na yaz, ne kadar uyumluyuz görelim.`,
     friendCode: 'Arkadaşının kodu',
-    placeholder: 'ör. K7R-X2M',
+    placeholder: 'Kodu yaz ya da mesajı yapıştır',
+    ownCode: 'Bu senin kendi kodun. Arkadaşının kodunu yaz.',
     find: 'Uyumu bul',
     invalid: 'Kod okunamadı. Harfleri kontrol eder misin?',
     kicker: 'Damak uyumu',
@@ -518,6 +519,10 @@ export const tr = {
       ['Uygulama güncellemeleri.', 'Uygulama, yeni sürümü indirmek için güncelleme sunucusuna bağlanır. Bu bağlantıda yalnızca sürüm bilgisi ve rastgele bir kurulum kimliği gibi teknik bilgiler gider; fincanların ve fotoğrafların gönderilmez.'],
       ['Silme ve taşıma.', 'Ayarlar\'dan tüm verilerini silebilir ya da dışa aktarıp yeni telefonuna taşıyabilirsin. Uygulamayı silmek de tüm verileri telefondan kaldırır.'],
     ] as [string, string][],
+  },
+  recovered: {
+    title: 'Fincan kayıtları okunamadı',
+    body: 'Telefondaki fincan kayıtların bozulmuş görünüyor; uygulama boş bir listeyle devam ediyor. Bozuk kayıtlar silinmedi, ayrıca saklandı. Bir yedeğin varsa Ayarlar > Yedekten geri yükle ile geri getirebilirsin.',
   },
   homePrompt: {
     reminderTitle: 'Seriyi kaçırma',

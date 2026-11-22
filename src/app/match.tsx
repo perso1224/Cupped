@@ -8,7 +8,7 @@ import { PillButton } from '../components/ui';
 import { BRAND } from '../config/brand';
 import { cardTheme, type CardTheme } from '../config/palateThemes';
 import { tr, upper } from '../i18n/tr';
-import { compatibility, decodeCode, encodeProfile, tasteProfile, type Match, type TasteProfile } from '../lib/match';
+import { canonicalCode, compatibility, decodeCode, extractCode, encodeProfile, tasteProfile, type Match, type TasteProfile } from '../lib/match';
 import { computePalateTypeId, getPalateType } from '../lib/palate';
 import { shareViewAsImage } from '../lib/share';
 import { useEntries } from '../lib/useEntries';
@@ -33,7 +33,13 @@ export default function MatchScreen() {
     Keyboard.dismiss();
     const friend = decodeCode(input);
     if (!friend || !mine) {
+      setResult(null); // eski sonuç ekranda kalıp yanıltmasın
       Alert.alert(tr.match.invalid);
+      return;
+    }
+    if (myCode && canonicalCode(input) === canonicalCode(myCode)) {
+      setResult(null);
+      Alert.alert(tr.match.ownCode);
       return;
     }
     setResult({ friend, match: compatibility(mine, friend), code: input.toUpperCase() });
@@ -90,7 +96,8 @@ export default function MatchScreen() {
           <Text style={styles.label}>{tr.match.friendCode}</Text>
           <TextInput
             value={input}
-            onChangeText={(t) => setInput(t.toUpperCase().slice(0, 7))}
+            // Arkadaşın gönderdiği mesajın tamamı yapıştırılırsa içindeki kod ayıklanır
+            onChangeText={(t) => setInput((t.length > 8 ? (extractCode(t) ?? t) : t).replace(/[İı]/g, '1').toUpperCase().slice(0, 7))}
             placeholder={tr.match.placeholder}
             placeholderTextColor={colors.tertiary}
             autoCapitalize="characters"

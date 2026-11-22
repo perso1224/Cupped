@@ -45,3 +45,14 @@ describe('uyum', () => {
     expect(compatibility(a, b).clash).toBe('espressoFilter');
   });
 });
+
+describe('kod ayıklama ve Türkçe klavye', () => {
+  it('paylaşılan mesajın tamamından kodu çıkarır; İ kabul edilir', async () => {
+    const { extractCode, encodeProfile, decodeCode, canonicalCode } = await import('./match');
+    const code = encodeProfile({ typeId: 'classic_master', notes: ['chocolate'], methods: { espresso: 3, filter: 1, coldbrew: 0, milk: 0, turkish: 2 }, home: 1, cafe: 2 });
+    expect(extractCode(`Cupped damak kodum: ${code}\nUygulamada Profil > Damak Uyumu'na yaz`)).toBe(code);
+    const withDotted = code.replace(/1/g, 'İ');
+    expect(decodeCode(withDotted)).not.toBeNull();
+    expect(canonicalCode(code.toLowerCase())).toBe(code);
+  });
+});

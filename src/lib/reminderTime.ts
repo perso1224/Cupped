@@ -12,10 +12,15 @@ export function nextReminder(
   minute: number = REMINDER_MINUTE,
 ) {
   const at = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
+  const cupToday = cupDays.has(dayKey(now));
+  const today = !cupToday && now.getTime() < at.getTime();
   // Bugün fincan eklendiyse ya da saat geçtiyse: yarın
-  if (cupDays.has(dayKey(now)) || now.getTime() >= at.getTime()) at.setDate(at.getDate() + 1);
+  if (!today) at.setDate(at.getDate() + 1);
+  // Seri metni yalnızca hatırlatma geldiğinde seri hâlâ yaşıyorsa: bugün (bugün eklenmediyse) ya da
+  // bugün fincan eklendiyse yarın. Bugün eklenmeden saat geçtiyse yarına kadar seri zaten bozulmuş olur.
+  const alive = today || cupToday;
   const body =
-    streak > 0
+    streak > 0 && alive
       ? `Serin ${streak} gün. Bugünkü fincanını ekle, ${streak + 1} olsun ☕`
       : 'Bugün hangi kahveyi içtin? 5 saniyede ekle ☕';
   return { at, title: 'Cupped', body };

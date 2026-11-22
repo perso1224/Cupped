@@ -67,6 +67,41 @@ export function encodeProfile(p: TasteProfile): string {
 
 /** Kodu çözer; yazım hatası/uydurma kodda null. Küçük harf, boşluk, tire ve O/I/L karışıklığı tolere edilir. */
 export function decodeCode(raw: string): TasteProfile | null {
+  const s = normalizeCode(raw)
+    .replace(/-/g, '');
+  if (s.length !== 6) return null;
+  return decodeClean(s);
+}
+
+/** Büyük harf, Türkçe İ/ı → 1, O → 0, I/L → 1; boşluk ve tire kalır. */
+function normalizeCode(raw: string): string {
+  return raw
+    .replace(/[İı]/g, '1')
+    .toUpperCase()
+    .replace(/\s/g, '')
+    .replace(/O/g, '0')
+    .replace(/[IL]/g, '1');
+}
+
+/** "XXX-XXX" biçiminde, karşılaştırma için (kendi kodunu girme kontrolü). */
+export function canonicalCode(raw: string): string {
+  const s = normalizeCode(raw).replace(/-/g, '');
+  return s.length === 6 ? `${s.slice(0, 3)}-${s.slice(3)}` : s;
+}
+
+/**
+ * Yapıştırılan metinden kodu ayıklar ("Cupped damak kodum: K7R-X2M …" → "K7R-X2M").
+ * Önce tireli biçim, yoksa metindeki 6 karakterlik geçerli bir parça aranır. Bulunamazsa null.
+ */
+export function extractCode(text: string): string | null {
+  const dashed = text.match(/[0-9A-Za-zİı]{3}-[0-9A-Za-zİı]{3}/g) ?? [];
+  for (const c of dashed) if (decodeCode(c)) return canonicalCode(c);
+  const words = text.split(/[^0-9A-Za-zİı]+/).filter((w) => w.length === 6);
+  for (const w of words) if (decodeCode(w)) return canonicalCode(w);
+  return null;
+}
+
+function decodeClean(raw: string): TasteProfile | null {
   const s = raw.toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
   if (s.length !== 6) return null;
   let full = 0;

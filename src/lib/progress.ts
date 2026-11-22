@@ -209,7 +209,10 @@ export function passport(entries: CupEntry[]): Passport {
     methods,
     places: [...places.values()].sort((a, b) => b.visits - a.visits || a.firstVisit.localeCompare(b.firstVisit)),
     palateTypeIds: [...new Set(sorted.map((e) => e.palateTypeId))],
-    badges: earnedBadges(sorted),
+    // Rozetler pahalı: yalnızca okunduğunda hesaplanır (mekan listesi isteyenler boşuna ödemesin)
+    get badges() {
+      return earnedBadges(sorted);
+    },
   };
 }
 
