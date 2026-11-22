@@ -93,9 +93,28 @@ export default function NewCup() {
 
   // H3: ekranın açılışından kayda kadar geçen süre
   const openedAt = useRef(0);
+  const prefill = useRef<{ method: Method | null; where: string; typed: string }>({ method: null, where: 'null', typed: '' });
   useEffect(() => {
     openedAt.current = Date.now();
-    loadEntries().then(setHistory);
+    loadEntries().then((list) => {
+      setHistory(list);
+      // Hızlı kayıt: yeni fincanda son kullanılan yöntem ve mekan hazır seçili gelir (değiştirmek tek dokunuş)
+      const last = list[0];
+      if (editId || againId || !last) return;
+      const w: Where | null =
+        last.venueKind === 'home'
+          ? { kind: 'home' }
+          : last.venueKind === 'office'
+            ? { kind: 'office' }
+          : last.placeName
+            ? { kind: 'place', name: last.placeName }
+            : null;
+      // Önceden seçilenler "değişiklik" sayılmasın (Kapat'ta boşuna "vazgeçilsin mi?" sorulmasın)
+      prefill.current = { method: last.method, where: JSON.stringify(w), typed: w?.kind === 'place' ? w.name : '' };
+      setMethod((m) => m ?? last.method);
+      setWhere((cur) => cur ?? w);
+      if (w?.kind === 'place') setTyped((t) => t || w.name);
+    });
     if (editId) {
       getEntry(editId).then((e) => {
         if (!e) return goBack();
@@ -181,7 +200,11 @@ export default function NewCup() {
         water !== (original.brew?.waterMl ? String(original.brew.waterMl) : '') ||
         grind !== (original.brew?.grind ?? null) ||
         rating !== (original.rating ?? null)
-      : !!(photo || method || where || typed.trim() || notes.length || origin.trim() || dose || water || grind || note.trim() || rating || when !== 'now');
+      : !!(photo ||
+          (method && method !== prefill.current.method) ||
+          (where && JSON.stringify(where) !== prefill.current.where) ||
+          (typed.trim() && typed.trim() !== prefill.current.typed) ||
+          notes.length || origin.trim() || dose || water || grind || note.trim() || rating || when !== 'now');
     if (!dirty) return goBack();
     if (Platform.OS === 'web') {
       if (globalThis.confirm?.(original ? tr.capture.discardEditTitle : tr.capture.discardTitle)) goBack();

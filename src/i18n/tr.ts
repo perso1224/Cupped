@@ -104,7 +104,7 @@ export const tr = {
     levelTop: (cur: string) => `${cur} · en üst seviye`,
     nudgeTitle: 'Günün önerisi',
     ctaTitle: 'İlk fincanını ekle',
-    ctaBody: 'Fotoğrafını çek, 2 dokunuşta kaydet; skorun ve damak tipin ortaya çıksın.',
+    ctaBody: 'Fotoğrafını çek, birkaç dokunuşta kaydet; skorun ve damak tipin ortaya çıksın.',
     ctaBodyWithType: (t: string) => `Tahminimiz ${t}. İlk fincanla gerçek damak tipin ortaya çıksın.`,
     ctaButton: 'Fincan ekle',
   },
@@ -381,7 +381,7 @@ export const tr = {
   onboarding: {
     saveError: 'Kaydedilemedi. Lütfen tekrar dene.',
     welcomeTitle: 'Her fincan bir damak kimliği.',
-    welcomeBody: 'Fincanını çek, 2 dokunuşta kaydet, skorunu ve damak tipini gör. Sonra arkadaşlarına sor: senin damak tipin ne?',
+    welcomeBody: 'Fincanını çek, birkaç dokunuşta kaydet, skorunu ve damak tipini gör. Sonra arkadaşlarına sor: senin damak tipin ne?',
     start: 'Başlayalım',
     next: 'Devam',
     skip: 'Geç',
