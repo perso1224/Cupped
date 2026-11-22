@@ -64,6 +64,9 @@
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#FAF8F5"
+    },
+    "experiments": {
+      "reactCompiler": true
     }
   }
 }
