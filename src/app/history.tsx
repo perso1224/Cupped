@@ -5,6 +5,7 @@ import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../components/CupRow';
 import { FadeIn, useAnimatedRemovals } from '../components/motion';
+import { EmptyState } from '../components/EmptyState';
 import { tr, upper } from '../i18n/tr';
 import { useEntries } from '../lib/useEntries';
 import { filterEntries } from '../lib/progress';
@@ -51,7 +52,7 @@ export default function History() {
           <BackButton label={tr.settings.back} />
           <Text style={styles.title}>{heading}</Text>
           {filtered && list.length ? <Text style={styles.summary}>{tr.history.filterSummary(list.length, avg)}</Text> : null}
-          {entries && list.length === 0 ? <Text style={styles.empty}>{tr.history.empty}</Text> : null}
+          {entries && list.length === 0 ? <EmptyState title={tr.history.empty} body={filtered ? undefined : tr.history.emptyBody} cta={!filtered} /> : null}
         </>
       }
       renderItem={({ item: g, index: gi }) => (

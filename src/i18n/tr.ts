@@ -308,7 +308,7 @@ export const tr = {
     monthCardTitle: 'Aylık Damak Özeti',
     yourLevel: 'Seviyen',
     xp: (n: number) => `${n.toLocaleString('tr-TR')} kahve puanı`,
-    toNext: (next: string, n: number) => `${next} için ${n} puan`,
+    toNext: (next: string, n: number) => `${next} için ${n.toLocaleString('tr-TR')} puan`,
     topLevel: 'En üst seviyedesin',
     levelEmpty: 'İlk fincanınla seviyen belirlenir.',
     logCup: 'Fincan ekle',
@@ -593,7 +593,8 @@ export const tr = {
   },
   history: {
     title: 'Tüm fincanlar',
-    empty: 'Henüz fincan yok.',
+    empty: 'Henüz fincan yok',
+    emptyBody: 'İlk fincanını ekle; geçmişin gün gün burada birikir.',
     filterSummary: (n: number, avg: number) => `${n} fincan · ortalama ${avg}`,
   },
   venue: {

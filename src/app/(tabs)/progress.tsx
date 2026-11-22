@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
+import { ListRow, ListSection } from '../../components/List';
 import { Icon } from '../../components/Icon';
 import { CountUp, FadeIn, GrowBar } from '../../components/motion';
 import { TrendChart } from '../../components/TrendChart';
@@ -177,20 +178,21 @@ export default function Progress() {
             style={{ marginTop: 20 }}
           />
         ) : null}
+        {/* Diğer bağlantılar: dört alt alta düğme yerine Profil > Koleksiyon gibi gruplu liste */}
         {entries.length > 0 ? (
-          <PillButton label={tr.wall.open} icon="grid-outline" variant="light" onPress={() => router.push('/wall')} style={{ marginTop: 12 }} />
-        ) : null}
-        {hasPrev ? (
-          <PillButton
-            label={kind === 'week' ? tr.wrapped.lastWeek : tr.wrapped.lastMonth}
-            icon="play-back"
-            variant="light"
-            onPress={() => router.push({ pathname: '/wrapped', params: { period: kind, offset: '-1' } })}
-            style={{ marginTop: 12 }}
-          />
-        ) : null}
-        {entries.length > 0 ? (
-  <PillButton label={tr.progress.history} icon="time-outline" variant="light" onPress={() => router.push('/history')} style={{ marginTop: 12 }} />
+          <ListSection>
+            {hasPrev ? (
+              <ListRow
+                icon="play-back"
+                tint={tint.amber}
+                title={kind === 'week' ? tr.wrapped.lastWeek : tr.wrapped.lastMonth}
+                chevron
+                onPress={() => router.push({ pathname: '/wrapped', params: { period: kind, offset: '-1' } })}
+              />
+            ) : null}
+            <ListRow icon="grid" tint={tint.espresso} title={tr.wall.open} chevron onPress={() => router.push('/wall')} />
+            <ListRow icon="time" tint={tint.slate} title={tr.progress.history} chevron onPress={() => router.push('/history')} />
+          </ListSection>
         ) : null}
       </FadeIn>
     </ScrollView>
@@ -211,7 +213,8 @@ const styles = StyleSheet.create({
   lift: { shadowColor: '#2B1A12', shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   topRow: { flexDirection: 'row', gap: 12 },
   levelCard: { flex: 1, backgroundColor: colors.card, borderRadius: 22, overflow: 'hidden' },
-  levelStamp: { alignSelf: 'flex-start', borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.accent, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2, marginTop: 6 },
+  // Seviye adı dolu, yumuşak bir etikette (kesikli çerçeve yer tutucu gibi görünüyordu)
+  levelStamp: { alignSelf: 'flex-start', backgroundColor: colors.accentSoft, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, marginTop: 6 },
   levelBody: { padding: 14, flex: 1 },
   levelName: { ...type.title2, color: colors.accentText },
   barTrack: { height: 6, borderRadius: 3, backgroundColor: colors.line, overflow: 'hidden', marginTop: 10 },

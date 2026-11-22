@@ -35,6 +35,8 @@ import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
 export default function Home() {
   const insets = useSafeAreaInsets();
   const { width: screenW } = useWindowDimensions();
+  // Küçük ekranda iki düğme yan yana sığmıyor (yazı iki satıra kayıyordu): alt alta
+  const narrow = screenW < 360;
   const tabSpace = useTabBarSpace();
   const scrollRef = useTabScrollRef();
   const introDone = useIntroDone();
@@ -306,9 +308,9 @@ export default function Home() {
                 <Text style={styles.cardTitleDark}>{tr.homePrompt.backupTitle}</Text>
               </View>
               <Text style={styles.cardSub}>{tr.homePrompt.backupBody}</Text>
-              <View style={{ flexDirection: 'row', marginTop: 12 }}>
-                <PillButton label={tr.homePrompt.backupLater} variant="light" onPress={() => answerBackup(false)} style={{ flex: 1, marginRight: 8, height: 46 }} />
-                <PillButton label={tr.homePrompt.backupYes} onPress={() => answerBackup(true)} style={{ flex: 2, height: 46 }} />
+              <View style={narrow ? styles.btnCol : styles.btnRow}>
+                <PillButton label={tr.homePrompt.backupLater} variant="light" onPress={() => answerBackup(false)} style={narrow ? styles.btnFull : styles.btnSecondary} />
+                <PillButton label={tr.homePrompt.backupYes} onPress={() => answerBackup(true)} style={narrow ? styles.btnFull : styles.btnPrimary} />
               </View>
             </Card>
             </FadeIn>
@@ -322,9 +324,9 @@ export default function Home() {
                 <Text style={styles.cardTitleDark}>{tr.homePrompt.reminderTitle}</Text>
               </View>
               <Text style={styles.cardSub}>{tr.homePrompt.reminderBody}</Text>
-              <View style={{ flexDirection: 'row', marginTop: 12 }}>
-                <PillButton label={tr.homePrompt.no} variant="light" onPress={() => answerReminder(false)} style={{ flex: 1, marginRight: 8, height: 46 }} />
-                <PillButton label={tr.homePrompt.yes} onPress={() => answerReminder(true)} style={{ flex: 2, height: 46 }} />
+              <View style={narrow ? styles.btnCol : styles.btnRow}>
+                <PillButton label={tr.homePrompt.no} variant="light" onPress={() => answerReminder(false)} style={narrow ? styles.btnFull : styles.btnSecondary} />
+                <PillButton label={tr.homePrompt.yes} onPress={() => answerReminder(true)} style={narrow ? styles.btnFull : styles.btnPrimary} />
               </View>
             </Card>
             </FadeIn>
@@ -510,9 +512,8 @@ function MenuLine({ color, label, value }: { color: string; label: string; value
     <View style={styles.menuLine} accessible accessibilityLabel={`${label}: ${value}`}>
       <View style={[styles.menuDot, { backgroundColor: color }]} />
       <Text style={styles.menuLabel}>{label}</Text>
-      <Text style={styles.menuLeader} numberOfLines={1} ellipsizeMode="clip">
-        {' · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·'}
-      </Text>
+      {/* Menü noktaları: çizgiyle çizilir (yazıyla çizilince bazı ekranlarda sonda "…" çıkıyordu) */}
+      <View style={styles.menuLeader} />
       <Text style={styles.menuValue} numberOfLines={1}>
         {value}
       </Text>
@@ -539,6 +540,11 @@ function HighlightRow({ icon, color, title, text }: { icon: Parameters<typeof Ic
 }
 
 const styles = StyleSheet.create({
+  btnRow: { flexDirection: 'row', marginTop: 12, gap: 8 },
+  btnCol: { marginTop: 12, gap: 8, flexDirection: 'column-reverse' },
+  btnSecondary: { flex: 1, height: 46 },
+  btnPrimary: { flex: 2, height: 46 },
+  btnFull: { height: 46 },
   header: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 14 },
   date: { ...type.sectionHeader },
   largeTitle: { ...type.largeTitle, marginTop: 2 },
@@ -592,7 +598,8 @@ const styles = StyleSheet.create({
   menuLine: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
   menuDot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
   menuLabel: { fontSize: 15, fontWeight: '600', color: BOARD.text },
-  menuLeader: { flex: 1, color: BOARD.muted, opacity: 0.6, marginHorizontal: 6, fontSize: 13, overflow: 'hidden' },
+  // Tüm kenarlı ince kutu: iOS tek kenarda noktalı çizgiyi desteklemiyor
+  menuLeader: { flex: 1, height: 1, marginHorizontal: 8, marginTop: 6, borderWidth: 1, borderRadius: 1, borderStyle: 'dotted', borderColor: BOARD.muted, opacity: 0.5 },
   menuValue: { fontSize: 17, fontFamily: fonts.display, color: BOARD.text, maxWidth: '55%', flexShrink: 1 },
   cardTitle: { ...type.footnote, fontWeight: '600' },
   cardTitleDark: { ...type.headline },

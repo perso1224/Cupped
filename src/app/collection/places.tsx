@@ -1,15 +1,19 @@
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
 import { CollectionScreen } from '../../components/collection';
 import { ListRow, ListSection } from '../../components/List';
-import { PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
+import { EmptyState } from '../../components/EmptyState';
 import { passport, placeRatings } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
-import { tint, type } from '../../theme';
+import { tint } from '../../theme';
 
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+// Bu yılın tarihlerinde yıl yazılmaz (satır kısa kalsın)
+const shortDate = (iso: string) => {
+  const d = new Date(iso);
+  const thisYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString('tr-TR', thisYear ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' });
+};
 
 /** Profil > Koleksiyon > Mekanlar: ziyaret sayısına göre sıralı liste; dokununca o mekandaki fincanlar açılır. */
 export default function Places() {
@@ -22,10 +26,7 @@ export default function Places() {
   return (
     <CollectionScreen title={tr.profile.placesPlural} summary={places.length ? tr.collection.placesSummary(places.length, visits) : undefined}>
       {entries && places.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.empty}>{tr.collection.noPlaces}</Text>
-          <PillButton label={tr.collection.addCup} onPress={() => router.push('/new')} style={{ marginTop: 16, alignSelf: 'stretch' }} />
-        </View>
+        <EmptyState icon="location-outline" title={tr.collection.noPlaces} />
       ) : null}
 
       {places.length ? (
@@ -36,7 +37,9 @@ export default function Places() {
               icon={i === 0 && p.visits > 1 ? 'trophy' : 'location'}
               tint={i === 0 && p.visits > 1 ? tint.amber : tint.cherry}
               title={p.name}
-              subtitle={[tr.collection.placeSub(p.visits, shortDate(p.firstVisit)), ratings.get(p.key) ? tr.rating.avg(ratings.get(p.key)!.avg) : null].filter(Boolean).join(' · ')}
+              subtitle={tr.collection.placeSub(p.visits, shortDate(p.firstVisit))}
+              // Yıldız ortalaması sağda: dar ekranda alt satıra tek başına düşmesin
+              value={ratings.get(p.key) ? tr.rating.avg(ratings.get(p.key)!.avg) : undefined}
               chevron
               onPress={() => open(p.key, p.name)}
             />
@@ -46,8 +49,3 @@ export default function Places() {
     </CollectionScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  emptyBox: { marginTop: 24 },
-  empty: { ...type.subhead, lineHeight: 21 },
-});
