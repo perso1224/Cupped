@@ -91,3 +91,4 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - `MetricTile` bars use `GrowBar`.
   - new.tsx: the form fades in after the photo step, the details block fades in, and the save button pops when it becomes ready (`Pop skipInitial`).
   - Not yet verified on device.
+- Verified by the owner on device: the new-cup flow animations (confetti, staggered result, details fade).
