@@ -2,9 +2,10 @@ import { Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_800ExtraBold, useFonts
 import { usePathname } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
 import { Appearance, AppState, View } from 'react-native';
+import { BrandIntro } from '../components/BrandIntro';
 import { refreshReminder } from '../lib/reminders';
 import { recordActiveDay } from '../lib/storage';
 import { useProfile } from '../lib/useProfile';
@@ -12,6 +13,9 @@ import { colors, isDark, themePref } from '../theme';
 
 /** Doğrudan bağlantıyla açılan ekranların altında her zaman sekmeler olsun (geri tuşu çıkmaza girmesin). */
 export const unstable_settings = { anchor: '(tabs)' };
+
+/** Açılış animasyonu bu oturumda gösterildi mi (modül düzeyi: ekranlar arası gezinmede tekrar çıkmasın). */
+let introShown = false;
 
 /** Tema değişince yeniden yüklemenin güvenli olduğu ekranlar (yarım kalan giriş yok): ana sekmeler. */
 const SAFE_TO_RELOAD = new Set(['/', '/progress', '/passport', '/profile']);
@@ -66,7 +70,21 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (profile === undefined || (!fontsLoaded && !fontError)) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  // Açılış animasyonu: yalnızca uygulama açılışında bir kez (yeniden yüklemede yine gösterilir)
+  const [showIntro, setShowIntro] = useState(!introShown);
+  const endIntro = useCallback(() => {
+    introShown = true;
+    setShowIntro(false);
+  }, []);
+  const ready = profile !== undefined && (fontsLoaded || !!fontError);
+  const intro = showIntro ? <BrandIntro ready={ready} onDone={endIntro} /> : null;
+
+  if (!ready)
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        {intro}
+      </View>
+    );
 
   return (
     <>
@@ -98,6 +116,8 @@ export default function RootLayout() {
           <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
         </Stack.Protected>
       </Stack>
+      {/* Açılış animasyonu en üstte, uygulamanın üzerinden kaybolur */}
+      {intro}
     </>
   );
 }

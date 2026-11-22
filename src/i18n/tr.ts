@@ -305,6 +305,9 @@ export const tr = {
     lastCup: (date: string) => `Son: ${date}`,
     untriedSub: 'Bir fincanla damganı al',
   },
+  intro: {
+    tagline: 'Damak kimliğin',
+  },
   rating: {
     question: 'Nasıl buldun? (isteğe bağlı)',
     label: (n: number) => `${n} yıldız`,
