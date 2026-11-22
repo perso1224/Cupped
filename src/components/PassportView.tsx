@@ -9,17 +9,19 @@ import { tr } from '../i18n/tr';
 import { badgeProgress, passport } from '../lib/progress';
 import { useEntries } from '../lib/useEntries';
 import { colors, type } from '../theme';
+import { useTabBarSpace } from './TabBar';
 
 /** Damak Pasaportu sekmesinin içeriği (Profil > Koleksiyon'un ayrı sayfaları components/collection.tsx'i kullanır). */
 export function PassportView({ header }: { header: ReactNode }) {
   const insets = useSafeAreaInsets();
+  const tabSpace = useTabBarSpace();
   const entries = useEntries() ?? [];
   const p = passport(entries);
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: 48 }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: tabSpace }}
     >
       {header}
       <Text style={styles.summary}>{tr.passport.summary(p.places.length, p.methods.length)}</Text>

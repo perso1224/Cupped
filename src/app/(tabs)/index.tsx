@@ -23,6 +23,7 @@ import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
 import { useSettings } from '../../lib/useSettings';
 import { colors, tint, type } from '../../theme';
+import { useTabBarSpace } from '../../components/TabBar';
 
 /**
  * Ana sayfa "Özet": Apple Fitness/Sağlık tarzı bölümlü yapı + Cal AI tarzı pano.
@@ -30,6 +31,7 @@ import { colors, tint, type } from '../../theme';
  */
 export default function Home() {
   const insets = useSafeAreaInsets();
+  const tabSpace = useTabBarSpace();
   const { width: screenW } = useWindowDimensions();
   const entries = useEntries();
   const list = entries ?? [];
@@ -147,7 +149,7 @@ export default function Home() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: 48 }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: tabSpace }}
     >
       {/* Başlık: tarih + büyük "Özet" (Apple Fitness gibi) */}
       <View style={styles.header}>

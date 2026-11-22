@@ -15,9 +15,11 @@ import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
 import { colors, radius, tint, type } from '../../theme';
+import { useTabBarSpace } from '../../components/TabBar';
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
+  const tabSpace = useTabBarSpace();
   const entries = useEntries() ?? [];
   const [metrics, reloadMetrics] = useMetrics();
   const profile = useProfile();
@@ -49,7 +51,7 @@ export default function Profile() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: 48 }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: tabSpace }}
     >
       <View style={styles.header}>
         <Text style={styles.largeTitle}>{tr.profile.title}</Text>

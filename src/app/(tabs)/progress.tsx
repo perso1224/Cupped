@@ -10,9 +10,11 @@ import { getPalateType } from '../../lib/palate';
 import { addDays, inRange, periodRange, periodReport, startOfMonth, startOfWeek, weeklyRecordBefore } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
 import { colors, layout, type } from '../../theme';
+import { useTabBarSpace } from '../../components/TabBar';
 
 export default function Progress() {
   const insets = useSafeAreaInsets();
+  const tabSpace = useTabBarSpace();
   const entries = useEntries() ?? [];
   const [kind, setKind] = useState<'week' | 'month'>('week');
 
@@ -32,7 +34,7 @@ export default function Progress() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 48 }}
+      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: tabSpace }}
     >
       <Text style={styles.title}>{tr.progress.title}</Text>
       <Segmented
