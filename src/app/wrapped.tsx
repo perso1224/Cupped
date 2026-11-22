@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { PressScale, haptic, reduceMotionNow } from '../components/motion';
 import { Icon } from '../components/Icon';
+import { GLASS, GlassSurface } from '../components/Glass';
 import { CloseButton } from '../components/NavButtons';
 import { placeLabel, type CardHandle } from '../components/ShareCard';
 import { BRAND } from '../config/brand';
@@ -249,8 +250,10 @@ export default function Wrapped() {
             {isLast && finished ? tr.wrapped.finish : tr.wrapped.close}
           </Text>
         </PressScale>
-        <PressScale onPress={share} scaleTo={0.95} style={styles.shareBtn}>
-          <Text style={styles.shareText}>{tr.wrapped.share}</Text>
+        {/* iPhone iOS 26+: Liquid Glass kapsül (yazı slayt renginde); diğerlerinde açık renk kapsül */}
+        <PressScale onPress={share} scaleTo={0.95} style={[styles.shareBtn, GLASS && styles.shareClear]}>
+          {GLASS ? <GlassSurface style={styles.glassFill} interactive /> : null}
+          <Text style={[styles.shareText, GLASS && { color: theme.fg }]}>{tr.wrapped.share}</Text>
         </PressScale>
       </View>
     </View>
@@ -539,6 +542,8 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: 'center',
   },
+  shareClear: { backgroundColor: 'transparent' },
+  glassFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 999 },
   shareText: { fontSize: 16, fontWeight: '800', color: '#111' },
   empty: { color: '#FAF8F5', fontSize: 20, fontWeight: '700', textAlign: 'center', lineHeight: 28 },
   emptyBtn: { marginTop: 24, alignSelf: 'center', backgroundColor: '#FAF8F5', borderRadius: 999, paddingHorizontal: 28, paddingVertical: 14 },

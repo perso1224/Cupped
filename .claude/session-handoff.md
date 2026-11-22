@@ -81,3 +81,6 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - `BackButton` becomes a 44pt glass circle with a chevron only.
   - Also glass: `CloseButton`, the Profile gear, and the CupDetail photo buttons (with a dark tint).
   - Older iOS and Android keep the old look. Not yet verified on iPhone.
+- Share buttons are glass on iOS 26+:
+  - `PillButton glass` is used in card, wall, evolution and match (×2).
+  - wrapped uses a glass background with the slide's fg text color.

@@ -70,7 +70,7 @@ export default function Wall() {
       <View style={styles.topBar}>
         <CloseButton />
         <Text style={styles.hint}>{tr.wall.title}</Text>
-        <PillButton label={tr.palateCard.share} onPress={share} disabled={sharing || !list.length} style={styles.shareBtn} />
+        <PillButton glass label={tr.palateCard.share} onPress={share} disabled={sharing || !list.length} style={styles.shareBtn} />
       </View>
       {years.length > 1 ? (
         <View style={{ paddingHorizontal: 16, marginTop: 10 }}>

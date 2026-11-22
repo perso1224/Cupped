@@ -92,7 +92,7 @@ export default function PalateCard() {
         <CloseButton />
         <Text style={styles.hint}>{tr.palateCard.hint}</Text>
         {type && s.cups > 0 ? (
-          <PillButton label={tr.palateCard.share} onPress={share} disabled={sharing} style={styles.shareBtn} />
+          <PillButton glass label={tr.palateCard.share} onPress={share} disabled={sharing} style={styles.shareBtn} />
         ) : (
           <View style={{ width: 36 }} />
         )}

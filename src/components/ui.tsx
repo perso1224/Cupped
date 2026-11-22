@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { GLASS, GlassSurface } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { haptic, PressScale, reduceMotionNow } from './motion';
 import { colors, radius } from '../theme';
@@ -29,6 +30,7 @@ export function PillButton({
   variant = 'dark',
   icon,
   style,
+  glass,
 }: {
   label: string;
   onPress: () => void;
@@ -37,7 +39,27 @@ export function PillButton({
   variant?: 'dark' | 'light' | 'accent';
   icon?: IconName;
   style?: StyleProp<ViewStyle>;
+  /** iPhone iOS 26+'da Liquid Glass kapsül (paylaş gibi düğmeler); diğerlerinde `variant` görünümü. */
+  glass?: boolean;
 }) {
+  if (glass && GLASS) {
+    return (
+      <PressScale
+        onPress={() => {
+          haptic.light();
+          onPress();
+        }}
+        disabled={disabled}
+        style={[styles.pill, styles.pillClear, disabled && { opacity: 0.35 }, style]}
+      >
+        <GlassSurface style={styles.glassFill} interactive />
+        <View style={styles.pillInner}>
+          {icon ? <Icon name={icon} size={18} color={colors.text} /> : null}
+          <Text style={[styles.pillText, { color: colors.text }]}>{label}</Text>
+        </View>
+      </PressScale>
+    );
+  }
   const bg = variant === 'dark' ? colors.black : variant === 'accent' ? colors.accent : colors.card;
   const border = variant === 'light' ? colors.line : bg;
   const fg = variant === 'dark' ? colors.white : colors.text;
@@ -138,6 +160,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 24,
   },
+  pillClear: { backgroundColor: 'transparent', borderColor: 'transparent' },
+  glassFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radius.pill },
   pillInner: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   pillText: { fontSize: 17, fontWeight: '700' },
   card: {

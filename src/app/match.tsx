@@ -73,6 +73,7 @@ export default function MatchScreen() {
             </Text>
             <PillButton
               label={tr.match.shareCode}
+              glass
               variant="light"
               icon="share-outline"
               onPress={() => Share.share({ message: tr.match.shareMessage(myCode) }).catch(() => {})}
@@ -109,7 +110,7 @@ export default function MatchScreen() {
               <ResultCard ref={cardRef} width={cardW} height={cardH} mine={mine} friend={result.friend} match={result.match} myCode={myCode!} />
             </View>
           </View>
-          <PillButton label={tr.match.shareResult} onPress={shareResult} disabled={sharing} style={{ marginTop: 16 }} />
+          <PillButton glass label={tr.match.shareResult} onPress={shareResult} disabled={sharing} style={{ marginTop: 16 }} />
         </>
       ) : null}
     </ScrollView>

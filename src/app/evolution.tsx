@@ -48,7 +48,7 @@ export default function Evolution() {
       <View style={styles.topBar}>
         <CloseButton />
         <Text style={styles.hint}>{tr.evolution.title}</Text>
-        <PillButton label={tr.palateCard.share} onPress={share} disabled={sharing} style={styles.shareBtn} />
+        <PillButton glass label={tr.palateCard.share} onPress={share} disabled={sharing} style={styles.shareBtn} />
       </View>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <View style={{ borderRadius: u * 6, overflow: 'hidden' }}>
