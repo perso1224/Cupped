@@ -7,6 +7,7 @@ import { photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
 import { colors } from '../theme';
 import { ScoreRing } from './ScoreRing';
+import { useDamakCode } from '../lib/useDamakCode';
 
 export function placeLabel(entry: Pick<CupEntry, 'venueKind' | 'placeName'>): string {
   if (entry.venueKind === 'home') return tr.card.homeBrew;
@@ -41,6 +42,7 @@ export function ShareCard({
   const photoH = height * 0.44;
   const ringSize = width * 0.34;
   const photo = photoUrl(entry.photoUri);
+  const code = useDamakCode(); // davet: kartı gören, kodu Damak Uyumu'na yazabilir
 
   return (
     <View style={{ width, height, borderRadius: 28, overflow: 'hidden' }}>
@@ -88,7 +90,7 @@ export function ShareCard({
           <Text allowFontScaling={false} style={styles.brandLine}>
             <Text style={styles.brand}>{BRAND.name}</Text>
             {'  ·  '}
-            {tr.card.explainer}
+            {code ? tr.card.inviteCode(code) : tr.card.explainer}
           </Text>
         </View>
       </View>

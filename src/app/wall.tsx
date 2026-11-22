@@ -12,6 +12,7 @@ import { computePalateTypeId, getPalateType } from '../lib/palate';
 import { longestStreak, yearWall } from '../lib/progress';
 import { shareViewAsImage } from '../lib/share';
 import { photoUrl } from '../lib/storage';
+import { useDamakCode } from '../lib/useDamakCode';
 import { useEntries } from '../lib/useEntries';
 import { colors, fonts, type } from '../theme';
 
@@ -25,6 +26,7 @@ export default function Wall() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const entries = useEntries() ?? [];
+  const code = useDamakCode();
   const now = new Date();
   const years = useMemo(() => {
     const ys = new Set(entries.map((e) => new Date(e.createdAt).getFullYear()));
@@ -119,7 +121,10 @@ export default function Wall() {
                   ))}
               </View>
               <View style={[styles.rowBetween, { marginTop: u * 4 }]}>
-                <T style={{ color: th.muted, fontSize: u * 3.3, fontWeight: '600' }}>{typeId ? getPalateType(typeId).name : tr.card.question}</T>
+                <View>
+                  <T style={{ color: th.muted, fontSize: u * 3.3, fontWeight: '600' }}>{typeId ? getPalateType(typeId).name : tr.card.question}</T>
+                  {code ? <T style={{ color: th.fg, fontSize: u * 3.2, fontWeight: '700', marginTop: 2 }}>{tr.match.cardCode(code)}</T> : null}
+                </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Bean size={u * 5} color={th.accent} line={th.bg} />
                   <T style={{ color: th.fg, fontSize: u * 5.6, fontFamily: fonts.heavy }}>{BRAND.name}</T>

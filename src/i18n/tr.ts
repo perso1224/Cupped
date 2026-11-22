@@ -199,6 +199,7 @@ export const tr = {
     office: 'Ofis kahvesi',
     question: 'Senin damak tipin ne?',
     explainer: 'Kahveni çek, damak tipini öğren',
+    inviteCode: (c: string) => `Damak kodum ${c}`,
   },
   profile: {
     title: 'Profil',

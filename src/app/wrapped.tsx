@@ -21,6 +21,7 @@ import { Icon } from '../components/Icon';
 import { CloseButton } from '../components/NavButtons';
 import { placeLabel, type CardHandle } from '../components/ShareCard';
 import { BRAND } from '../config/brand';
+import { useDamakCode } from '../lib/useDamakCode';
 import { periodWord, tr, upper, type PeriodWord } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
 import { addDays, dayKey, periodRange } from '../lib/progress';
@@ -56,6 +57,7 @@ function capitalize(s: string) {
 }
 
 export default function Wrapped() {
+  const damakCode = useDamakCode();
   const { period, offset: offsetParam } = useLocalSearchParams<{ period?: string; offset?: string }>();
   const kind = period === 'week' ? 'week' : 'month';
   const offset = offsetParam === '-1' ? -1 : 0;
@@ -206,7 +208,7 @@ export default function Wrapped() {
       >
         {/* Sadece bu görünüm kaydedilir (köşeler kare, 9:16). */}
         <View ref={slideRef} collapsable={false} style={{ width: W, height: H, backgroundColor: theme.bg }}>
-          <SlideView slide={slide} theme={theme} W={W} H={H} enter={enter} periodLabel={periodLabel} kind={kind} index={index} pw={pw} />
+          <SlideView slide={slide} theme={theme} W={W} H={H} enter={enter} periodLabel={periodLabel} kind={kind} index={index} pw={pw} code={damakCode} />
         </View>
 
         <Pressable style={StyleSheet.absoluteFill} onPress={onTap} onLongPress={() => setPaused(true)} onPressOut={() => paused && setPaused(false)} />
@@ -288,7 +290,9 @@ function SlideView({
   kind,
   index,
   pw,
+  code,
 }: {
+  code: string | null;
   slide: WrappedSlide;
   theme: Theme;
   W: number;
@@ -320,7 +324,10 @@ function SlideView({
   const footer = (
     <View style={[styles.footer, { paddingHorizontal: u * 7, paddingBottom: H * 0.16 }]}>
       <Text style={[styles.footerBrand, t, { fontSize: u * 5.5 }]}>{BRAND.name}</Text>
-      <Text style={[styles.footerQ, { color: hexA(theme.fg, 0.7), fontSize: u * 3.4 }]}>{tr.card.question}</Text>
+      <Text style={[styles.footerQ, { color: hexA(theme.fg, 0.7), fontSize: u * 3.4, textAlign: 'right' }]}>
+        {tr.card.question}
+        {code ? `\n${tr.match.cardCode(code)}` : ''}
+      </Text>
     </View>
   );
 
