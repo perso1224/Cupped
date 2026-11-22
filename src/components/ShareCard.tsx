@@ -5,8 +5,7 @@ import { tr, upper } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
 import { photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
-// Paylaşılan görsel: uygulama koyu temada olsa da hep açık renkli kart
-import { lightColors as colors } from '../theme';
+import { colors } from '../theme';
 import { ScoreRing } from './ScoreRing';
 
 export function placeLabel(entry: Pick<CupEntry, 'venueKind' | 'placeName'>): string {
@@ -67,7 +66,7 @@ export function ShareCard({
             { marginTop: -ringSize / 2 - 8, width: ringSize + 16, height: ringSize + 16, borderRadius: (ringSize + 16) / 2 },
           ]}
         >
-          <ScoreRing score={entry.score} size={ringSize} stroke={ringSize * 0.08} animate={animate} onAnimationEnd={onAnimationEnd} palette={colors} />
+          <ScoreRing score={entry.score} size={ringSize} stroke={ringSize * 0.08} animate={animate} onAnimationEnd={onAnimationEnd} />
         </View>
 
         <View style={styles.body}>
