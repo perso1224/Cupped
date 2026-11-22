@@ -5,7 +5,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../../components/Icon';
 import { ListRow, ListSection } from '../../components/List';
-import { CountUp, PressScale } from '../../components/motion';
+import { CountUp } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
@@ -16,6 +16,7 @@ import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
 import { colors, radius, tint, type } from '../../theme';
+import { GlassIconButton } from '../../components/NavButtons';
 import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
 
 export default function Profile() {
@@ -60,9 +61,7 @@ export default function Profile() {
     >
       <View style={styles.header}>
         <Text style={styles.largeTitle}>{tr.profile.title}</Text>
-        <PressScale onPress={() => router.push('/settings')} hitSlop={12} scaleTo={0.9} style={styles.gear} accessibilityLabel={tr.settings.title}>
-          <Icon name="settings-outline" size={22} color={colors.text} />
-        </PressScale>
+        <GlassIconButton icon="settings-outline" iconSize={22} label={tr.settings.title} onPress={() => router.push('/settings')} fallback={styles.gear} />
       </View>
 
       {/* Kimlik */}

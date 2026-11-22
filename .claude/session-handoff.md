@@ -77,3 +77,7 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - "+" is the `add` trigger with `disabled`; its tabPress pushes `/new`. On iOS 26.1+ it has `role="search"`, so it sits separately as a circle.
   - Screens use `disableAutomaticContentInsets`; `useTabBarSpace` has an iOS branch.
   - Not yet verified on iPhone. Check the bottom spacing, the "+" circle, and whether it works in Expo Go.
+- Liquid Glass buttons (iOS 26+ only, via `GlassIconButton` in `NavButtons.tsx`):
+  - `BackButton` becomes a 44pt glass circle with a chevron only.
+  - Also glass: `CloseButton`, the Profile gear, and the CupDetail photo buttons (with a dark tint).
+  - Older iOS and Android keep the old look. Not yet verified on iPhone.

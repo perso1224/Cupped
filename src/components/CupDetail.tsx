@@ -9,7 +9,7 @@ import { BadgeArt } from './BadgeArt';
 import { Stars } from './Stars';
 import { Icon, type IconName } from './Icon';
 import { ListRow, ListSection } from './List';
-import { goBack } from './NavButtons';
+import { GlassIconButton, goBack } from './NavButtons';
 import { Card, PillButton } from './ui';
 import { CountUp, Pop, PressScale, haptic } from './motion';
 import { BADGES, PART_MAX } from '../config/scoring.config';
@@ -276,22 +276,19 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
 
 const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
 
-/** Fotoğraf üstünde yarı saydam koyu daire düğme. */
+/** Fotoğraf üstünde daire düğme: iOS 26+'da koyu Liquid Glass, diğerlerinde yarı saydam koyu daire. */
 function RoundButton({ icon, label, onPress, disabled }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean }) {
   return (
-    <PressScale
-      onPress={() => {
-        haptic.select();
-        onPress();
-      }}
+    <GlassIconButton
+      icon={icon}
+      iconSize={22}
+      label={label}
+      onPress={onPress}
       disabled={disabled}
-      hitSlop={10}
-      scaleTo={0.9}
-      accessibilityLabel={label}
-      style={[styles.round, disabled && { opacity: 0.5 }]}
-    >
-      <Icon name={icon} size={22} color={colors.onColor} />
-    </PressScale>
+      color={colors.onColor}
+      tint="rgba(0,0,0,0.3)"
+      fallback={styles.round}
+    />
   );
 }
 
