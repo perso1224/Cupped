@@ -221,22 +221,27 @@ export function badgeProgress(entries: CupEntry[]): BadgeProgress[] {
   const best = new Map<string, number>();
   const bump = (id: string, v: number) => best.set(id, Math.max(best.get(id) ?? 0, v));
 
-  // Sadık Fincan: art arda N gün, her gün tek ve aynı yöntem (en uzun seri)
+  // Sadık Fincan: art arda N gün, her gün en az bir kez AYNI yöntem (o gün başka kahve de içilebilir)
   const dayMethods = new Map<string, Set<Method>>();
   for (const e of sorted) {
     const k = dayKey(new Date(e.createdAt));
     dayMethods.set(k, (dayMethods.get(k) ?? new Set()).add(e.method));
   }
-  let run = 0;
-  let prevKey: string | null = null;
-  let prevMethod: Method | null = null;
-  for (const [k, set] of [...dayMethods.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-    const only = set.size === 1 ? [...set][0] : null;
-    const consecutive = prevKey !== null && dayKey(addDays(new Date(`${prevKey}T00:00:00`), 1)) === k;
-    run = only && consecutive && only === prevMethod ? run + 1 : only ? 1 : 0;
-    prevKey = k;
-    prevMethod = only;
-    bump('routine', run);
+  const days = [...dayMethods.keys()].sort();
+  for (const m of new Set(sorted.map((e) => e.method))) {
+    let run = 0;
+    let prev: string | null = null;
+    for (const k of days) {
+      if (!dayMethods.get(k)!.has(m)) {
+        run = 0;
+        prev = k;
+        continue;
+      }
+      const consecutive = prev !== null && dayKey(addDays(new Date(`${prev}T00:00:00`), 1)) === k;
+      run = consecutive && run > 0 ? run + 1 : 1;
+      prev = k;
+      bump('routine', run);
+    }
   }
 
   // Kafe Kaşifi
@@ -274,6 +279,13 @@ export function badgeProgress(entries: CupEntry[]): BadgeProgress[] {
   // Derinlik
   bump('depth', sorted.filter(isDetailed).length);
 
+  // Yeni rozetler (22 Kas)
+  bump('first_turkish', sorted.some((e) => e.method === 'turkish') ? 1 : 0);
+  bump('first_coldbrew', sorted.some((e) => e.method === 'coldbrew') ? 1 : 0);
+  bump('ten_places', new Set(sorted.map(placeKeyOf).filter(Boolean)).size);
+  bump('streak30', longestStreak(sorted));
+  bump('hundred_cups', sorted.length);
+
   const targets: Record<string, number> = {
     routine: BADGE_RULES.routineDays,
     third_wave_refugee: BADGE_RULES.independentPlaces,
@@ -282,6 +294,11 @@ export function badgeProgress(entries: CupEntry[]): BadgeProgress[] {
     first_geisha: 1,
     five_new_month: BADGE_RULES.newPlacesInMonth,
     depth: BADGE_RULES.detailedCups,
+    first_turkish: 1,
+    first_coldbrew: 1,
+    ten_places: BADGE_RULES.places,
+    streak30: BADGE_RULES.streakDays,
+    hundred_cups: BADGE_RULES.cups,
   };
   return BADGES.map((badge) => {
     const target = targets[badge.id] ?? 1;

@@ -156,12 +156,17 @@ export type Badge = { id: string; name: string; description: string; howTo: stri
 
 /** Rozetler. Eşikler BADGE_RULES içinde. */
 export const BADGES: Badge[] = [
-  { id: 'routine', name: 'Sadık Fincan', description: '5 gün üst üste aynı içecek. Yarın bir sürpriz?', howTo: '5 gün üst üste aynı yöntemle iç' },
+  { id: 'routine', name: 'Sadık Fincan', description: '5 gün üst üste aynı yöntemden içtin. Yarın bir sürpriz?', howTo: '5 gün üst üste her gün aynı yöntemden en az bir fincan iç' },
   { id: 'third_wave_refugee', name: 'Kafe Kaşifi', description: '5 farklı bağımsız mekan gezdin.', howTo: '5 farklı bağımsız kafeye git' },
   { id: 'chain_loyal', name: 'Müdavim', description: 'Aynı zincire art arda 3 kez gittin. Sadakat güzel şey.', howTo: 'Aynı zincire art arda 3 kez git' },
   { id: 'pourover_patience', name: 'Ev Baristası', description: 'Evde 5 filtre kahve demledin.', howTo: 'Evde 5 filtre kahve demle' },
-  { id: 'first_geisha', name: 'Geisha Anı', description: 'Geisha çekirdeğiyle tanıştın.', howTo: 'Detay modunda menşei olarak Geisha yaz' },
+  { id: 'first_geisha', name: 'Geisha Anı', description: 'Geisha çekirdeğiyle tanıştın.', howTo: 'Bir Geisha çekirdeği dene (Detay > Çekirdek)' },
   { id: 'five_new_month', name: 'Şehir Gezgini', description: 'Bir ayda 5 yeni mekan keşfettin.', howTo: 'Bir ay içinde 5 yeni mekan keşfet' },
+  { id: 'first_turkish', name: 'Fal Hazır', description: 'İlk Türk kahveni kaydettin. Fincanı kapatmayı unutma.', howTo: 'Bir Türk kahvesi kaydet' },
+  { id: 'first_coldbrew', name: 'Buz Gibi', description: 'İlk soğuk demlemeni içtin.', howTo: 'Bir soğuk demleme kaydet' },
+  { id: 'ten_places', name: 'Mekan Avcısı', description: '10 farklı mekanda kahve içtin.', howTo: '10 farklı mekanda kahve iç' },
+  { id: 'streak30', name: 'Otuz Gün', description: '30 gün üst üste fincan ekledin. Bu artık bir alışkanlık.', howTo: '30 gün üst üste fincan ekle' },
+  { id: 'hundred_cups', name: 'Yüzüncü Fincan', description: '100 fincanı geride bıraktın.', howTo: '100 fincan kaydet' },
   { id: 'depth', name: 'Tadım Defteri', description: '5 fincanı detaylı kaydettin: tat notu, menşei, tarif ya da kişisel not.', howTo: '5 fincanı detay moduyla kaydet' },
 ];
 
@@ -172,6 +177,9 @@ export const BADGE_RULES = {
   homeFilters: 5,
   newPlacesInMonth: 5,
   detailedCups: 5,
+  places: 10,
+  streakDays: 30,
+  cups: 100,
 } as const;
 
 /** Damak Özeti'ndeki "≈ X ml kahve" eğlenceli bilgisi için yaklaşık fincan hacimleri. */

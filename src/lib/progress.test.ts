@@ -340,3 +340,22 @@ describe('kişisel yıldız: mekanlar', () => {
     expect(favorites(l).loved).toEqual({ name: 'Kör Nokta', avg: 4.5 });
   });
 });
+
+describe('rozet kuralları (22 Kas)', () => {
+  const ids = (l: CupEntry[]) => badgeProgress(l).filter((b) => b.earned).map((b) => b.badge.id);
+  it('Sadık Fincan: aynı gün başka kahve içmek seriyi bozmaz', () => {
+    const l = [1, 2, 3, 4, 5].flatMap((d) => [cup(at(2026, 10, d, 8), { method: 'filter' }), cup(at(2026, 10, d, 15), { method: 'milk' })]);
+    expect(ids(l)).toContain('routine');
+    const gap = [1, 2, 4, 5, 6].map((d) => cup(at(2026, 10, d), { method: 'filter' }));
+    expect(ids(gap)).not.toContain('routine');
+  });
+  it('yeni rozetler: Türk kahvesi, soğuk demleme, 10 mekan, 100 fincan', () => {
+    const l = [cup(at(2026, 10, 1), { method: 'turkish' }), cup(at(2026, 10, 2), { method: 'coldbrew' })];
+    expect(ids(l)).toEqual(expect.arrayContaining(['first_turkish', 'first_coldbrew']));
+    const places = Array.from({ length: 10 }, (_, i) => cup(at(2026, 9, i + 1), { venueKind: 'independent', placeName: `Yer ${i}` }));
+    expect(ids(places)).toContain('ten_places');
+    const many = Array.from({ length: 100 }, (_, i) => cup(new Date(2026, 0, 1 + Math.floor(i / 3)).toISOString()));
+    expect(ids(many)).toContain('hundred_cups');
+    expect(badgeProgress(many.slice(0, 40)).find((b) => b.badge.id === 'hundred_cups')).toMatchObject({ current: 40, target: 100 });
+  });
+});
