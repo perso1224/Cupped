@@ -1,18 +1,17 @@
-export type Method = 'espresso' | 'filter' | 'coldbrew' | 'milk' | 'turkish';
+// Seçenek listeleri tek yerde: tür de buradan türetilir. Yeni bir yöntem/not eklenince her yer (formlar,
+// kayıt doğrulama) birlikte güncellenir; doğrulamada unutulan seçenek yüzünden kayıt düşmez.
+export const METHODS = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'] as const;
+export type Method = (typeof METHODS)[number];
 
 /** Kahvenin nereden geldiği; skorun "Emek" bileşenini belirler. */
-export type VenueKind = 'home' | 'independent' | 'chain' | 'office';
+export const VENUES = ['home', 'independent', 'chain', 'office'] as const;
+export type VenueKind = (typeof VENUES)[number];
 
-export type TasteNote =
-  | 'fruity'
-  | 'floral'
-  | 'chocolate'
-  | 'nutty'
-  | 'caramel'
-  | 'bright'
-  | 'bold';
+export const NOTES = ['fruity', 'floral', 'chocolate', 'nutty', 'caramel', 'bright', 'bold'] as const;
+export type TasteNote = (typeof NOTES)[number];
 
-export type Grind = 'fine' | 'medium' | 'coarse';
+export const GRINDS = ['fine', 'medium', 'coarse'] as const;
+export type Grind = (typeof GRINDS)[number];
 
 /** Detay modu: isteğe bağlı tarif bilgisi. */
 export type Brew = {

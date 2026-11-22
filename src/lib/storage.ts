@@ -213,7 +213,46 @@ export async function persistPhoto(tempUri: string, id: string, opts: { version?
       // önemli değil
     }
   }
+  // Listeler için küçük kopya (tam boy fotoğrafı her satırda çözmek bellek ve hız harcar)
+  await makeThumb(`cups/${name}`).catch(() => {});
   return `cups/${name}`;
+}
+
+/** Liste küçük resmi genişliği (piksel). 64 pt satır × 3x ekran ≈ 192; biraz pay. */
+const THUMB_WIDTH = 240;
+const thumbPath = (stored: string) => stored.replace(/^cups\//, 'cups/thumbs/');
+const thumbPending = new Set<string>();
+
+async function makeThumb(stored: string): Promise<void> {
+  const src = new File(Paths.document, stored);
+  if (!src.exists) return;
+  const dir = new Directory(Paths.document, 'cups', 'thumbs');
+  if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
+  const img = await ImageManipulator.manipulate(src.uri).resize({ width: THUMB_WIDTH }).renderAsync();
+  const saved = await img.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
+  const dest = new File(Paths.document, thumbPath(stored));
+  if (dest.exists) dest.delete();
+  new File(saved.uri).moveSync(dest);
+}
+
+/**
+ * Listeler (geçmiş, son fincanlar, Fincan Duvarı) için küçük resim adresi. Küçük kopya yoksa tam boy döner ve
+ * küçük kopya arka planda hazırlanır (eski fincanlar için; bir sonraki açılışta kullanılır).
+ */
+export function thumbUrl(stored: string | null | undefined): string | null {
+  if (!stored) return null;
+  if (stored.includes('://') || !stored.startsWith('cups/')) return photoUrl(stored);
+  try {
+    const t = new File(Paths.document, thumbPath(stored));
+    if (t.exists) return t.uri;
+  } catch {
+    return photoUrl(stored);
+  }
+  if (!thumbPending.has(stored)) {
+    thumbPending.add(stored);
+    makeThumb(stored).catch(() => {});
+  }
+  return photoUrl(stored);
 }
 
 /** Kamera fotoğrafları ~8MP; kart için 1080 piksel genişlik yeterli (fincan başına ~3MB yerine ~250KB). */
@@ -258,6 +297,8 @@ function deletePhoto(stored: string) {
     if (stored.includes('://')) return;
     const f = new File(Paths.document, stored);
     if (f.exists) f.delete();
+    const t = new File(Paths.document, thumbPath(stored));
+    if (t.exists) t.delete();
   } catch {
     // fotoğraf silinemese de kayıt silinmiş olur
   }

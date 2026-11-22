@@ -56,3 +56,12 @@ describe('kod ayıklama ve Türkçe klavye', () => {
     expect(canonicalCode(code.toLowerCase())).toBe(code);
   });
 });
+
+describe('kod biçimi listeleri', () => {
+  it('damak kodundaki yöntem ve not sırası uygulamadaki tüm seçenekleri kapsar', async () => {
+    const { METHODS_ORDER, NOTES_ORDER } = await import('./match');
+    const { METHODS, NOTES } = await import('./types');
+    expect([...METHODS_ORDER].sort()).toEqual([...METHODS].sort());
+    expect([...NOTES_ORDER].sort()).toEqual([...NOTES].sort());
+  });
+});

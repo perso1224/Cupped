@@ -1,11 +1,7 @@
-import type { CupEntry, Grind, Method, ScoreParts, TasteNote, VenueKind } from './types';
+import { GRINDS, METHODS, NOTES, VENUES, type CupEntry, type Grind, type ScoreParts, type TasteNote, type VenueKind } from './types';
 
 // Kayıtları okurken doğrulama/onarım. Saf fonksiyonlar (telefon hafızasına dokunmaz), testli.
 
-const METHODS: Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
-const VENUES: VenueKind[] = ['home', 'independent', 'chain', 'office'];
-const NOTES: TasteNote[] = ['fruity', 'floral', 'chocolate', 'nutty', 'caramel', 'bright', 'bold'];
-const GRINDS: Grind[] = ['fine', 'medium', 'coarse'];
 /** Metin alanları için üst sınır (bozuk/elle düzenlenmiş yedeklerde aşırı uzun değerler ekranı bozmasın). */
 const MAX_TEXT = 500;
 const MAX_NAME = 80;

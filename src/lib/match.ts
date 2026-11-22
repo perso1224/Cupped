@@ -9,6 +9,7 @@ import type { CupEntry, Method, TasteNote } from './types';
  *
  * Bit düzeni (30 bit = 6 harf, Crockford base32): sürüm 2 · tip 4 · not1 3 · not2 3 · 5 yöntem × 2 · ev 2 · kafe 2 · sağlama 4
  */
+// Damak kodunun biçimi bu SIRAYA bağlı: değiştirilmez (yeni yöntem eklenirse kod sürümü artırılmalı).
 export const METHODS_ORDER: Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
 export const NOTES_ORDER: TasteNote[] = ['fruity', 'floral', 'chocolate', 'nutty', 'caramel', 'bright', 'bold'];
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // I, L, O, U yok (karışmasın)

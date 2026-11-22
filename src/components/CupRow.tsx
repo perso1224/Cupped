@@ -4,7 +4,7 @@ import { Stars } from './Stars';
 import { Icon } from './Icon';
 import { PressScale } from './motion';
 import { tr } from '../i18n/tr';
-import { photoUrl } from '../lib/storage';
+import { thumbUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
 import { colors, type } from '../theme';
 import { placeLabel } from './ShareCard';
@@ -27,11 +27,12 @@ export function CupRow({ entry, timeOnly, showParts, plain }: { entry: CupEntry;
   const chips = showParts
     ? (['effort', 'discovery', 'depth', 'selectivity'] as const).filter((k) => entry.parts[k] !== 0)
     : [];
+  const thumb = thumbUrl(entry.photoUri);
   return (
     <PressScale onPress={() => router.push(`/cup/${entry.id}`)} scaleTo={0.97}>
       <Wrap style={plain ? styles.plainRow : styles.row}>
-        {entry.photoUri ? (
-          <Image source={{ uri: photoUrl(entry.photoUri)! }} style={styles.thumb} />
+        {thumb ? (
+          <Image source={{ uri: thumb }} style={styles.thumb} />
         ) : (
           <View style={[styles.thumb, styles.thumbEmpty]}>
             <Icon name="cafe" size={26} color={colors.accent} />

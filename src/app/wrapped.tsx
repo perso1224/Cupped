@@ -261,7 +261,7 @@ export default function Wrapped() {
 }
 
 /** Türkçe büyük harfli başlık (textTransform:'uppercase' "İ"yi bozar). */
-function Kicker({ style, children }: { style: any; children: React.ReactNode }) {
+function Kicker({ style, children }: { style: React.ComponentProps<typeof Animated.Text>['style']; children: React.ReactNode }) {
   const up = (c: React.ReactNode): React.ReactNode => (typeof c === 'string' ? upper(c) : Array.isArray(c) ? c.map(up) : c);
   return <Animated.Text style={style}>{up(children)}</Animated.Text>;
 }
@@ -416,7 +416,7 @@ function SlideView({
     case 'best':
       body = (
         <View style={{ flex: 1 }}>
-          {slide.entry.photoUri ? (
+          {photoUrl(slide.entry.photoUri) ? (
             <Image source={{ uri: photoUrl(slide.entry.photoUri)! }} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
             <View style={[StyleSheet.absoluteFill, { alignItems: 'center', paddingTop: H * 0.14 }]}>

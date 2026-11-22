@@ -3,13 +3,13 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
 import type { BadgeProgress } from '../lib/progress';
-import type { Method } from '../lib/types';
+import { METHODS, type Method } from '../lib/types';
 import { colors, layout, type } from '../theme';
 import { BadgeArt } from './BadgeArt';
 import { BackButton } from './NavButtons';
 import { Card } from './ui';
 
-export const ALL_METHODS: readonly Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
+export const ALL_METHODS: readonly Method[] = METHODS;
 
 /**
  * Profil > Koleksiyon altındaki sayfaların ortak iskeleti.

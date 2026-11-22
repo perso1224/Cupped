@@ -34,15 +34,12 @@ import { brewRatio, dayKey } from '../lib/progress';
 import { whenToDate, type When } from '../lib/when';
 import { createCup, editCup, parseNum, type Where } from '../lib/cupSave';
 import { safely } from '../lib/safe';
-import type { CupEntry, Grind, Method, TasteNote } from '../lib/types';
+import { GRINDS, METHODS, NOTES, type CupEntry, type Grind, type Method, type TasteNote } from '../lib/types';
 import { colors, type } from '../theme';
 
 /** Klavyenin üstündeki "Bitti" çubuğu (sayı klavyesinde ve notta Return tuşu yok). */
 const KB_DONE = 'cupped-kb-done';
 
-const METHODS: Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
-const NOTES: TasteNote[] = ['fruity', 'floral', 'chocolate', 'nutty', 'caramel', 'bright', 'bold'];
-const GRINDS: Grind[] = ['fine', 'medium', 'coarse'];
 
 export default function NewCup() {
   const insets = useSafeAreaInsets();

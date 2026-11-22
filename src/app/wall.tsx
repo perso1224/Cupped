@@ -12,7 +12,7 @@ import { tr, upper } from '../i18n/tr';
 import { computePalateTypeId, getPalateType } from '../lib/palate';
 import { longestStreak, yearWall } from '../lib/progress';
 import { shareViewSafely } from '../lib/share';
-import { photoUrl } from '../lib/storage';
+import { thumbUrl } from '../lib/storage';
 import { useDamakCode } from '../lib/useDamakCode';
 import { useEntries } from '../lib/useEntries';
 import { colors, fonts, type } from '../theme';
@@ -96,7 +96,7 @@ export default function Wall() {
                 <View key={m} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: gap * 3 }}>
                   <T style={{ width: labelW, color: th.muted, fontSize: u * 2.6, fontWeight: '700' }}>{MONTHS[m]}</T>
                   {days.map((d) => {
-                    const uri = d.best?.photoUri ? photoUrl(d.best.photoUri) : null;
+                    const uri = d.best?.photoUri ? thumbUrl(d.best.photoUri) : null;
                     const base = { width: cell, height: cellH, marginRight: gap, borderRadius: cell * 0.22 };
                     if (uri) return <Image key={d.key} source={{ uri }} style={base} />;
                     if (d.best) return <View key={d.key} style={[base, { backgroundColor: th.accent, opacity: 0.45 + (d.best.score / 100) * 0.55 }]} />;

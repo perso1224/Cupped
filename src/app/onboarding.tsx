@@ -16,11 +16,9 @@ import {
 } from '../lib/onboarding';
 import { getPalateType } from '../lib/palate';
 import { saveProfile } from '../lib/storage';
-import type { Method, TasteNote } from '../lib/types';
+import { METHODS, NOTES, type TasteNote } from '../lib/types';
 import { colors } from '../theme';
 
-const METHODS: Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
-const NOTES: TasteNote[] = ['fruity', 'floral', 'chocolate', 'nutty', 'caramel', 'bright', 'bold'];
 const CUPS: CupsPerDay[] = ['one', 'few', 'many'];
 const PLACES: UsualPlace[] = ['home', 'cafe', 'office', 'mixed'];
 const GOALS: PalateGoal[] = ['explore', 'brew', 'taste', 'log'];

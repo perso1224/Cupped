@@ -16,23 +16,32 @@ Durum: ☐ yapılacak · ☑ yapıldı · ❓ kurucu kararı gerekiyor
 
 ## B. Veri ve puan hataları
 
-- ☐ **"Dün" eklenen fincan:** Sonraki fincanlar yeniden puanlanmıyor. Fincan çift ilk-keşif bonusu alıyor, ardından bir silme XP'yi düşürüyor. "Asla düşmez" kuralına aykırı.
-- ☐ **Yedekten geri yükleme:** Aynı sorun var; içe aktarınca puanlar yeniden hesaplanmıyor.
-- ☐ **Yeni alanların silinmesi:** Eski bir sürüm (geri alma ya da yedek paket) çalışırsa, fincanlardaki yeni alanlar (ör. yıldız) bir sonraki kayıtta kalıcı olarak silinir.
-- ☐ **Performans:** 1000+ fincanda eski bir fincanı silmek ya da düzenlemek uygulamayı saniyelerce donduruyor. Ana sayfa her açılışta bütün geçmişi defalarca hesaplıyor.
-- ☐ **Zincir kafeler tutarsız sayılıyor:** Bazı ekranlar şubeleri birleştiriyor, bazıları ayırıyor. Aynı ekranda iki farklı "favori mekan" görünebiliyor.
-- ☐ **Fincan Duvarı afişi Ocak'ta yanlış yılı açıyor:** Geçen yılın afişine dokununca boş, yeni yılın duvarı geliyor.
-- ☐ **Hatırlatma metni:** Seri zaten bozulmuşken "Serin 3 gün" diyebiliyor.
-- ☐ **Damak Uyumu kodu:**
+- ☑ **"Dün" eklenen fincan:** Sonraki fincanlar yeniden puanlanmıyor. Fincan çift ilk-keşif bonusu alıyor, ardından bir silme XP'yi düşürüyor. "Asla düşmez" kuralına aykırı.
+- ☑ **Yedekten geri yükleme:** Aynı sorun var; içe aktarınca puanlar yeniden hesaplanmıyor.
+- ☑ **Yeni alanların silinmesi:** Eski bir sürüm (geri alma ya da yedek paket) çalışırsa, fincanlardaki yeni alanlar (ör. yıldız) bir sonraki kayıtta kalıcı olarak silinir.
+- ☑ **Performans:** 1000+ fincanda eski bir fincanı silmek ya da düzenlemek uygulamayı saniyelerce donduruyor. Ana sayfa her açılışta bütün geçmişi defalarca hesaplıyor.
+- ☑ **Zincir kafeler tutarsız sayılıyor:** Bazı ekranlar şubeleri birleştiriyor, bazıları ayırıyor. Aynı ekranda iki farklı "favori mekan" görünebiliyor.
+- ☑ **Fincan Duvarı afişi Ocak'ta yanlış yılı açıyor:** Geçen yılın afişine dokununca boş, yeni yılın duvarı geliyor.
+- ☑ **Hatırlatma metni:** Seri zaten bozulmuşken "Serin 3 gün" diyebiliyor.
+- ☑ **Damak Uyumu kodu:**
   - Arkadaşın gönderdiği mesajın tamamı yapıştırılınca kod okunmuyor.
   - Türkçe klavyedeki "İ" reddediliyor.
   - Kendi kodunu girince "%99 ruh ikizi" çıkıyor.
-- ☐ **Küçük hatalar:**
+- ☑ **Küçük hatalar:**
   - "1.000 ml" 1 ml olarak okunuyor.
   - Latin harfi olmayan mekan adlarının hepsi tek mekan sayılıyor.
   - Hem veri hem yedek bozuksa hiç kayıt yapılamıyor.
   - "Tüm verileri sil" telefonda tema ayarını silmiyor.
   - Android'de Damak Kartı'ndan çıkınca otomatik parlaklık kilitli kalıyor.
+
+Ek olarak yapılanlar (kod denetiminden):
+- ☑ Fincanlar telefonda ayrı bir dosyada tutuluyor (Android'deki 6 MB sınırı yok).
+- ☑ React Compiler artık bütün ekranları derliyor.
+- ☑ Fincanlar bellekte tutuluyor.
+- ☑ Liste satırlarında tam boy fotoğraf yerine küçük resim kullanılıyor.
+- ☑ Yöntem ve tat listeleri tek bir yerde toplandı.
+- ☑ Dolum animasyonları telefonun kendi animasyon motorunda çalışıyor.
+- ☑ Rozet ve damak evrimi kutlamaları tekrarlanmıyor.
 
 ## C. Kafa karıştıranlar (kurucu kararı gerekiyor)
 
