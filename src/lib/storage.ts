@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { parseEntries, parseEntriesDetailed } from './entries';
+import { deleteAllRaw, keepCorruptRaw, readRaw, writeRaw } from './entryStore';
 import { rescoreAfter } from './rescore';
 import { appLabel, normalizeMetrics, type Metrics, type ShareSource } from './metrics';
 import { normalizeSettings, type Settings } from './settings';
@@ -11,8 +12,6 @@ import type { CupEntry } from './types';
 import { clearThemePref } from '../theme';
 
 // Tüm veriler sadece telefonda tutulur (sunucu yok).
-const ENTRIES_KEY = 'cupped.entries.v1';
-const ENTRIES_BACKUP_KEY = 'cupped.entries.v1.bak';
 const COUNTERS_KEY = 'cupped.counters.v1';
 const PROFILE_KEY = 'cupped.profile.v1';
 const METRICS_KEY = 'cupped.metrics.v1';
@@ -37,7 +36,7 @@ function enqueue<T>(fn: () => Promise<T>): Promise<T> {
  * Sadece yazma kuyruğunun (enqueue) içinden çağrılır; onarım da burada yapılır.
  */
 async function readEntriesStrict(): Promise<CupEntry[]> {
-  const raw = await AsyncStorage.getItem(ENTRIES_KEY);
+  const raw = await readRaw('main');
   try {
     const { entries, dropped } = parseEntriesDetailed(raw);
     // Bazı kayıtlar okunamadıysa (ör. gelecekteki bir sürümün yeni alanı), üzerine yazmadan önce ham hali sakla.
@@ -48,7 +47,7 @@ async function readEntriesStrict(): Promise<CupEntry[]> {
     // Bozuk ham veri HER ZAMAN önce ayrı anahtara saklanır (kaybolmaz).
     void err;
     if (raw) await keepCorrupt(raw);
-    const backupRaw = await AsyncStorage.getItem(ENTRIES_BACKUP_KEY);
+    const backupRaw = await readRaw('backup');
     let backup: CupEntry[] = [];
     try {
       backup = backupRaw ? parseEntries(backupRaw) : [];
@@ -57,16 +56,14 @@ async function readEntriesStrict(): Promise<CupEntry[]> {
       if (backupRaw) await keepCorrupt(backupRaw);
       await AsyncStorage.setItem(RECOVERED_KEY, String(Date.now()));
     }
-    await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(backup));
+    await writeRaw('main', JSON.stringify(backup));
     return backup;
   }
 }
 
 /** Okunamayan ham veriyi ayrı anahtarda saklar; en yeni 3 kopya tutulur (telefon hafızası dolmasın). */
 async function keepCorrupt(raw: string) {
-  await AsyncStorage.setItem(`${ENTRIES_KEY}.corrupt.${Date.now()}`, raw);
-  const old = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(`${ENTRIES_KEY}.corrupt.`)).sort();
-  if (old.length > 3) await AsyncStorage.multiRemove(old.slice(0, old.length - 3));
+  await keepCorruptRaw(raw);
 }
 
 /** Veri bozulup boş listeyle devam edildiyse bir kez true döner (ekranda haber vermek için). */
@@ -82,9 +79,9 @@ export async function consumeRecoveryNotice(): Promise<boolean> {
 }
 
 async function writeEntries(list: CupEntry[]): Promise<void> {
-  const current = await AsyncStorage.getItem(ENTRIES_KEY);
-  if (current) await AsyncStorage.setItem(ENTRIES_BACKUP_KEY, current); // son sağlam hali yedekle
-  await AsyncStorage.setItem(ENTRIES_KEY, JSON.stringify(list));
+  const current = await readRaw('main');
+  if (current) await writeRaw('backup', current); // son sağlam hali yedekle
+  await writeRaw('main', JSON.stringify(list));
   // Bellekteki liste de güncellenir (en yeni önce), ekranlar haberdar edilir
   setEntriesCache([...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
 }
@@ -112,13 +109,13 @@ export async function loadEntries(): Promise<CupEntry[]> {
   if (entriesCache) return entriesCache;
   // Salt okunur: onarım yazmaları yalnızca kuyruktaki yazmalarda yapılır (yarış durumunda yeni kayıt ezilmesin).
   try {
-    const list = parseEntries(await AsyncStorage.getItem(ENTRIES_KEY));
+    const list = parseEntries(await readRaw('main'));
     if (!entriesCache) entriesCache = list;
     return entriesCache;
   } catch {
     // Bozuk veri bellekte tutulmaz (bir sonraki yazma onarır)
     try {
-      return parseEntries(await AsyncStorage.getItem(ENTRIES_BACKUP_KEY));
+      return parseEntries(await readRaw('backup'));
     } catch {
       return [];
     }
@@ -499,6 +496,7 @@ export function deleteAllData(): Promise<void> {
     // Tüm Cupped anahtarları (yedek ve bozuk-kopya anahtarları dahil)
     const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('cupped.'));
     await AsyncStorage.multiRemove(keys);
+    deleteAllRaw(); // telefondaki fincan dosyaları
     try {
       const dir = new Directory(Paths.document, 'cups');
       if (dir.exists) dir.delete();
