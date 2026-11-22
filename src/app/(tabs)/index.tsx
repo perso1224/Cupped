@@ -15,7 +15,7 @@ import { tr, upper } from '../../i18n/tr';
 import { agoLabel, caffeineToday, dailyNudge, levelProgress, weekPartAverages } from '../../lib/home';
 import { insights } from '../../lib/insights';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
-import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekDots, weekStrip, longestStreak, noteShares, favorites } from '../../lib/progress';
+import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, wallBanner, weekDots, weekStrip, longestStreak, noteShares, favorites } from '../../lib/progress';
 import { setReminderEnabled } from '../../lib/reminders';
 import { partsSummary } from '../../lib/scoring';
 import { exportAllData, updateMetrics } from '../../lib/storage';
@@ -60,6 +60,7 @@ export default function Home() {
     .filter((h) => settings.showCaffeine || h.id !== 'caffeine')
     .slice(0, 3);
   const type_ = list.length ? getPalateType(computePalateTypeId(list)) : profile ? getPalateType(profile.starterTypeId) : null;
+  const wall = wallBanner(list, now);
   const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
   // Yedek hatırlatması: 10+ fincan ve 30 gündür yedek yok (hatırlatma sorusuyla aynı anda çıkmaz)
   const askBackup = !!metrics && !askReminder && needsBackupNudge(metrics, list.length, now);
@@ -384,6 +385,32 @@ export default function Home() {
                 <Icon name="play" size={20} color={colors.black} />
               </View>
             </PressScale>
+            </FadeIn>
+          ) : null}
+
+          {/* Fincan Duvarı: Aralık boyunca "hazırlanıyor", yıl sonunda "tamamlandı" */}
+          {wall ? (
+            <FadeIn index={2}>
+              <PressScale
+                onPress={() => {
+                  haptic.light();
+                  router.push('/wall');
+                }}
+                scaleTo={0.97}
+                style={[styles.banner, { backgroundColor: tint.espresso }]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.bannerTitle, { color: colors.onColor }]}>
+                    {wall.kind === 'building' ? tr.wall.bannerBuilding(wall.year) : tr.wall.bannerDone(wall.year)}
+                  </Text>
+                  <Text style={[styles.bannerSub, { color: 'rgba(255,255,255,0.75)' }]}>
+                    {wall.kind === 'building' ? tr.wall.bannerBuildingSub(wall.daysLeft) : tr.wall.bannerDoneSub}
+                  </Text>
+                </View>
+                <View style={styles.bannerPlay}>
+                  <Icon name="grid" size={18} color={colors.black} />
+                </View>
+              </PressScale>
             </FadeIn>
           ) : null}
 

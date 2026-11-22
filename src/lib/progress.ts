@@ -500,3 +500,18 @@ export function yearWall(entries: CupEntry[], year: number, today: Date = new Da
     });
   });
 }
+
+/**
+ * Fincan Duvarı afişi: Aralık boyunca "hazırlanıyor" (kalan gün), 31 Aralık–7 Ocak "tamamlandı".
+ * O yıl hiç fincan yoksa gösterilmez.
+ */
+export function wallBanner(entries: CupEntry[], now: Date = new Date()): { kind: 'building'; daysLeft: number; year: number } | { kind: 'done'; year: number } | null {
+  const m = now.getMonth();
+  const d = now.getDate();
+  const year = m === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  const has = entries.some((e) => new Date(e.createdAt).getFullYear() === year);
+  if (!has) return null;
+  if (m === 11 && d < 31) return { kind: 'building', daysLeft: 31 - d, year };
+  if ((m === 11 && d === 31) || (m === 0 && d <= 7)) return { kind: 'done', year };
+  return null;
+}

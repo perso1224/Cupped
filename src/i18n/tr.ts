@@ -327,6 +327,10 @@ export const tr = {
     streak: 'En uzun seri',
     empty: 'Bu yıl henüz fincan yok. Her fincan duvara bir kare ekler.',
     open: 'Yılın Fincan Duvarı',
+    bannerBuilding: (y: number) => `${y} Fincan Duvarın hazırlanıyor`,
+    bannerBuildingSub: (n: number) => `Yıl bitmeden ${n} gün kaldı. Boş kareleri doldur.`,
+    bannerDone: (y: number) => `${y} Fincan Duvarın tamamlandı`,
+    bannerDoneSub: 'Yılın tüm fincanları tek posterde. Aç ve paylaş.',
   },
   match: {
     title: 'Damak Uyumu',

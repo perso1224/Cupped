@@ -14,6 +14,7 @@ import {
   placeRatings,
   coffeeTime,
   yearWall,
+  wallBanner,
   scoreTrend,
   passport,
   periodReport,
@@ -382,5 +383,17 @@ describe('Fincan Duvarı', () => {
     expect(w[0][0].best).toBeNull();
     expect(w[5][15].future).toBe(true);
     expect(w[5][14].future).toBe(false);
+  });
+});
+
+describe('Fincan Duvarı afişi', () => {
+  const l = [cup(at(2026, 3, 1))];
+  it('Aralık: hazırlanıyor; 31 Aralık–7 Ocak: tamamlandı; diğer zamanlar yok', () => {
+    expect(wallBanner(l, new Date(2026, 11, 10))).toEqual({ kind: 'building', daysLeft: 21, year: 2026 });
+    expect(wallBanner(l, new Date(2026, 11, 31))).toEqual({ kind: 'done', year: 2026 });
+    expect(wallBanner(l, new Date(2027, 0, 5))).toEqual({ kind: 'done', year: 2026 });
+    expect(wallBanner(l, new Date(2027, 0, 9))).toBeNull();
+    expect(wallBanner(l, new Date(2026, 10, 30))).toBeNull();
+    expect(wallBanner([], new Date(2026, 11, 10))).toBeNull();
   });
 });
