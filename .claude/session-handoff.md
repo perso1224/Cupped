@@ -105,3 +105,7 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - Locked items are faint dashed blanks.
   - These stamps are non-interactive (the owner's decision). The method → history filter is still in Profile > Koleksiyon > Yöntemler.
 - Passport stamps: the frames are drawn with SVG (rotated inside the SVG), because rotated RN border views look jagged on iOS. Only the text and icon use an RN rotate.
+- App Store prep:
+  - `docs/APP_STORE.md` has the TestFlight test info, store texts (checked against character limits), category, age rating, App Privacy ("Data Not Collected") and a screenshot plan.
+  - `docs/gizlilik.html` is the public privacy policy.
+  - Waiting on the owner: a contact e-mail, and where to host the privacy page (GitHub Pages needs a public repo).

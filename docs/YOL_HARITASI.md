@@ -24,7 +24,7 @@ Ne zaman: (f)(g)(h) bittiğinde ve 10-20 kişilik Expo Go denemesinden sonra (yo
 Hazırlık listesi:
 - [~] Uygulama ikonu ve açılış ekranı: geçici ikon var (fincan izi halkaları), marka adı kesinleşince yenilenecek
 - [ ] Marka adı ve handle ön araştırması (TÜRKPATENT), `src/config/brand.ts` güncellenir
-- [ ] Gizlilik politikası sayfası (veri sadece cihazda; kamera ve fotoğraf izinleri ne için)
+- [~] Gizlilik politikası sayfası hazır: `docs/gizlilik.html` (e-posta doldurulup yayınlanacak). Mağaza metinleri: `docs/APP_STORE.md`
 - [x] Kamera ve fotoğraf izin metinleri Türkçe; gereksiz mikrofon izni kaldırıldı
 - [x] "Verilerimi dışa aktar" (JSON), Profil'de
 - [ ] Apple Developer hesabı (kurucu alır), ardından EAS Build ile bulutta iOS derlemesi (Mac gerekmez) ve TestFlight'a gönderim
