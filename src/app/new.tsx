@@ -25,7 +25,7 @@ import { Icon } from '../components/Icon';
 import { CloseButton, goBack } from '../components/NavButtons';
 import { OriginPicker } from '../components/OriginPicker';
 import { StarInput } from '../components/Stars';
-import { PressScale, animateLayout, haptic, reduceMotionNow } from '../components/motion';
+import { FadeIn, Pop, PressScale, animateLayout, haptic, reduceMotionNow } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
 import { computePalateTypeId } from '../lib/palate';
@@ -429,6 +429,8 @@ export default function NewCup() {
   return (
     // Android'de klavye formun altındaki alanları örtmesin (iOS'ta ScrollView kendisi ayarlıyor)
     <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Fotoğraftan forma geçişte form yumuşakça belirir */}
+      <FadeIn style={{ flex: 1 }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 24 }}
@@ -527,7 +529,7 @@ export default function NewCup() {
         </PressScale>
 
         {showDetail ? (
-          <View>
+          <FadeIn>
             <Text style={styles.detailHint}>{tr.capture.detailHint}</Text>
 
             <Text style={styles.label}>{tr.capture.notesLabel}</Text>
@@ -610,17 +612,21 @@ export default function NewCup() {
               multiline
               style={[styles.input, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]}
             />
-          </View>
+          </FadeIn>
         ) : null}
       </ScrollView>
+      </FadeIn>
 
       {kbOpen ? null : (
         <View style={[styles.saveBar, { paddingBottom: insets.bottom + 12 }]}>
-          <PillButton
-            label={!method ? tr.capture.chooseMethod : !where ? tr.capture.choosePlace : original ? tr.capture.saveChanges : tr.capture.save}
-            onPress={original ? () => saveEdit(original) : save}
-            disabled={!method || !where || saving}
-          />
+          {/* Yöntem ve yer seçilip düğme hazır olunca hafifçe zıplar */}
+          <Pop trigger={!!method && !!where} skipInitial>
+            <PillButton
+              label={!method ? tr.capture.chooseMethod : !where ? tr.capture.choosePlace : original ? tr.capture.saveChanges : tr.capture.save}
+              onPress={original ? () => saveEdit(original) : save}
+              disabled={!method || !where || saving}
+            />
+          </Pop>
         </View>
       )}
 

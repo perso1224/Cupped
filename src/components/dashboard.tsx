@@ -3,7 +3,7 @@ import { Animated, ScrollView, StyleSheet, Text, View, type ColorValue } from 'r
 import Svg, { Circle } from 'react-native-svg';
 import { colors, fonts } from '../theme';
 import { Icon, type IconName } from './Icon';
-import { haptic } from './motion';
+import { GrowBar, haptic } from './motion';
 
 /** Küçük halka: Cal AI'daki makro halkalarının karşılığı (Emek / Keşif / Derinlik, kafein…). */
 export function MiniRing({
@@ -76,7 +76,7 @@ export function MetricTile({
       </Text>
       {/* Dolum çubuğu: bardağın dolması gibi soldan sağa */}
       <View style={styles.tileTrack}>
-        <View style={[styles.tileFill, { width: `${Math.max(f > 0 ? 6 : 0, f * 100)}%`, backgroundColor: color }]} />
+        <GrowBar style={[styles.tileFill, { backgroundColor: color }]} fraction={f > 0 ? Math.max(0.06, f) : 0} />
       </View>
     </View>
   );

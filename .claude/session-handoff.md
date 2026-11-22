@@ -86,3 +86,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - wrapped uses a glass background with the slide's fg text color.
 - Verified on iPhone by the owner: native tabs, glass back/close/gear buttons, glass share buttons.
 - Still to verify: the micro-animations on Android (tab shift, sliding highlight, scroll-to-top).
+- New-cup flow animations:
+  - Fresh result screen: staggered `FadeIn` (`disabled` prop when not fresh), and `Confetti` (motion.tsx) plus `haptic.medium` at about 1.15 s, when the score lands.
+  - `MetricTile` bars use `GrowBar`.
+  - new.tsx: the form fades in after the photo step, the details block fades in, and the save button pops when it becomes ready (`Pop skipInitial`).
+  - Not yet verified on device.

@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { cachedSettings, loadSettings, subscribeSettings } from '../lib/storage';
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
   Animated,
@@ -9,6 +9,8 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  View,
+  useWindowDimensions,
   type PressableProps,
   type StyleProp,
   type TextStyle,
@@ -140,10 +142,21 @@ export function PressScale({
 }
 
 /** İlk görünüşte aşağıdan hafifçe süzülerek belirir. index ile sırayla (kademeli) gelir. */
-export function FadeIn({ children, index = 0, style }: { children: ReactNode; index?: number; style?: StyleProp<ViewStyle> }) {
-  const [v] = useState(() => new Animated.Value(reduceMotion ? 1 : 0));
+export function FadeIn({
+  children,
+  index = 0,
+  style,
+  disabled,
+}: {
+  children: ReactNode;
+  index?: number;
+  style?: StyleProp<ViewStyle>;
+  /** true: animasyonsuz, doğrudan görünür (ör. yalnızca yeni kayıtta canlandırmak için). */
+  disabled?: boolean;
+}) {
+  const [v] = useState(() => new Animated.Value(reduceMotion || disabled ? 1 : 0));
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion || disabled) return;
     Animated.timing(v, {
       toValue: 1,
       duration: 320,
@@ -151,7 +164,7 @@ export function FadeIn({ children, index = 0, style }: { children: ReactNode; in
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [v, index]);
+  }, [v, index, disabled]);
   return (
     <Animated.View
       style={[style, { opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}
@@ -178,16 +191,32 @@ export function CountUp({ value, style, duration = 650 }: { value: number; style
 }
 
 /** Bir kez "pop" yapan (büyüyüp yerine oturan) kutu: rozet, seri alevi gibi küçük kutlamalar için. */
-export function Pop({ children, style, delay = 0, trigger }: { children: ReactNode; style?: StyleProp<ViewStyle>; delay?: number; trigger?: unknown }) {
+export function Pop({
+  children,
+  style,
+  delay = 0,
+  trigger,
+  skipInitial,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  delay?: number;
+  trigger?: unknown;
+  /** true: ilk görünüşte değil, yalnızca `trigger` değişince zıplar. */
+  skipInitial?: boolean;
+}) {
   const [s] = useState(() => new Animated.Value(1));
+  const first = useRef(true);
   useEffect(() => {
-    if (reduceMotion) return;
+    const isFirst = first.current;
+    first.current = false;
+    if (reduceMotion || (skipInitial && isFirst)) return;
     s.setValue(0.6);
     Animated.sequence([
       Animated.delay(delay),
       Animated.spring(s, { toValue: 1, useNativeDriver: true, speed: 12, bounciness: 14 }),
     ]).start();
-  }, [s, delay, trigger]);
+  }, [s, delay, trigger, skipInitial]);
   return <Animated.View style={[style, { transform: [{ scale: s }] }]}>{children}</Animated.View>;
 }
 
@@ -203,4 +232,66 @@ export function GrowBar({ fraction, style }: { fraction: number; style?: StylePr
     Animated.timing(v, { toValue: target, duration: 700, delay: 120, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [v, target]);
   return <Animated.View style={[style, { width: v.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} />;
+}
+
+/** Konfeti parçası: başlangıç konumu, sapma, dönüş, renk ve şekil (önceden rastgele seçilir). */
+type Piece = { x: number; drift: number; spin: number; delay: number; dur: number; color: string; w: number; h: number; round: boolean };
+const CONFETTI_COLORS = ['#D98B2B', '#6B4226', '#C8553D', '#E9C46A', '#8A9A5B', '#F1E3CF'];
+
+/**
+ * Kutlama: ekranın üstünden kahve tonlarında konfeti dökülür (yalnızca bir kez, dokunmayı engellemez).
+ * `play` true olunca başlar. "Hareketi azalt" açıksa hiç gösterilmez.
+ */
+export function Confetti({ play, count = 36 }: { play: boolean; count?: number }) {
+  const { width, height } = useWindowDimensions();
+  const [pieces] = useState<Piece[]>(() =>
+    Array.from({ length: count }, (_, i) => ({
+      x: Math.random(),
+      drift: (Math.random() - 0.5) * 120,
+      spin: (Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 540),
+      delay: Math.random() * 350,
+      dur: 1500 + Math.random() * 900,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      w: 6 + Math.random() * 5,
+      h: 10 + Math.random() * 8,
+      round: Math.random() < 0.3,
+    })),
+  );
+  const [vals] = useState(() => pieces.map(() => new Animated.Value(0)));
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    if (!play || reduceMotion) return;
+    const anims = vals.map((v, i) =>
+      Animated.timing(v, { toValue: 1, duration: pieces[i].dur, delay: pieces[i].delay, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+    );
+    Animated.parallel(anims).start(() => setDone(true));
+  }, [play, vals, pieces]);
+  if (!play || reduceMotion || done) return null;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {pieces.map((p, i) => {
+        const v = vals[i];
+        return (
+          <Animated.View
+            key={i}
+            style={{
+              position: 'absolute',
+              left: p.x * width,
+              top: -24,
+              width: p.w,
+              height: p.round ? p.w : p.h,
+              borderRadius: p.round ? p.w / 2 : 2,
+              backgroundColor: p.color,
+              opacity: v.interpolate({ inputRange: [0, 0.8, 1], outputRange: [1, 1, 0] }),
+              transform: [
+                { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, height + 48] }) },
+                { translateX: v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, p.drift, p.drift * 0.4] }) },
+                { rotate: v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${p.spin}deg`] }) },
+              ],
+            }}
+          />
+        );
+      })}
+    </View>
+  );
 }

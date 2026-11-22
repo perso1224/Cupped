@@ -11,7 +11,7 @@ import { Icon, type IconName } from './Icon';
 import { ListRow, ListSection } from './List';
 import { GlassIconButton, goBack } from './NavButtons';
 import { Card, PillButton } from './ui';
-import { CountUp, Pop, PressScale, haptic } from './motion';
+import { Confetti, CountUp, FadeIn, Pop, PressScale, haptic } from './motion';
 import { BADGES, PART_MAX } from '../config/scoring.config';
 import { tr } from '../i18n/tr';
 import { brewRatio, isDetailed } from '../lib/progress';
@@ -43,6 +43,16 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
   // Paylaşım, skor animasyonu bitmeden ve fotoğraf yüklenmeden yapılmasın (yoksa kartta yarım skor çıkar).
   const [animDone, setAnimDone] = useState(!isFresh);
   const [imageDone, setImageDone] = useState(false);
+  // Puan sayımı bitince (~1,1 sn) kutlama: konfeti + hafif titreşim
+  const [celebrate, setCelebrate] = useState(false);
+  useEffect(() => {
+    if (!isFresh) return;
+    const t = setTimeout(() => {
+      setCelebrate(true);
+      haptic.medium();
+    }, 1150);
+    return () => clearTimeout(t);
+  }, [isFresh]);
 
   // Düzenleme ekranından dönünce güncel hali göster.
   // Kayıt değişmediyse kartı yeniden çizme (skor animasyonu baştan başlamasın);
@@ -161,17 +171,20 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
 
         {/* Fotoğrafın üstüne doğru çekilmiş bilgi kartı */}
         <View style={styles.sheet}>
-          <View style={styles.timeChip}>
-            <Icon name="time-outline" size={14} color={colors.muted} />
-            <Text style={styles.timeText}>{when}</Text>
-          </View>
-          <Text style={styles.title}>{tr.methods[entry.method]}</Text>
-          {place ? <Text style={styles.place}>{place}</Text> : null}
-          {entry.rating ? (
-            <View style={{ marginTop: 8 }}>
-              <Stars value={entry.rating} size={20} />
+          {/* Yeni kayıtta bölümler sırayla süzülerek gelir; detay ekranında doğrudan görünür */}
+          <FadeIn disabled={!isFresh} index={0}>
+            <View style={styles.timeChip}>
+              <Icon name="time-outline" size={14} color={colors.muted} />
+              <Text style={styles.timeText}>{when}</Text>
             </View>
-          ) : null}
+            <Text style={styles.title}>{tr.methods[entry.method]}</Text>
+            {place ? <Text style={styles.place}>{place}</Text> : null}
+            {entry.rating ? (
+              <View style={{ marginTop: 8 }}>
+                <Stars value={entry.rating} size={20} />
+              </View>
+            ) : null}
+          </FadeIn>
 
           {evolvedFrom && evolvedTo ? (
             <Pop delay={1100} style={styles.newBadge}>
@@ -206,22 +219,26 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
           ))}
 
           {/* Tek, kocaman skor */}
-          <Card style={styles.scoreCard}>
-            <View style={{ flex: 1 }}>
-              {isFresh ? <CountUp value={entry.score} style={styles.scoreNumber} duration={1100} /> : <Text style={styles.scoreNumber}>{entry.score}</Text>}
-              <Text style={styles.scoreLabel}>{tr.card.cupScore}</Text>
-              <Text style={styles.scoreSub}>{partsSummary(entry.parts, tr.result.breakdown)}</Text>
-            </View>
-            <CupGauge size={104} fraction={entry.score / 100} animate={isFresh} />
-          </Card>
+          <FadeIn disabled={!isFresh} index={1}>
+            <Card style={styles.scoreCard}>
+              <View style={{ flex: 1 }}>
+                {isFresh ? <CountUp value={entry.score} style={styles.scoreNumber} duration={1100} /> : <Text style={styles.scoreNumber}>{entry.score}</Text>}
+                <Text style={styles.scoreLabel}>{tr.card.cupScore}</Text>
+                <Text style={styles.scoreSub}>{partsSummary(entry.parts, tr.result.breakdown)}</Text>
+              </View>
+              <CupGauge size={104} fraction={entry.score / 100} animate={isFresh} />
+            </Card>
+          </FadeIn>
 
           {/* Skor nereden geldi: üç küçük kutu (ana sayfadakiyle aynı renkler) */}
-          <View style={styles.tiles}>
-            <MetricTile value={signed(entry.parts.effort)} label={tr.result.breakdown.effort} fraction={entry.parts.effort / PART_MAX.effort} color={tint.amber} icon="hand-left" />
-            <MetricTile value={signed(entry.parts.discovery)} label={tr.result.breakdown.discovery} fraction={entry.parts.discovery / PART_MAX.discovery} color={tint.cherry} icon="compass" />
-            <MetricTile value={signed(entry.parts.depth)} label={tr.result.breakdown.depth} fraction={entry.parts.depth / PART_MAX.depth} color={tint.espresso} icon="leaf" />
-          </View>
-          <Text style={styles.extras}>{extras}</Text>
+          <FadeIn disabled={!isFresh} index={2}>
+            <View style={styles.tiles}>
+              <MetricTile value={signed(entry.parts.effort)} label={tr.result.breakdown.effort} fraction={entry.parts.effort / PART_MAX.effort} color={tint.amber} icon="hand-left" />
+              <MetricTile value={signed(entry.parts.discovery)} label={tr.result.breakdown.discovery} fraction={entry.parts.discovery / PART_MAX.discovery} color={tint.cherry} icon="compass" />
+              <MetricTile value={signed(entry.parts.depth)} label={tr.result.breakdown.depth} fraction={entry.parts.depth / PART_MAX.depth} color={tint.espresso} icon="leaf" />
+            </View>
+            <Text style={styles.extras}>{extras}</Text>
+          </FadeIn>
 
           {isDetailed(entry) ? <Details entry={entry} /> : null}
 
@@ -259,6 +276,9 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
         {mode === 'detail' ? <RoundButton icon="chevron-back" label={tr.settings.back} onPress={goBack} /> : <View />}
         <RoundButton icon="share-outline" label={tr.result.share} onPress={share} disabled={!shareReady} />
       </View>
+
+      {/* Yeni fincan: puan yerine oturunca kahve renklerinde konfeti */}
+      {isFresh ? <Confetti play={celebrate} /> : null}
 
       {mode === 'result' ? (
         <View style={[styles.bar, { paddingBottom: insets.bottom + 12 }]}>
