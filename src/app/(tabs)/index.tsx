@@ -244,7 +244,7 @@ export default function Home() {
       ) : (
         <>
           {/* BUGÜN */}
-          <View style={{ height: 22 }} />
+          <View style={{ height: 16 }} />
           <FadeIn index={0}>
             <Pager key={pages.length} width={pageW} pages={pages} />
           </FadeIn>

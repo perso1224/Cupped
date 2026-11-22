@@ -82,8 +82,13 @@ export function MetricTile({
   );
 }
 
-/** Yatay kaydırılan sayfalar + altta nokta göstergesi. */
-export function Pager({ pages, width }: { pages: ReactNode[]; width: number }) {
+/**
+ * Yatay kaydırılan sayfalar + altta nokta göstergesi.
+ * bleed: sayfalar kenar boşluğuna taşar ki kartların gölgesi kaydırma alanında kesilmesin
+ * (kesilince yuvarlak köşelerde gri kare izler kalıyordu).
+ */
+export function Pager({ pages, width: inner, bleed = 20 }: { pages: ReactNode[]; width: number; bleed?: number }) {
+  const width = inner + bleed * 2;
   const [x] = useState(() => new Animated.Value(0));
   const [page, setPage] = useState(0);
   return (
@@ -102,10 +107,10 @@ export function Pager({ pages, width }: { pages: ReactNode[]; width: number }) {
             haptic.select();
           }
         }}
-        style={{ width }}
+        style={{ width, marginHorizontal: -bleed }}
       >
         {pages.map((p, i) => (
-          <View key={i} style={{ width }}>
+          <View key={i} style={{ width, paddingHorizontal: bleed, paddingTop: 6, paddingBottom: 24 }}>
             {p}
           </View>
         ))}
@@ -148,6 +153,6 @@ const styles = StyleSheet.create({
   tileTrack: { height: 8, borderRadius: 4, backgroundColor: colors.line, overflow: 'hidden', marginTop: 12 },
   tileFill: { height: 8, borderRadius: 4 },
   tileLabel: { fontSize: 12, fontWeight: '600', color: colors.muted, marginTop: 1 },
-  dots: { flexDirection: 'row', justifyContent: 'center', marginTop: 12, gap: 6 },
+  dots: { flexDirection: 'row', justifyContent: 'center', marginTop: -8, gap: 6 },
   dot: { height: 6, borderRadius: 3, backgroundColor: colors.text },
 });
