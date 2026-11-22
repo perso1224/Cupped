@@ -319,6 +319,14 @@ export const tr = {
   intro: {
     tagline: 'Damak kimliğin',
   },
+  evolution: {
+    kicker: 'DAMAK EVRİMİ',
+    line: (a: string, b: string) => `${a} → ${b}`,
+    open: 'Evrim kartını gör',
+    title: 'Damak evrimim',
+    from: 'Eskiden',
+    to: 'Artık',
+  },
   wall: {
     title: 'Fincan Duvarı',
     kicker: 'Fincan Duvarım',

@@ -17,6 +17,7 @@ import { tr } from '../i18n/tr';
 import { brewRatio, isDetailed } from '../lib/progress';
 import { refreshReminder } from '../lib/reminders';
 import { shareViewAsImage } from '../lib/share';
+import { getPalateType } from '../lib/palate';
 import { partsSummary } from '../lib/scoring';
 import { bumpCounter, deleteEntry, getEntry, photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
@@ -27,7 +28,7 @@ import { colors, fonts, layout, tint, type } from '../theme';
  * mode='detail': listeden açılan yığın ekranı (sağdan kayar, üstte Geri).
  */
 export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
-  const { id, fresh, badges } = useLocalSearchParams<{ id: string; fresh?: string; badges?: string }>();
+  const { id, fresh, badges, evolvedFrom, evolvedTo } = useLocalSearchParams<{ id: string; fresh?: string; badges?: string; evolvedFrom?: string; evolvedTo?: string }>();
   const newBadges = (badges ?? '')
     .split(',')
     .map((b) => BADGES.find((x) => x.id === b))
@@ -170,6 +171,25 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
             <View style={{ marginTop: 8 }}>
               <Stars value={entry.rating} size={20} />
             </View>
+          ) : null}
+
+          {evolvedFrom && evolvedTo ? (
+            <Pop delay={1100} style={styles.newBadge}>
+              <View style={[styles.evoIcon]}>
+                <Icon name="sparkles" size={22} color={colors.onColor} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.newBadgeKicker}>{tr.evolution.kicker}</Text>
+                <Text style={styles.newBadgeName}>{tr.evolution.line(getPalateType(evolvedFrom).name, getPalateType(evolvedTo).name)}</Text>
+                <PressScale
+                  onPress={() => router.push({ pathname: '/evolution', params: { from: evolvedFrom, to: evolvedTo } })}
+                  scaleTo={0.96}
+                  style={styles.evoBtn}
+                >
+                  <Text style={styles.evoBtnText}>{tr.evolution.open}</Text>
+                </PressScale>
+              </View>
+            </Pop>
           ) : null}
 
           {newBadges.map((b, i) => (
@@ -370,6 +390,9 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 16,
   },
+  evoIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  evoBtn: { alignSelf: 'flex-start', marginTop: 10, backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  evoBtnText: { color: colors.onColor, fontWeight: '800', fontSize: 13 },
   newBadgeKicker: { color: colors.accent, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
   newBadgeName: { color: colors.white, fontSize: 18, fontWeight: '900', marginTop: 2 },
   newBadgeDesc: { color: colors.mutedOnDark, fontSize: 13, marginTop: 2 },

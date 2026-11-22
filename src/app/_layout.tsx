@@ -108,6 +108,7 @@ export default function RootLayout() {
           <Stack.Screen name="result/[id]" {...single} options={{ presentation: 'modal', sheetGrabberVisible: true }} />
           <Stack.Screen name="card" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="wall" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+          <Stack.Screen name="evolution" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen
             name="wrapped"
             {...single}

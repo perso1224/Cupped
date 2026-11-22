@@ -303,7 +303,11 @@ export default function NewCup() {
       }).catch(() => {});
       refreshReminder();
       haptic.success();
-      router.replace({ pathname: '/result/[id]', params: { id, fresh: '1', ...(newBadges ? { badges: newBadges } : {}) } });
+      // Damak Evrimi: bu fincanla damak tipi değiştiyse (en az 3 fincanlık geçmişte) sonuç ekranında kutlanır
+      const typeBefore = history.length >= 3 ? computePalateTypeId(history) : null;
+      const typeAfter = computePalateTypeId([...history, newEntry]);
+      const evolved = typeBefore && typeBefore !== typeAfter ? { evolvedFrom: typeBefore, evolvedTo: typeAfter } : {};
+      router.replace({ pathname: '/result/[id]', params: { id, fresh: '1', ...(newBadges ? { badges: newBadges } : {}), ...evolved } });
     } catch {
       Alert.alert(tr.capture.saveError);
     } finally {
