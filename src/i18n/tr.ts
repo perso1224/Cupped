@@ -136,7 +136,7 @@ export const tr = {
     discard: 'Vazgeç',
     keepEditing: 'Devam et',
     hideDetail: 'Detayı gizle',
-    detailHint: 'Basit kayıt da tamamen yeterli. Detay, damak tipini daha isabetli yapar ve Derinlik rozetine sayılır.',
+    detailHint: 'Basit kayıt da tamamen yeterli. Detay, damak tipini daha isabetli yapar ve Tadım Defteri rozetine sayılır.',
     notesLabel: 'Tat notları (en fazla 2)',
     originLabel: 'Çekirdek menşei',
     originPlaceholder: 'ör. Etiyopya Yirgacheffe',

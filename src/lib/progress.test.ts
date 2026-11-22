@@ -149,7 +149,7 @@ describe('pasaport ve rozetler', () => {
 
   const ids = (list: CupEntry[]) => earnedBadges(list).map((b) => b.id);
 
-  it('Rutine Saplandın: 5 gün üst üste aynı yöntem', () => {
+  it('Sadık Fincan: 5 gün üst üste aynı yöntem', () => {
     const five = [1, 2, 3, 4, 5].map((d) => cup(at(2026, 10, d)));
     expect(ids(five)).toContain('routine');
     expect(ids(five.slice(0, 4))).not.toContain('routine');
@@ -157,12 +157,12 @@ describe('pasaport ve rozetler', () => {
     expect(ids(broken)).not.toContain('routine');
   });
 
-  it('Zincir Sadıkı: art arda 3 aynı zincir', () => {
+  it('Müdavim: art arda 3 aynı zincir', () => {
     const s = { venueKind: 'chain' as const, placeName: 'Starbucks' };
     expect(ids([1, 2, 3].map((d) => cup(at(2026, 10, d), s)))).toContain('chain_loyal');
   });
 
-  it('Pour-over Sabrı, Üçüncü Dalga Mülteci, İlk Geisha, Ayda 5 Yeni Mekan', () => {
+  it('Ev Baristası, Kafe Kâşifi, Geisha Anı, Şehir Gezgini', () => {
     const home = [1, 3, 5, 7, 9].map((d) => cup(at(2026, 10, d), { method: 'filter' }));
     expect(ids(home)).toContain('pourover_patience');
     const indep = [1, 2, 3, 4, 5].map((d) => cup(at(2026, 10, d, 12), { venueKind: 'independent', placeName: `Yer ${d}` }));

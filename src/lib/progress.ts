@@ -221,7 +221,7 @@ export function badgeProgress(entries: CupEntry[]): BadgeProgress[] {
   const best = new Map<string, number>();
   const bump = (id: string, v: number) => best.set(id, Math.max(best.get(id) ?? 0, v));
 
-  // Rutine Saplandın: art arda N gün, her gün tek ve aynı yöntem (en uzun seri)
+  // Sadık Fincan: art arda N gün, her gün tek ve aynı yöntem (en uzun seri)
   const dayMethods = new Map<string, Set<Method>>();
   for (const e of sorted) {
     const k = dayKey(new Date(e.createdAt));
@@ -239,10 +239,10 @@ export function badgeProgress(entries: CupEntry[]): BadgeProgress[] {
     bump('routine', run);
   }
 
-  // Üçüncü Dalga Mülteci
+  // Kafe Kâşifi
   bump('third_wave_refugee', new Set(sorted.filter((e) => e.venueKind === 'independent').map(placeKeyOf).filter(Boolean)).size);
 
-  // Zincir Sadıkı: aynı zincire art arda N ziyaret (en uzun seri)
+  // Müdavim: aynı zincire art arda N ziyaret (en uzun seri)
   let chainRun = 0;
   let lastChain: string | null = null;
   for (const e of sorted) {
@@ -252,13 +252,13 @@ export function badgeProgress(entries: CupEntry[]): BadgeProgress[] {
     bump('chain_loyal', chainRun);
   }
 
-  // Pour-over Sabrı
+  // Ev Baristası
   bump('pourover_patience', sorted.filter((e) => e.method === 'filter' && e.venueKind === 'home').length);
 
-  // İlk Geisha
+  // Geisha Anı
   bump('first_geisha', sorted.some((e) => e.origin && normalizePlace(e.origin).includes('geisha')) ? 1 : 0);
 
-  // Ayda 5 Yeni Mekan (en iyi ay)
+  // Şehir Gezgini (en iyi ay)
   const seen = new Set<string>();
   const perMonth = new Map<string, number>();
   for (const e of sorted) {
