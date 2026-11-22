@@ -172,7 +172,7 @@ export default function SettingsScreen() {
         />
       </ListSection>
 
-      <ListSection title={tr.settings.appearance} footer={tr.settings.appearanceFooter}>
+      <ListSection title={tr.settings.appearance} footer={themePref === 'system' ? tr.settings.appearanceFooter : tr.settings.appearanceFixed}>
         <ListRow
           icon="contrast"
           tint={tint.slate}

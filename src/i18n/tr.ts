@@ -490,7 +490,8 @@ export const tr = {
   },
   settings: {
     appearance: 'Görünüm',
-    appearanceFooter: 'Telefonu izle seçiliyse uygulama telefonunun açık/koyu ayarına uyar.',
+    appearanceFooter: 'Uygulama telefonunun açık/koyu ayarına uyar.',
+    appearanceFixed: 'Telefonun ayarı ne olursa olsun bu görünüm kullanılır.',
     theme: 'Tema',
     themes: { system: 'Telefonu izle', light: 'Açık', dark: 'Koyu' },
     themeRestart: 'Tema kaydedildi. Uygulamayı kapatıp açınca geçerli olur.',

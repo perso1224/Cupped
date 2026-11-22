@@ -1,7 +1,7 @@
 import { Children, Fragment, type ReactNode } from 'react';
 import { Platform, StyleSheet, Switch, Text, View, type ColorValue } from 'react-native';
 import { upper } from '../i18n/tr';
-import { colors, type } from '../theme';
+import { colors, isDark, type } from '../theme';
 import { Icon, type IconName } from './Icon';
 import { haptic, PressScale } from './motion';
 
@@ -50,6 +50,9 @@ export function ListRow({
   destructive?: boolean;
   right?: ReactNode;
 }) {
+  // Uzun değer (ör. "Yeni mekanlar keşfetmek") sağda kesilmesin: başlığın altında ikinci satırda tam görünür
+  const valueBelow = !!value && !subtitle && value.length > 12;
+  const sub = subtitle ?? (valueBelow ? value : undefined);
   const content = (
     <View style={styles.row}>
       {icon ? (
@@ -58,18 +61,19 @@ export function ListRow({
         </View>
       ) : null}
       {/* Kısa değerler (saat, sayı) hep tam görünür; uzun değer başlıktan önce kısalır. Dar ekranda başlık da kısalabilir. */}
-      <View style={subtitle ? { flex: 1 } : { flexGrow: 1, flexShrink: 1, minWidth: '45%' }}>
-        <Text style={[styles.title, destructive && { color: colors.danger }]} numberOfLines={1}>
+      {/* Sağda yazı alanı varsa başlık ezilmesin; yoksa başlık kalan yeri doldurur */}
+      <View style={right ? { flexShrink: 0 } : { flex: 1 }}>
+        <Text style={[styles.title, destructive && { color: colors.danger }]} numberOfLines={2}>
           {title}
         </Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        {sub ? <Text style={[styles.subtitle, valueBelow && styles.valueBelow]}>{sub}</Text> : null}
       </View>
-      {value ? (
+      {value && !valueBelow ? (
         <Text style={[styles.value, { flexShrink: value.length <= 8 ? 0 : 1 }]} numberOfLines={1}>
           {value}
         </Text>
       ) : null}
-      {right ? <View style={{ flexShrink: 1, minWidth: 80 }}>{right}</View> : null}
+      {right ? <View style={{ flex: 1, minWidth: 80 }}>{right}</View> : null}
       {toggle !== undefined ? (
         <Switch
           accessibilityLabel={title}
@@ -78,10 +82,11 @@ export function ListRow({
             onToggle?.(v);
             haptic.select();
           }}
-          trackColor={{ true: colors.accent, false: colors.line }}
-          // iOS: topuzu sisteme bırak (iOS 26'da basılı tutunca Liquid Glass olur); Android'de beyaz.
-          thumbColor={Platform.OS === 'android' ? '#fff' : undefined}
-          ios_backgroundColor={colors.line}
+          trackColor={{ true: colors.accent, false: isDark ? '#4A3F38' : colors.line }}
+          // iOS: topuzu sisteme bırak (iOS 26'da basılı tutunca Liquid Glass olur); Android ve web'de beyaz.
+          thumbColor={Platform.OS === 'ios' ? undefined : '#fff'}
+          {...(Platform.OS === 'web' ? { activeThumbColor: '#fff' } : {})}
+          ios_backgroundColor={isDark ? '#4A3F38' : colors.line}
         />
       ) : null}
       {chevron ? <Icon name="chevron-forward" size={18} color={colors.tertiary} /> : null}
@@ -105,5 +110,6 @@ const styles = StyleSheet.create({
   iconBox: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   title: { ...type.body },
   subtitle: { ...type.footnote, marginTop: 1 },
+  valueBelow: { color: colors.accentText, fontWeight: '600' },
   value: { ...type.body, color: colors.muted, flexShrink: 1, textAlign: 'right' },
 });

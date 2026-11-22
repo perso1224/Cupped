@@ -5,7 +5,8 @@ import { tr, upper } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
 import { photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
+import { Icon } from './Icon';
 import { ScoreRing } from './ScoreRing';
 import { useDamakCode } from '../lib/useDamakCode';
 
@@ -43,20 +44,22 @@ export function ShareCard({
   const ringSize = width * 0.34;
   const photo = photoUrl(entry.photoUri);
   const code = useDamakCode(); // davet: kartı gören, kodu Damak Uyumu'na yazabilir
+  const u = width / 100; // yazılar kartla birlikte ölçeklenir (önizleme ve 1080 px görsel aynı görünsün)
 
   return (
-    <View style={{ width, height, borderRadius: 28, overflow: 'hidden' }}>
+    // Önizlemede kartın kenarı belli olsun (çerçeve paylaşılan görsele girmez)
+    <View style={{ width, height, borderRadius: 28, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line }}>
       <View ref={ref} collapsable={false} style={[styles.card, { width, height }]}>
         <View style={{ height: photoH, backgroundColor: colors.accentSoft }}>
           {photo ? (
             <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} resizeMode="cover" onLoadEnd={onImageLoaded} />
           ) : (
             <View style={styles.noPhoto}>
-              <Text allowFontScaling={false} style={{ fontSize: width * 0.22 }}>☕</Text>
+              <Icon name="cafe" size={u * 20} color={colors.accent} />
             </View>
           )}
           <View style={[styles.badge, { top: height * 0.13 }]}>
-            <Text allowFontScaling={false} style={styles.badgeText} numberOfLines={1}>
+            <Text allowFontScaling={false} style={[styles.badgeText, { fontSize: u * 3.6 }]} numberOfLines={1}>
               {tr.methods[entry.method]} · {placeLabel(entry)}
             </Text>
           </View>
@@ -72,22 +75,24 @@ export function ShareCard({
         </View>
 
         <View style={styles.body}>
-          <Text allowFontScaling={false} style={styles.kicker}>
+          <Text allowFontScaling={false} style={[styles.kicker, { fontSize: u * 3.2 }]}>
             {upper(tr.card.cupScore)}
           </Text>
-          <Text allowFontScaling={false} style={[styles.typeName, { fontSize: width * 0.1 }]} numberOfLines={1} adjustsFontSizeToFit>
+          {/* Uzun tip adları ("Üçüncü Dalga Gezgini") kesilmesin: iki satıra kadar */}
+          <Text allowFontScaling={false} style={[styles.typeName, { fontSize: u * 8, lineHeight: u * 9.4 }]} numberOfLines={2}>
             {type.name}
           </Text>
-          <Text allowFontScaling={false} style={styles.tagline} numberOfLines={2}>
+          <Text allowFontScaling={false} style={[styles.tagline, { fontSize: u * 3.7, lineHeight: u * 5.2 }]} numberOfLines={3}>
             {type.tagline}
           </Text>
         </View>
 
-        <View style={[styles.footer, { bottom: height * 0.17 }]}>
-          <Text allowFontScaling={false} style={styles.question}>
+        {/* Alt yazı akışta: uzun slogan olsa da üst üste binmez; Instagram'ın alt arayüzünün üstünde kalır */}
+        <View style={[styles.footer, { paddingBottom: height * 0.17 }]}>
+          <Text allowFontScaling={false} style={[styles.question, { fontSize: u * 4.8 }]}>
             {tr.card.question}
           </Text>
-          <Text allowFontScaling={false} style={styles.brandLine}>
+          <Text allowFontScaling={false} style={[styles.brandLine, { fontSize: u * 3.2 }]}>
             <Text style={styles.brand}>{BRAND.name}</Text>
             {'  ·  '}
             {code ? tr.card.inviteCode(code) : tr.card.explainer}
@@ -110,14 +115,14 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     maxWidth: '88%',
   },
-  badgeText: { color: colors.onColor, fontWeight: '700', fontSize: 13 },
+  badgeText: { color: colors.onColor, fontWeight: '700' },
   ringWrap: { alignSelf: 'center', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   body: { alignItems: 'center', paddingHorizontal: 24 },
-  kicker: { fontSize: 12, fontWeight: '800', color: colors.accentText, letterSpacing: 1.2 },
-  typeName: { fontWeight: '900', color: colors.text, marginTop: 4, textAlign: 'center', letterSpacing: -0.5 },
-  tagline: { fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 6, lineHeight: 20 },
-  footer: { position: 'absolute', left: 16, right: 16, alignItems: 'center' },
-  question: { fontSize: 18, fontWeight: '900', color: colors.text },
-  brandLine: { fontSize: 12, color: colors.muted, marginTop: 4, fontWeight: '600' },
-  brand: { fontWeight: '900', color: colors.text },
+  kicker: { fontWeight: '800', color: colors.accentText, letterSpacing: 1.2 },
+  typeName: { fontFamily: fonts.heavy, color: colors.text, marginTop: 4, textAlign: 'center' },
+  tagline: { color: colors.muted, textAlign: 'center', marginTop: 6 },
+  footer: { marginTop: 'auto', paddingHorizontal: 16, alignItems: 'center' },
+  question: { fontFamily: fonts.display, color: colors.text, textAlign: 'center' },
+  brandLine: { color: colors.muted, marginTop: 4, fontWeight: '600', textAlign: 'center' },
+  brand: { fontFamily: fonts.heavy, color: colors.text },
 });
