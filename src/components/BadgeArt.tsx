@@ -11,6 +11,11 @@ const ART: Record<string, ImageSourcePropType> = {
   first_geisha: require('../../assets/badges/first_geisha.png'),
   five_new_month: require('../../assets/badges/five_new_month.png'),
   depth: require('../../assets/badges/depth.png'),
+  first_turkish: require('../../assets/badges/first_turkish.png'),
+  first_coldbrew: require('../../assets/badges/first_coldbrew.png'),
+  ten_places: require('../../assets/badges/ten_places.png'),
+  streak30: require('../../assets/badges/streak30.png'),
+  hundred_cups: require('../../assets/badges/hundred_cups.png'),
 };
 
 /**
