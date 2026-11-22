@@ -17,7 +17,7 @@ import { tr } from '../i18n/tr';
 import { brewRatio, isDetailed } from '../lib/progress';
 import { refreshReminder } from '../lib/reminders';
 import { shareViewAsImage } from '../lib/share';
-import { levelFor } from '../lib/scoring';
+import { partsSummary } from '../lib/scoring';
 import { bumpCounter, deleteEntry, getEntry, photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
 import { colors, fonts, layout, tint, type } from '../theme';
@@ -190,7 +190,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
             <View style={{ flex: 1 }}>
               {isFresh ? <CountUp value={entry.score} style={styles.scoreNumber} duration={1100} /> : <Text style={styles.scoreNumber}>{entry.score}</Text>}
               <Text style={styles.scoreLabel}>{tr.card.cupScore}</Text>
-              <Text style={styles.scoreSub}>{levelFor(entry.score)}</Text>
+              <Text style={styles.scoreSub}>{partsSummary(entry.parts, tr.result.breakdown)}</Text>
             </View>
             <CupGauge size={104} fraction={entry.score / 100} animate={isFresh} />
           </Card>

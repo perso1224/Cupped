@@ -67,21 +67,32 @@ describe('Fincan Skoru', () => {
     const first = scoreCup(input({ venueKind: 'independent', placeName: 'Mahalle Kavurucusu' }), []);
     expect(first.parts.discovery).toBe(25); // yeni mekan + yeni yöntem
     const history = [entry({ venueKind: 'independent', placeName: 'mahalle kavurucusu' })];
-    const again = scoreCup(input({ venueKind: 'independent', placeName: 'Mahalle Kavurucusu' }), history);
+    const soon = new Date(Date.parse(history[0].createdAt) + 86400000).toISOString(); // ertesi gün, aynı ay
+    const again = scoreCup(input({ venueKind: 'independent', placeName: 'Mahalle Kavurucusu' }), history, soon);
     expect(again.parts.discovery).toBe(0);
     expect(again.total).toBe(55);
   });
 
-  it('ofis kahvesi en düşük emektir', () => {
+  it('ofis ve zincir kahvesi en düşük emek (10)', () => {
     const history = [entry({ method: 'espresso' })];
-    expect(scoreCup(input({ venueKind: 'office' }), history).total).toBe(45);
+    const soon = new Date(Date.parse(history[0].createdAt) + 3600000).toISOString();
+    expect(scoreCup(input({ venueKind: 'office' }), history, soon).total).toBe(50);
   });
 
-  it('aynı zincire art arda 3. ziyarette -5', () => {
+  it('zincire art arda gitmek artık cezalandırılmaz (Müdavim rozetiyle çelişmesin)', () => {
     const s = { venueKind: 'chain' as const, placeName: 'Starbucks' };
     const h2 = [entry(s), entry(s)];
-    expect(scoreCup(input(s), h2.slice(0, 1)).parts.selectivity).toBe(0); // 2. ziyaret
-    expect(scoreCup(input(s), h2).parts.selectivity).toBe(-5); // 3. ziyaret
+    const soon = new Date(Date.parse(h2[1].createdAt) + 3600000).toISOString();
+    expect(scoreCup(input(s), h2, soon).parts.selectivity).toBe(0); // 3. ziyaret
+    expect(scoreCup(input(s), h2, soon).total).toBe(50);
+  });
+
+  it('30+ gün sonra dönülen mekan +5, bu ay ilk kez kullanılan yöntem +5', () => {
+    const old = entry({ venueKind: 'independent', placeName: 'Kör Nokta', createdAt: new Date(2026, 5, 1, 9).toISOString() });
+    const back = scoreCup(input({ venueKind: 'independent', placeName: 'Kör Nokta' }), [old], new Date(2026, 6, 15, 9).toISOString());
+    expect(back.parts.discovery).toBe(10); // yeniden keşif 5 + bu ay ilk espresso 5
+    const sameMonth = scoreCup(input({ venueKind: 'independent', placeName: 'Kör Nokta' }), [old], new Date(2026, 5, 20, 9).toISOString());
+    expect(sameMonth.parts.discovery).toBe(0); // 19 gün: dönüş puanı yok; espresso bu ay zaten içilmiş
   });
 
   it('arada başka mekan varsa seri bozulur', () => {
@@ -115,7 +126,7 @@ describe('keşif sınırları', () => {
     const third = scoreCup(input({ venueKind: 'independent', placeName: 'C' }), week, mon(18));
     expect(third.parts.discovery).toBe(0); // yöntem de yeni değil (espresso)
     const nextWeek = scoreCup(input({ venueKind: 'independent', placeName: 'C' }), week, mon(23));
-    expect(nextWeek.parts.discovery).toBe(15);
+    expect(nextWeek.parts.discovery).toBe(15); // aynı ay: yöntem puanı yok
   });
 
   it('zincirin başka şubesi yeni mekan sayılmaz', () => {

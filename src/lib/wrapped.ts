@@ -1,7 +1,8 @@
 import { CUP_VOLUME_ML, WRAPPED_RULES } from '../config/scoring.config';
 import { computePalateTypeId, mostCommon } from './palate';
 import { discoveriesIn, inRange } from './progress';
-import { levelFor, normalizePlace } from './scoring';
+import { levelForXp } from './home';
+import { normalizePlace } from './scoring';
 import type { CupEntry, Method } from './types';
 
 /** Damak Özeti (Spotify Wrapped tarzı) hikayesinin slaytları. Sadece veri; görünüm ekranda. */
@@ -73,7 +74,8 @@ export function buildWrapped(entries: CupEntry[], start: Date, end: Date): Wrapp
   }
   slides.push(
     { kind: 'best', entry: best },
-    { kind: 'score', avg, level: levelFor(avg) },
+    // Seviye: dönem sonuna kadar biriken kahve puanı (asla düşmez)
+    { kind: 'score', avg, level: levelForXp(entries.filter((e) => e.createdAt < end.toISOString()).reduce((s, e) => s + Math.max(0, e.score), 0)) },
     { kind: 'type', typeId },
     {
       kind: 'summary',

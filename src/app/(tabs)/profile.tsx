@@ -9,7 +9,7 @@ import { Card, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
 import { badgeProgress, profileSummary } from '../../lib/progress';
-import { levelFor } from '../../lib/scoring';
+import { levelProgress } from '../../lib/home';
 import { updateMetrics } from '../../lib/storage';
 import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
@@ -34,6 +34,7 @@ export default function Profile() {
   );
 
   const { avg, places, methods, palateTypeId, streak } = profileSummary(entries);
+  const level = levelProgress(entries);
   const typeId = palateTypeId ?? profile?.starterTypeId ?? null;
   const type_ = typeId ? getPalateType(typeId) : null;
   const badges = badgeProgress(entries);
@@ -85,7 +86,7 @@ export default function Profile() {
           <Text style={styles.typeName}>{type_.name}</Text>
           <Text style={styles.tagline}>{type_.tagline}</Text>
           <View style={styles.metaRow}>
-            {entries.length ? <Meta icon="podium" text={`${tr.result.level}: ${levelFor(avg)}`} /> : null}
+            {level ? <Meta icon="podium" text={`${tr.result.level}: ${level.level}`} /> : null}
             {profile ? <Meta icon="flag" text={tr.onboarding.goal[profile.goal]} /> : null}
           </View>
         </Card>

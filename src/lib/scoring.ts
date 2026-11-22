@@ -1,5 +1,5 @@
 import { CHAINS, LEVELS, SCORING } from '../config/scoring.config';
-import type { CupEntry, CupInput, ScoreResult, VenueKind } from './types';
+import type { CupEntry, CupInput, ScoreParts, ScoreResult, VenueKind } from './types';
 
 /** Karşılaştırma için mekan adını sadeleştirir: küçük harf, Türkçe karakterler, boşluk/noktalama yok. */
 export function normalizePlace(name: string): string {
@@ -70,6 +70,12 @@ export function placeKey(entry: Pick<CupEntry, 'placeName' | 'venueKind'>): stri
   return chain ? `chain:${chain}` : normalizePlace(entry.placeName) || entry.placeName.trim().toLocaleLowerCase('tr-TR');
 }
 
+/** Yerel saatle ay anahtarı. */
+function monthKey(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${d.getMonth()}`;
+}
+
 /** Yerel saatle haftanın (Pazartesi) anahtarı. */
 function weekKey(iso: string): string {
   const d = new Date(iso);
@@ -107,8 +113,18 @@ export function scoreCup(input: CupInput, history: CupEntry[], at: string = new 
       if (weekKey(e.createdAt) === wk) newThisWeek++;
     }
     if (!seen.has(key) && newThisWeek < SCORING.discovery.newPlacePerWeek) discovery += SCORING.discovery.newPlace;
+    else if (seen.has(key)) {
+      // Uzun aradan sonra dönülen mekan: küçük "yeniden keşif" puanı
+      const last = [...past].reverse().find((e) => placeKey(e) === key && e.createdAt < at);
+      if (last && Date.parse(at) - Date.parse(last.createdAt) >= SCORING.discovery.returnAfterDays * 86400000) {
+        discovery += SCORING.discovery.returnPlace;
+      }
+    }
   }
   if (!past.some((e) => e.method === input.method)) discovery += SCORING.discovery.newMethod;
+  else if (!past.some((e) => e.method === input.method && monthKey(e.createdAt) === monthKey(at))) {
+    discovery += SCORING.discovery.methodThisMonth; // bu ay ilk kez bu yöntem
+  }
 
   let selectivity = 0;
   if (input.venueKind === 'chain' && input.placeName) {
@@ -131,4 +147,12 @@ export function scoreCup(input: CupInput, history: CupEntry[], at: string = new 
 /** Skora karşılık gelen seviye etiketi. */
 export function levelFor(score: number): string {
   return (LEVELS.find((l) => score >= l.min) ?? LEVELS[LEVELS.length - 1]).label;
+}
+
+/** Skorun nereden geldiği, kısa: "Emek +25 · Keşif +15" (taban ve 0 olan parçalar yazılmaz). */
+export function partsSummary(parts: ScoreParts, labels: Record<'effort' | 'discovery' | 'depth' | 'selectivity', string>): string {
+  return (['effort', 'discovery', 'depth', 'selectivity'] as const)
+    .filter((k) => parts[k] !== 0)
+    .map((k) => `${labels[k]} ${parts[k] > 0 ? '+' : ''}${parts[k]}`)
+    .join(' · ');
 }

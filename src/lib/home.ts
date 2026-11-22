@@ -1,4 +1,4 @@
-import { BADGES, CAFFEINE_MG, LEVELS, PALATE_RULES, PART_MAX, WEEKLY } from '../config/scoring.config';
+import { BADGES, CAFFEINE_MG, PART_MAX, WEEKLY, XP_LEVELS } from '../config/scoring.config';
 import { addDays, badgeProgress, dayKey, discoveriesIn, inRange, startOfWeek } from './progress';
 import type { CupEntry, Method } from './types';
 
@@ -45,24 +45,31 @@ export function agoLabel(minutes: number | null): string {
   return `${Math.round(minutes / 1440)} gün`;
 }
 
-export type LevelProgress = { avg: number; level: string; next: string | null; toNext: number; fraction: number };
+export type LevelProgress = { xp: number; level: string; next: string | null; toNext: number; fraction: number };
 
-/** Son fincanların ortalamasına göre seviye ve bir sonraki seviyeye kalan puan. */
+/** Birikimli kahve puanından seviye (asla düşmez). */
+export function levelForXp(xp: number): string {
+  return (XP_LEVELS.find((l) => xp >= l.min) ?? XP_LEVELS[XP_LEVELS.length - 1]).label;
+}
+
+/**
+ * Kullanıcı seviyesi: tüm fincan skorlarının toplamı ("kahve puanı"). Fincan ekledikçe artar, düşmez.
+ * Bir sonraki seviyeye kalan puan ve ilerleme oranı.
+ */
 export function levelProgress(entries: CupEntry[]): LevelProgress | null {
   if (!entries.length) return null;
-  const recent = [...entries].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, PALATE_RULES.window);
-  const avg = Math.round(recent.reduce((s, e) => s + e.score, 0) / recent.length);
-  const asc = [...LEVELS].sort((a, b) => a.min - b.min);
-  const idx = asc.reduce((i, l, j) => (avg >= l.min ? j : i), 0);
+  const xp = entries.reduce((s, e) => s + Math.max(0, e.score), 0);
+  const asc = [...XP_LEVELS].sort((a, b) => a.min - b.min);
+  const idx = asc.reduce((i, l, j) => (xp >= l.min ? j : i), 0);
   const cur = asc[idx];
   const next = asc[idx + 1] ?? null;
-  if (!next) return { avg, level: cur.label, next: null, toNext: 0, fraction: 1 };
+  if (!next) return { xp, level: cur.label, next: null, toNext: 0, fraction: 1 };
   return {
-    avg,
+    xp,
     level: cur.label,
     next: next.label,
-    toNext: next.min - avg,
-    fraction: Math.max(0, Math.min(1, (avg - cur.min) / (next.min - cur.min))),
+    toNext: next.min - xp,
+    fraction: Math.max(0, Math.min(1, (xp - cur.min) / (next.min - cur.min))),
   };
 }
 

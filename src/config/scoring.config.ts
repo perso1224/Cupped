@@ -11,8 +11,8 @@ export const SCORING = {
   effort: {
     home: 25, // Evde manuel demleme
     independent: 15, // Bağımsız / üçüncü dalga mekan
-    chain: 5, // Zincir mekan
-    office: 5, // Ofis makinesi / hazır
+    chain: 10, // Zincir mekan (22 Kas: 5→10, zincirci kullanıcı cezalandırılmasın)
+    office: 10, // Ofis makinesi / hazır
   } satisfies Record<VenueKind, number>,
   depth: {
     twoNotes: 5, // 2 tat notu girildi (detay modu) — brif: "küçük bonus", basit kullanan cezalandırılmaz
@@ -22,10 +22,14 @@ export const SCORING = {
     newPlace: 15, // İlk kez gidilen mekan
     newPlacePerWeek: 2, // Yeni mekan puanı haftada en fazla bu kadar (uydurma mekan adıyla puan kasılmasın)
     newMethod: 10, // İlk kez denenen yöntem
+    // Keşif tükenmesin (22 Kas): tekrar kazanılabilen küçük keşifler
+    returnAfterDays: 30, // Bu kadar gündür gidilmeyen mekana dönüş...
+    returnPlace: 5, // ...+5 "yeniden keşif"
+    methodThisMonth: 5, // Bu ay ilk kez kullanılan (daha önce denenmiş) yöntem
   },
   selectivity: {
     sameChainStreakFrom: 3, // Aynı zincire art arda 3. ziyaret ve sonrası
-    penalty: -5,
+    penalty: 0, // 22 Kas: ceza kaldırıldı (Müdavim rozetiyle çelişiyordu). Eski kayıtlarda -5 kalabilir.
   },
   max: 100,
   min: 0,
@@ -55,6 +59,18 @@ export const LEVELS: { min: number; label: string }[] = [
   { min: 75, label: 'Uzman' },
   { min: 60, label: 'Seçici' },
   { min: 40, label: 'Meraklı' },
+  { min: 0, label: 'Çaylak' },
+];
+
+/**
+ * Kullanıcı seviyesi: birikimli "kahve puanı" (tüm fincan skorlarının toplamı). Asla düşmez.
+ * Ortalama 60 puanlı fincanla: Meraklı ~8, Seçici ~25, Uzman ~65, Efsane ~165 fincan.
+ */
+export const XP_LEVELS: { min: number; label: string }[] = [
+  { min: 10000, label: 'Efsane' },
+  { min: 4000, label: 'Uzman' },
+  { min: 1500, label: 'Seçici' },
+  { min: 500, label: 'Meraklı' },
   { min: 0, label: 'Çaylak' },
 ];
 

@@ -17,7 +17,7 @@ import { insights } from '../../lib/insights';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
 import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekDots, weekStrip, weeklyPalateScore, longestStreak, noteShares, favorites } from '../../lib/progress';
 import { setReminderEnabled } from '../../lib/reminders';
-import { levelFor } from '../../lib/scoring';
+import { partsSummary } from '../../lib/scoring';
 import { updateMetrics } from '../../lib/storage';
 import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
@@ -43,7 +43,8 @@ export default function Home() {
 
   const todayKey = dayKey(now);
   const todays = list.filter((e) => dayKey(new Date(e.createdAt)) === todayKey);
-  const todayScore = todays.length ? Math.max(...todays.map((e) => e.score)) : 0;
+  const bestToday = todays.reduce<(typeof todays)[number] | null>((b, e) => (!b || e.score > b.score ? e : b), null);
+  const todayScore = bestToday?.score ?? 0;
   const streak = currentStreak(list, now);
   const ws = startOfWeek(now);
   const weekEntries = list.filter((e) => inRange(e, ws, addDays(ws, 7)));
@@ -104,7 +105,7 @@ export default function Home() {
         <View style={{ flex: 1, marginLeft: 16 }}>
           <Text style={styles.boardKicker}>{upper(tr.home.todayScore)}</Text>
           <Text style={styles.boardScore}>{todays.length ? todayScore : '–'}</Text>
-          <Text style={styles.boardSub}>{todays.length ? levelFor(todayScore) : tr.home.noCupToday}</Text>
+          <Text style={styles.boardSub}>{bestToday ? partsSummary(bestToday.parts, tr.result.breakdown) : tr.home.noCupToday}</Text>
         </View>
       </View>
       <View style={styles.boardRule} />

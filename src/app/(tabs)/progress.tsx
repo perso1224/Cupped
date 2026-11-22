@@ -63,6 +63,7 @@ export default function Progress() {
             <View style={styles.barTrack}>
               <View style={[styles.barFill, { width: `${Math.max(4, (level?.fraction ?? 0) * 100)}%` }]} />
             </View>
+            {level ? <Text style={styles.xp}>{tr.progress.xp(level.xp)}</Text> : null}
             <Text style={styles.small} numberOfLines={2}>
               {level ? (level.next ? tr.progress.toNext(level.next, level.toNext) : tr.progress.topLevel) : tr.progress.levelEmpty}
             </Text>
@@ -215,6 +216,7 @@ const styles = StyleSheet.create({
   barTrack: { height: 6, borderRadius: 3, backgroundColor: colors.line, overflow: 'hidden', marginTop: 10 },
   barFill: { height: 6, borderRadius: 3, backgroundColor: colors.text },
   small: { ...type.footnote, marginTop: 8 },
+  xp: { ...type.caption, color: colors.accentText, fontWeight: '700', marginTop: 8 },
   streakCard: { flex: 1, backgroundColor: colors.card, borderRadius: 22, padding: 14, alignItems: 'center', justifyContent: 'center' },
   streakNum: { fontSize: 38, fontFamily: fonts.heavy, color: colors.text, marginTop: 2 },
   dots: { flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch', marginTop: 10 },

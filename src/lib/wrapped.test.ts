@@ -41,7 +41,7 @@ describe('Damak Özeti', () => {
     expect(s[3]).toEqual({ kind: 'place', name: 'Starbucks', visits: 2 });
     expect(s[4]).toEqual({ kind: 'discover', places: 2, methods: 2 });
     expect(s[5].kind === 'best' && s[5].entry.score).toBe(80);
-    expect(s[6]).toEqual({ kind: 'score', avg: 55, level: 'Meraklı' });
+    expect(s[6]).toEqual({ kind: 'score', avg: 55, level: 'Çaylak' }); // seviye: biriken kahve puanı (3 fincan)
   });
 
   it('evde ağırlıklı ay: "evin en iyi kafen" slaytı', () => {

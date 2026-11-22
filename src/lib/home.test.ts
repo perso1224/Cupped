@@ -55,10 +55,15 @@ describe('ana sayfa panoları', () => {
 
   it('seviye ilerlemesi', () => {
     expect(levelProgress([])).toBeNull();
+    // Birikimli kahve puanı: skorların toplamı, asla düşmez
     const p = levelProgress([cup(at(20), { score: 66 }), cup(at(21), { score: 68 })])!;
-    expect(p).toMatchObject({ avg: 67, level: 'Seçici', next: 'Uzman', toNext: 8 });
-    expect(p.fraction).toBeCloseTo(7 / 15);
-    expect(levelProgress([cup(at(21), { score: 95 })])).toMatchObject({ level: 'Efsane', next: null });
+    expect(p).toMatchObject({ xp: 134, level: 'Çaylak', next: 'Meraklı', toNext: 366 });
+    expect(p.fraction).toBeCloseTo(134 / 500);
+    const many = Array.from({ length: 30 }, (_, i) => cup(at(1 + (i % 20)), { score: 50 })); // 1500
+    expect(levelProgress(many)).toMatchObject({ xp: 1500, level: 'Seçici', next: 'Uzman', toNext: 2500 });
+    // Düşük skorlu fincan eklemek seviyeyi düşürmez
+    expect(levelProgress([...many, cup(at(21), { score: 40 })])!.xp).toBeGreaterThan(1500);
+    expect(levelProgress(Array.from({ length: 200 }, () => cup(at(21), { score: 60 })))).toMatchObject({ level: 'Efsane', next: null });
   });
 
   it('günün önerisi her zaman anlamlı bir şey söyler', () => {
