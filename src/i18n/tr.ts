@@ -256,6 +256,13 @@ export const tr = {
     week: 'Bu hafta',
     month: 'Bu ay',
     weeklyScore: 'Haftalık Damak Skoru',
+    weekAvg: 'Bu haftanın ortalama skoru',
+    monthAvg: 'Bu ayın ortalama skoru',
+    firstPeriod: (k: 'week' | 'month') => (k === 'week' ? 'İlk haftan, kıyas gelecek hafta.' : 'İlk ayın, kıyas gelecek ay.'),
+    vsPrev: (k: 'week' | 'month', d: number) => {
+      const p = k === 'week' ? 'Geçen haftaya' : 'Geçen aya';
+      return d === 0 ? `${p} göre aynı` : `${p} göre ${d > 0 ? '+' : '−'}${Math.abs(d)} puan`;
+    },
     record: (n: number) => `Rekorun: ${n}`,
     firstWeek: 'İlk haftan: rekoru sen belirliyorsun.',
     monthSummary: 'Bu ayın özeti',

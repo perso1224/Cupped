@@ -11,7 +11,7 @@ import { Card, PillButton, Segmented } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
 import { levelProgress } from '../../lib/home';
-import { addDays, currentStreak, inRange, periodRange, periodReport, scoreTrend, startOfMonth, startOfWeek, weekDots, weeklyRecordBefore, type TrendRange } from '../../lib/progress';
+import { addDays, currentStreak, inRange, periodRange, periodReport, scoreTrend, startOfMonth, startOfWeek, weekDots, type TrendRange } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
 import { colors, fonts, layout, tint, type } from '../../theme';
 import { useTabBarSpace } from '../../components/TabBar';
@@ -30,11 +30,12 @@ export default function Progress() {
     kind === 'week'
       ? periodReport(entries, ws, addDays(ws, 7))
       : periodReport(entries, ms, new Date(now.getFullYear(), now.getMonth() + 1, 1));
-  const record = weeklyRecordBefore(entries, ws);
-  const isRecord = kind === 'week' && report.palateScore > record && record > 0;
   const palate = report.palateTypeId ? getPalateType(report.palateTypeId) : null;
   const prev = periodRange(kind, -1, now);
   const hasPrev = entries.some((e) => inRange(e, prev.start, prev.end));
+  // Önceki döneme göre ortalama skor farkı (uygulamanın her yerinde aynı sayı: fincan skoru ortalaması)
+  const prevAvg = hasPrev ? periodReport(entries, prev.start, prev.end).avg : null;
+  const diff = prevAvg !== null && report.cups ? report.avg - prevAvg : null;
   const level = levelProgress(entries);
   const streak = currentStreak(entries, now);
   const dots = weekDots(entries, now);
@@ -129,21 +130,15 @@ export default function Progress() {
 
       <FadeIn index={0} key={kind}>
         <Card style={{ marginTop: 14 }}>
-          {kind === 'week' ? (
-            <>
-              {/* Haftalık Damak Skoru sadece haftalık anlamlı (çeşitlilik puanı ay boyunca hep 100'e dayanır) */}
-              <Text style={styles.label}>{tr.progress.weeklyScore}</Text>
-              <CountUp value={report.palateScore} style={styles.big} />
-              <Text style={[styles.label, isRecord && { color: colors.accentText }]}>
-                {isRecord ? tr.progress.newRecord : record > 0 ? tr.progress.record(record) : tr.progress.firstWeek}
-              </Text>
-            </>
-          ) : (
-            <Text style={styles.label}>{tr.progress.monthSummary}</Text>
-          )}
+          <Text style={styles.label}>{kind === 'week' ? tr.progress.weekAvg : tr.progress.monthAvg}</Text>
+          {report.cups ? <CountUp value={report.avg} style={styles.big} /> : <Text style={styles.big}>–</Text>}
+          {report.cups ? (
+            <Text style={[styles.label, diff !== null && diff > 0 && { color: colors.success }]}>
+              {diff === null ? tr.progress.firstPeriod(kind) : tr.progress.vsPrev(kind, diff)}
+            </Text>
+          ) : null}
           <View style={styles.grid}>
             <Stat value={report.cups} label={tr.progress.cups} />
-            <Stat value={report.avg} label={tr.progress.avg} />
             <Stat value={report.places} label={tr.progress.places} />
             {kind === 'month' ? (
               <Stat value={report.newPlaces} label={tr.progress.newPlaces} />
@@ -234,7 +229,7 @@ const styles = StyleSheet.create({
   big: { ...type.display, fontSize: 56 },
   typeName: { ...type.title2, marginTop: 2 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
-  stat: { width: '50%', paddingVertical: 8 },
+  stat: { width: '33.33%', paddingVertical: 8 },
   statValue: { ...type.stat },
   statLabel: { ...type.footnote },
   section: { ...type.title2, marginTop: 28, marginBottom: 12 },
