@@ -1,94 +1,59 @@
-# Session Handoff — Cupped (2026-11-22)
+# Session Handoff — Cupped (2026-11-22, second session)
 
-## Current goal
-Cupped: an Expo SDK 58 / React Native coffee-logging app ("damak kimliği"). Turkish UI.
+## Context
+Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-technical, uses an iPhone, and now also tests on an Android phone via Expo Go. Explain everything in simple Turkish.
 
-The user is non-technical, a student, and has no computer (iPhone/iPad only). Explain things to them in simple Turkish.
+## Rules
+- Build every change for **both iOS and Android** unless the owner says otherwise (see AGENTS.md "Platforms").
+- Push to `claude/expo-setup-guide-9xz45k` only. Do not open a PR unless asked.
+- Each push runs `.github/workflows/expo-update.yml`: tests, typecheck and lint, then `eas update --branch preview --platform all`.
+- Before declaring work done, run:
+  - `npx tsc --noEmit`
+  - `CI=1 npx expo lint`
+  - `npx vitest run` (104 tests)
+  - a web export plus Playwright checks in the scratchpad
+- Commit messages are in Turkish and end with the attribution lines.
+- The "no schema change" rule from earlier in this session was lifted, for the star rating only.
 
-The user's workflow is to describe a feature or paste code in chat. Claude implements it, runs checks, and pushes. The GitHub Action then publishes an EAS Update to the `preview` channel, and the user tests in the app on their iPhone.
+## Done this session (in order)
+- Profile > Collection: separate pages `src/app/collection/{badges,places,methods}.tsx`. The old `collection.tsx` was removed.
+- Back button stretched on iOS: fixed with a fixed top bar, and PressScale no longer adds `flexGrow` for `alignSelf` alone.
+- Floating tab bar (`src/components/TabBar.tsx`): Liquid Glass on iOS 26+ through `src/components/Glass.tsx` (`expo-glass-effect`, safe require), white fallback otherwise. The "+" button is separate; the Profile tab shows the user's initial.
+- Cup screen: hero photo, a sheet, a big score with `CupGauge`, three tiles, and Edit/Done buttons in result mode.
+- Progress screen: Level and Streak cards, plus `TrendChart` with 1M/3M/1Y/All ranges (`scoreTrend`).
+- Coffee picker for origins: `src/config/origins.ts` and `OriginPicker`. It writes to the `origin` string field.
+- Coffee identity:
+  - Fraunces font via `@expo-google-fonts/fraunces`; `fonts` in `theme.ts`.
+  - `CupGauge` and `Bean` in `src/components/coffee.tsx`.
+  - Stamp-style `WeekStrip`.
+  - Bar-style `MetricTile`.
+- React Compiler enabled in `app.json` (`experiments.reactCompiler`).
+- Home page: a swipeable "menu board" pager with at most 5 pages: Today, Caffeine (if enabled), Streak, Taste map, Favorites.
+  - Light theme: white cards. Dark theme: espresso cards.
+  - Pager uses `bleed` so card shadows are not clipped.
+- Dark mode:
+  - `theme.ts` picks LIGHT or DARK when the app opens.
+  - `black`/`white` are an ink pair that swap in dark mode; `onColor` is always white.
+  - The theme preference (system/light/dark) is stored in `Documents/cupped-theme.txt` (localStorage on web) and read synchronously.
+  - Changing it calls `Updates.reloadAsync()`.
+- Android pass:
+  - Settings pickers use `useChoice()`: Alert on iOS, bottom sheet on Android and web.
+  - Card `elevation` and ListRow ripple.
+  - Hardware back button on the new-cup screen.
+  - `KeyboardAvoidingView`; the save bar hides while the keyboard is open (Android only).
+  - History screen uses FlatList.
+  - Notification channel `reminders`.
+- Personal star rating:
+  - `CupEntry.rating` (1–5 or null) via `ratingOrNull`.
+  - `StarInput` and `Stars` components.
+  - `placeRatings` and `favorites().loved`.
+  - Editing keeps the score when the scoring inputs are unchanged.
 
-There is no open task right now. The overnight autonomous pass is done. The user just asked whether they can paste code for Claude to apply, and the answer was yes.
+## Verified by owner on device
+- iPhone: the collection pages, glass tab bar, switches, home pager, and stars.
+- Android: general UI, Wrapped (no animation there because system animations are off — expected), keyboard, back button, and stars.
 
-## Branch / delivery
-- Work and push only on `claude/expo-setup-guide-9xz45k`. Do not open a PR unless the user asks.
-- HEAD is `5c6aa1a`, pushed, with a clean tree.
-- Each push triggers `.github/workflows/expo-update.yml`. It runs npm ci, test, typecheck and lint, then `eas update --branch preview --platform ios`. `.md`/docs changes are ignored by the trigger. Runs 20–23 succeeded.
-- Before declaring work done: `npx tsc --noEmit`, `CI=1 npx expo lint`, `npx vitest run` (92 tests).
-- Web check: `npx expo export -p web --output-dir <scratchpad>/web`, then Playwright scripts in the scratchpad (v3.js edit flow, v4/v5/v7.js).
-- Commit messages are in Turkish and end with the Co-Authored-By and Claude-Session lines from the system reminder.
-
-## Changed files (overnight, from 9a80315 to 5c6aa1a)
-- `src/app/new.tsx`:
-  - edit mode `?edit=<id>`: prefilled form, `saveEdit` rescores against the entries before this one, `updateEntry`.
-  - "same again" mode `?again=<id>`.
-  - `maxLength` on inputs.
-  - `photoWidth` ref.
-  - gallery error handling.
-  - Close on the photo step while editing returns to the form.
-- `src/components/CupDetail.tsx`:
-  - rows: Aynısından bir tane daha (detail mode only), Düzenle, Sil.
-  - `useFocusEffect` reload that skips when the entry is unchanged and re-locks Share when the photo changes.
-  - score parts on one row.
-- `src/lib/storage.ts`:
-  - `updateEntry`, `discardPhoto`.
-  - `persistPhoto(tempUri, id, {version,width})`.
-  - `readEntriesStrict` saves a lossy or corrupt raw copy to `.corrupt.<ts>`; if there is no backup it continues with an empty list.
-  - `loadEntries` is read-only.
-  - `updateSettings` writes before notifying listeners.
-  - import cap of 20k entries.
-  - old export files are cleaned up.
-  - `shrinkPhoto` decodes once.
-- `src/lib/entries.ts`:
-  - `parseEntriesDetailed` (dropped/lossy count).
-  - `createdAt` normalized to ISO.
-  - notes and grind whitelisted, notes capped at 2.
-  - brew values coerced.
-  - text caps: name 80, note 500.
-- `src/lib/reminderTime.ts`, `src/lib/reminders.ts`: `reminderPlan` schedules the first reminder plus 6 daily follow-ups (ids `cupped-daily`, `cupped-daily-1..6`).
-- `src/lib/scoring.ts`, `src/lib/progress.ts`:
-  - exported `placeKey`, used everywhere; chain branches count as one place.
-  - `PassportPlace.key`, `filterEntries`.
-- `src/lib/metrics.ts`: `dayIndex` uses `Date.UTC`.
-- `src/app/history.tsx`: `?place=&title=` / `?method=` filters plus a summary line; memoized grouping.
-- `src/components/PassportView.tsx`: places and earned method stamps are pressable and open the filtered history.
-- `src/components/motion.tsx`: PressScale gets `accessibilityRole="button"` and a disabled state by default.
-- `src/components/ui.tsx`: Chip has a selected state.
-- `src/components/List.tsx`: ListRow shrink rules (short values never truncate); Switch is labelled.
-- `src/app/onboarding.tsx`, `src/app/settings.tsx`, `src/app/(tabs)/index.tsx`, `src/app/(tabs)/profile.tsx`, `src/app/(tabs)/progress.tsx`: try/catch around async calls; "Tüm fincanlar" is hidden when there are no entries.
-- `src/i18n/tr.ts`: new strings for edit, again, errors, filterSummary and shutter.
-- Tests: `entries.test.ts`, `progress.test.ts`, `reminderTime.test.ts`.
-- Docs: `CUPPED_OVERNIGHT_REPORT.md` (full morning report), `CUPPED_OVERNIGHT_PROGRESS.md`.
-
-## Decisions made
-- **Product (user):**
-  - Düello/QR is out of scope.
-  - Scoring: base 40, office 5, depth +5/+5, new-place bonus at most 2 per week.
-  - Level is hidden on share cards.
-  - Daily reminder that the user can turn off.
-  - Photo "is it coffee" check comes later, on-device, warn only, iOS + Android.
-- **Engineering (overnight):**
-  - Editing preserves id, createdAt and list order. The score is recomputed from entries before this one. Later entries are not rescored; scores are historical snapshots.
-  - Not done; these need the user's decision: personal like/star rating (changes product identity), dark mode, enabling React Compiler (needs on-device testing).
-  - Do not copy Cal AI or Spotify designs exactly. Use Ionicons, not emoji. Respect reduce motion and haptics settings.
-
-## Failing tests
-None. `tsc` and lint are clean and 92/92 Vitest tests pass. `expo-doctor` has 2 checks that fail only because there is no network access to exp.host; this is not a project problem.
-
-## Root cause (of the overnight fixes)
-- **Data loss:**
-  - The repair path wrote `[]` over corrupt data when no backup existed.
-  - `loadEntries`, which was not queued, did repair writes that raced with saves.
-  - Records that failed or partially failed normalization were silently dropped on the next write.
-- **Reminder stopped:** only a single DATE trigger was scheduled, and only when the app opened.
-- **Place inconsistency:** scoring used chain-aware keys while progress, passport and badges used `normalizePlace` (which gives an empty key for non-Latin names).
-- **SE truncation:** ListRow had a non-shrinking title, a spacer with an extra gap, and short values that were allowed to shrink.
-
-## Next step
-- Wait for the user's next request; they may paste code or describe features.
-- Ask the user for iPhone feedback on: Düzenle, Aynısından bir tane daha, Pasaport → mekan list, reminder time display.
-- Possible later work:
-  - FlatList virtualization for history at 500+ entries.
-  - thumbnails.
-  - backing up photos (zip).
-  - TestFlight once the user buys an Apple Developer account.
-  - on-device coffee check (`docs/YOL_HARITASI.md`).
+## Open / ideas
+- On Android, not yet confirmed: the 4-option sheet under "Damak hedefi", and the reminder actually arriving.
+- Share card follows the theme (dark in dark mode); the owner has not decided whether it should always be light.
+- TestFlight / Play Store prep is in `docs/YOL_HARITASI.md`.
