@@ -45,3 +45,8 @@ Docs: https://docs.expo.dev/eas/index.md
 - Every new feature and change is built for **both iOS and Android** by default.
 - Only make a change iOS-only or Android-only when the owner explicitly says so.
 - Where platforms differ (pickers, keyboard, shadows, back button), keep both working, with platform checks in code. Note in the reply what is untested on which device.
+
+## Replies to the owner (owner preference)
+
+- After finishing work, keep the summary very short (a few lines: what changed, what to test on which phone).
+- Do not write long, detailed summaries of what was done; focus the reply on the suggested next step.
