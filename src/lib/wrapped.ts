@@ -67,8 +67,11 @@ export function buildWrapped(entries: CupEntry[], start: Date, end: Date): Wrapp
   } else if (place) {
     slides.push({ kind: 'place', name: place.item.placeName!, visits: place.count });
   }
+  // Keşif yoksa (0 yeni mekan, 0 yeni yöntem) slayt hiç gösterilmez.
+  if (disc.places.length + disc.methods.length > 0) {
+    slides.push({ kind: 'discover', places: disc.places.length, methods: disc.methods.length });
+  }
   slides.push(
-    { kind: 'discover', places: disc.places.length, methods: disc.methods.length },
     { kind: 'best', entry: best },
     { kind: 'score', avg, level: levelFor(avg) },
     { kind: 'type', typeId },

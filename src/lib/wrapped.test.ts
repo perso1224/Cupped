@@ -58,6 +58,7 @@ describe('Damak Özeti', () => {
     ];
     const s = buildWrapped(e, ...NOV);
     expect(s.find((x) => x.kind === 'cups')).toMatchObject({ cups: 1 });
-    expect(s.find((x) => x.kind === 'discover')).toEqual({ kind: 'discover', places: 0, methods: 0 });
+    // 0 yeni mekan ve 0 yeni yöntem: keşif slaytı hiç yok
+    expect(s.find((x) => x.kind === 'discover')).toBeUndefined();
   });
 });

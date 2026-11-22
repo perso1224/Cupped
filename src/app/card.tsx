@@ -128,10 +128,19 @@ export default function PalateCard() {
 
               {type && s.cups > 0 ? (
                 <View style={[styles.stats, { marginTop: u * 6, borderColor: th.muted }]}>
-                  <Stat u={u} th={th} value={s.cups} label={tr.palateCard.cups} />
-                  <Stat u={u} th={th} value={s.avg} label={tr.palateCard.avg} divider />
-                  <Stat u={u} th={th} value={s.places} label={tr.palateCard.places} divider />
-                  <Stat u={u} th={th} value={s.methods} label={tr.palateCard.methods} divider />
+                  {/* Değeri 0 olan bilgi kartta gösterilmez (ör. hiç kafeye gidilmediyse "0 Mekan" yok) */}
+                  {(
+                    [
+                      [s.cups, tr.palateCard.cups],
+                      [s.avg, tr.palateCard.avg],
+                      [s.places, tr.palateCard.places],
+                      [s.methods, tr.palateCard.methods],
+                    ] as const
+                  )
+                    .filter(([v]) => v > 0)
+                    .map(([v, l], i) => (
+                      <Stat key={l} u={u} th={th} value={v} label={l} divider={i > 0} />
+                    ))}
                 </View>
               ) : null}
 
