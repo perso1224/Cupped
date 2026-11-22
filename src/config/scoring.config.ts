@@ -157,8 +157,8 @@ export type Badge = { id: string; name: string; description: string; howTo: stri
 /** Rozetler. Eşikler BADGE_RULES içinde. */
 export const BADGES: Badge[] = [
   { id: 'routine', name: 'Sadık Fincan', description: '5 gün üst üste aynı yöntemden içtin. Yarın bir sürpriz?', howTo: '5 gün üst üste her gün aynı yöntemden en az bir fincan iç' },
-  { id: 'third_wave_refugee', name: 'Kafe Kaşifi', description: '5 farklı bağımsız mekan gezdin.', howTo: '5 farklı bağımsız kafeye git' },
-  { id: 'chain_loyal', name: 'Müdavim', description: 'Aynı zincire art arda 3 kez gittin. Sadakat güzel şey.', howTo: 'Aynı zincire art arda 3 kez git' },
+  { id: 'third_wave_refugee', name: 'Kafe Kaşifi', description: 'Zincir olmayan 5 farklı kafe gezdin.', howTo: 'Zincir olmayan 5 farklı kafeye git' },
+  { id: 'chain_loyal', name: 'Müdavim', description: 'Aynı zincire art arda 3 kez gittin. Sadakat güzel şey.', howTo: 'Aynı zincir kafeye (ör. Starbucks, Kahve Dünyası) art arda 3 kez git' },
   { id: 'pourover_patience', name: 'Ev Baristası', description: 'Evde 5 filtre kahve demledin.', howTo: 'Evde 5 filtre kahve demle' },
   { id: 'first_geisha', name: 'Geisha Anı', description: 'Geisha çekirdeğiyle tanıştın.', howTo: 'Bir Geisha çekirdeği dene (Detay > Çekirdek)' },
   { id: 'five_new_month', name: 'Şehir Gezgini', description: 'Bir ayda 5 yeni mekan keşfettin.', howTo: 'Bir ay içinde 5 yeni mekan keşfet' },

@@ -19,6 +19,7 @@ import {
   Text,
   TextInput,
   View,
+  type ScrollViewInstance,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../components/Icon';
@@ -34,6 +35,7 @@ import { brewRatio, dayKey } from '../lib/progress';
 import { whenToDate, type When } from '../lib/when';
 import { createCup, editCup, parseNum, type Where } from '../lib/cupSave';
 import { safely } from '../lib/safe';
+import { useProfile } from '../lib/useProfile';
 import { GRINDS, METHODS, NOTES, type CupEntry, type Grind, type Method, type TasteNote } from '../lib/types';
 import { colors, type } from '../theme';
 
@@ -61,6 +63,10 @@ export default function NewCup() {
   const [where, setWhere] = useState<Where | null>(null);
   const [typed, setTyped] = useState('');
   const [history, setHistory] = useState<CupEntry[]>([]);
+  // Tanıtımda seçilen favori yöntem en başta
+  const profile = useProfile();
+  const fav = profile?.favMethod;
+  const methodOrder = fav ? [fav, ...METHODS.filter((m) => m !== fav)] : METHODS;
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [cameraReady, setCameraReady] = useState(false);
@@ -77,8 +83,22 @@ export default function NewCup() {
   const [grind, setGrind] = useState<Grind | null>(null);
   const [note, setNote] = useState('');
 
+  // En fazla 2 tat: 3.'ye dokununca ilk seçim sessizce düşmesin, kısa bir uyarı çıksın
+  const [noteLimit, setNoteLimit] = useState(false);
+  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+  }, []);
   function toggleNote(n: TasteNote) {
-    setNotes((cur) => (cur.includes(n) ? cur.filter((x) => x !== n) : cur.length >= 2 ? [cur[1], n] : [...cur, n]));
+    if (!notes.includes(n) && notes.length >= 2) {
+      haptic.medium();
+      setNoteLimit(true);
+      if (noteTimer.current) clearTimeout(noteTimer.current);
+      noteTimer.current = setTimeout(() => setNoteLimit(false), 2500);
+      return;
+    }
+    setNoteLimit(false);
+    setNotes((cur) => (cur.includes(n) ? cur.filter((x) => x !== n) : [...cur, n]));
   }
 
   // H3: ekranın açılışından kayda kadar geçen süre
@@ -100,10 +120,9 @@ export default function NewCup() {
             ? { kind: 'place', name: last.placeName }
             : null;
       // Önceden seçilenler "değişiklik" sayılmasın (Kapat'ta boşuna "vazgeçilsin mi?" sorulmasın)
-      prefill.current = { method: last.method, where: JSON.stringify(w), typed: w?.kind === 'place' ? w.name : '' };
+      prefill.current = { method: last.method, where: JSON.stringify(w), typed: '' };
       setMethod((m) => m ?? last.method);
       setWhere((cur) => cur ?? w);
-      if (w?.kind === 'place') setTyped((t) => t || w.name);
     });
     if (editId) {
       getEntry(editId).then((e) => {
@@ -112,7 +131,6 @@ export default function NewCup() {
         setPhoto(photoUrl(e.photoUri));
         setMethod(e.method);
         setWhere(e.venueKind === 'home' || e.venueKind === 'office' ? { kind: e.venueKind } : { kind: 'place', name: e.placeName ?? '' });
-        if (e.placeName && e.venueKind !== 'home' && e.venueKind !== 'office') setTyped(e.placeName);
         setNotes(e.notes ?? []);
         setOrigin(e.origin ?? '');
         setDose(e.brew?.doseG ? String(e.brew.doseG) : '');
@@ -131,7 +149,6 @@ export default function NewCup() {
         if (e.venueKind === 'home' || e.venueKind === 'office') setWhere({ kind: e.venueKind });
         else if (e.placeName) {
           setWhere({ kind: 'place', name: e.placeName });
-          setTyped(e.placeName);
         }
         setOrigin(e.origin ?? '');
         setDose(e.brew?.doseG ? String(e.brew.doseG) : '');
@@ -145,7 +162,11 @@ export default function NewCup() {
     }).catch(() => {});
   }, [editId, againId]);
 
-  const places = knownPlaces(history).slice(0, 6);
+  // Seçili mekan her zaman bir çip olarak görünür (yazı kutusunda tekrar edilmez)
+  const topPlaces = knownPlaces(history).slice(0, 6);
+  const selectedName = where?.kind === 'place' && !typed.trim() ? where.name : null;
+  const places =
+    selectedName && !topPlaces.some((p) => placeNameKey(p) === placeNameKey(selectedName)) ? [selectedName, ...topPlaces.slice(0, 5)] : topPlaces;
 
   // Android: klavye açıkken Kaydet çubuğu klavyenin üstüne binmesin, yazı alanına yer kalsın
   // (iPhone'daki gibi klavye kapanınca geri gelir).
@@ -162,6 +183,8 @@ export default function NewCup() {
 
   // Android geri tuşu: doğrudan çıkmasın, Kapat ile aynı davransın (girilen bilgi varsa önce sorar).
   const closeRef = useRef<() => void>(() => {});
+  const formScroll = useRef<ScrollViewInstance>(null);
+  const detailY = useRef(0);
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -385,6 +408,7 @@ export default function NewCup() {
       {/* Fotoğraftan forma geçişte form yumuşakça belirir */}
       <FadeIn style={{ flex: 1 }}>
       <ScrollView
+        ref={formScroll}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
@@ -407,7 +431,7 @@ export default function NewCup() {
         {original ? <Text style={[type.largeTitle, { marginTop: 16 }]}>{tr.capture.editTitle}</Text> : null}
         <Text style={styles.q}>{tr.capture.how}</Text>
         <View style={styles.chips}>
-          {METHODS.map((m) => (
+          {methodOrder.map((m) => (
             <Chip key={m} label={tr.methods[m]} selected={method === m} onPress={() => setMethod(m)} />
           ))}
         </View>
@@ -450,6 +474,7 @@ export default function NewCup() {
             returnKeyType="done"
             style={styles.input}
           />
+          {typed.length >= 60 ? <Text style={styles.limitHint}>{tr.capture.placeLimit(typed.length, 80)}</Text> : null}
         </View>
 
         {/* Kişisel beğeni: isteğe bağlı, skoru etkilemez */}
@@ -479,8 +504,12 @@ export default function NewCup() {
           onPress={() => {
             haptic.select();
             animateLayout();
-            setShowDetail((v) => !v);
+            const opening = !showDetail;
+            setShowDetail(opening);
+            // Açılınca ayrıntılar görünsün: ekran "Detay ekle" satırına kayar (alanlar ekranın altında kalmasın)
+            if (opening) setTimeout(() => formScroll.current?.scrollTo({ y: Math.max(0, detailY.current - 12), animated: true }), 260);
           }}
+          onLayout={(e) => (detailY.current = e.nativeEvent.layout.y)}
           hitSlop={8}
           scaleTo={0.96}
           style={styles.detailToggle}
@@ -499,6 +528,7 @@ export default function NewCup() {
                 <Chip key={n} label={tr.notes[n]} selected={notes.includes(n)} onPress={() => toggleNote(n)} />
               ))}
             </View>
+            {noteLimit ? <Text style={styles.limitHint}>{tr.onboarding.notesLimit}</Text> : null}
 
             <Text style={styles.label}>{tr.capture.originLabel}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -539,7 +569,7 @@ export default function NewCup() {
               inputAccessoryViewID={KB_DONE}
                 value={dose}
                 onChangeText={setDose}
-                placeholder={tr.capture.doseLabel}
+                placeholder={tr.capture.dosePlaceholder}
                 placeholderTextColor={colors.muted}
                 keyboardType="decimal-pad"
                 style={[styles.input, { flex: 1, flexBasis: 0, minWidth: 0, marginRight: 8 }]}
@@ -548,7 +578,7 @@ export default function NewCup() {
               inputAccessoryViewID={KB_DONE}
                 value={water}
                 onChangeText={setWater}
-                placeholder={tr.capture.waterLabel}
+                placeholder={tr.capture.waterPlaceholder}
                 placeholderTextColor={colors.muted}
                 keyboardType="decimal-pad"
                 style={[styles.input, { flex: 1, flexBasis: 0, minWidth: 0 }]}
@@ -636,6 +666,7 @@ const styles = StyleSheet.create({
   inputRow: { marginTop: 4 },
   detailToggle: { marginTop: 24, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6 },
   detailToggleText: { fontSize: 16, fontWeight: '800', color: colors.accentText },
+  limitHint: { ...type.footnote, color: colors.accentText, marginTop: 2 },
   detailHint: { fontSize: 14, color: colors.muted, lineHeight: 20, marginTop: 8 },
   label: { ...type.headline, marginTop: 20, marginBottom: 10 },
   unit: { fontSize: 12, fontWeight: '700', color: colors.muted, marginBottom: 6 },

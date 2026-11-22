@@ -72,6 +72,7 @@ export default function MatchScreen() {
             <Text style={styles.code} selectable>
               {myCode}
             </Text>
+            <Text style={styles.codeNote}>{tr.match.codeNote}</Text>
             <PillButton
               label={tr.match.shareCode}
               glass
@@ -197,6 +198,7 @@ const styles = StyleSheet.create({
   sub: { ...type.subhead, marginTop: 6, lineHeight: 21 },
   box: { backgroundColor: colors.card, borderRadius: 20, padding: 18, marginTop: 18 },
   label: { ...type.footnote, fontWeight: '600' },
+  codeNote: { ...type.footnote, marginTop: 6 },
   code: { fontSize: 40, fontFamily: fonts.heavy, color: colors.text, marginTop: 6, paddingRight: 6 },
   muted: { ...type.subhead, marginTop: 6 },
   input: {

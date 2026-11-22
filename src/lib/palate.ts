@@ -24,6 +24,21 @@ export function mostCommon<T extends string>(items: T[]): T[] {
  * Tat notu varsa (detay modu) notlardan, yoksa yöntem + mekan türünden.
  */
 export function computePalateTypeId(entries: PalateSource[], opts: { wholePeriod?: boolean } = {}): string {
+  if (opts.wholePeriod) return rawPalateTypeId(entries, opts);
+  // Kararlı tip: tek bir farklı fincan tipi değiştirmesin. Son fincanla, ondan bir önce ve iki önceki duruma göre
+  // hesaplanan üç tipten en az ikisi aynıysa o tip; yeni bir tip ancak art arda iki fincanla yerleşir.
+  const sorted = [...entries].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const c0 = rawPalateTypeId(sorted);
+  if (sorted.length < 2) return c0;
+  const c1 = rawPalateTypeId(sorted.slice(0, -1));
+  if (c0 === c1) return c0;
+  if (sorted.length < 3) return c1;
+  const c2 = rawPalateTypeId(sorted.slice(0, -2));
+  return c0 === c2 ? c0 : c1;
+}
+
+/** Damak tipinin ham hesabı (son N fincan; dönem raporunda dönemin tamamı). */
+export function rawPalateTypeId(entries: PalateSource[], opts: { wholePeriod?: boolean } = {}): string {
   const sorted = [...entries].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   // Profil için son N fincan; dönem raporları (Özet) için dönemin tamamı (en çok yöntemle çelişmesin).
   const recent = opts.wholePeriod ? sorted : sorted.slice(-PALATE_RULES.window);

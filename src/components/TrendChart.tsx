@@ -86,7 +86,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           <Text style={[styles.axis, { position: 'absolute', right: 8, bottom: 0 }]}>{fmt(t1, withYear)}</Text>
           {sp ? (
             <View style={[styles.bubble, { left: bx, width: bubbleW }]} pointerEvents="none">
-              <Text style={styles.bubbleValue}>{sp.avg} puan</Text>
+              <Text style={styles.bubbleValue}>ort. {sp.avg}</Text>
               <Text style={styles.bubbleDate}>{fmt(sp.t, withYear)}</Text>
             </View>
           ) : null}

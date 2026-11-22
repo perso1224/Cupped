@@ -14,7 +14,7 @@ import { Card, PillButton } from './ui';
 import { Confetti, CountUp, FadeIn, Pop, PressScale, haptic } from './motion';
 import { BADGES, PART_MAX } from '../config/scoring.config';
 import { tr } from '../i18n/tr';
-import { brewRatio, isDetailed } from '../lib/progress';
+import { brewRatio, isDetailed, trNum } from '../lib/progress';
 import { refreshReminder } from '../lib/reminders';
 import { shareViewSafely } from '../lib/share';
 import { getPalateType } from '../lib/palate';
@@ -241,6 +241,16 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
               <MetricTile value={signed(entry.parts.depth)} label={tr.result.breakdown.depth} fraction={entry.parts.depth / PART_MAX.depth} color={tint.espresso} icon="leaf" />
             </View>
             <Text style={styles.extras}>{extras}</Text>
+            <PressScale
+              onPress={() => Alert.alert(tr.scoreHelp.title, tr.scoreHelp.body)}
+              hitSlop={10}
+              scaleTo={0.95}
+              style={styles.helpLink}
+              accessibilityRole="button"
+            >
+              <Icon name="help-circle-outline" size={16} color={colors.accentText} />
+              <Text style={styles.helpText}>{tr.scoreHelp.link}</Text>
+            </PressScale>
           </FadeIn>
 
           {isDetailed(entry) ? <Details entry={entry} /> : null}
@@ -257,7 +267,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
             />
           </View>
 
-          <ListSection footer={tr.result.editHint}>
+          <ListSection footer={mode === 'detail' ? tr.result.editHint : undefined}>
             {mode === 'detail' ? (
               <ListRow
                 icon="repeat"
@@ -316,8 +326,8 @@ function Details({ entry }: { entry: CupEntry }) {
   const b = entry.brew;
   const recipe = b
     ? [
-        b.doseG ? `${b.doseG} g` : null,
-        b.waterMl ? `${b.waterMl} ml` : null,
+        b.doseG ? `${trNum(b.doseG)} g` : null,
+        b.waterMl ? `${trNum(b.waterMl)} ml` : null,
         brewRatio(b.doseG, b.waterMl),
         b.grind ? tr.capture.grind[b.grind] : null,
       ]
@@ -328,10 +338,8 @@ function Details({ entry }: { entry: CupEntry }) {
     <View style={styles.details}>
       <View style={styles.detailsHead}>
         <Text style={styles.detailsTitle}>{tr.result.details}</Text>
-        <View style={styles.depthChip}>
-          <Text style={styles.depthChipText}>{tr.result.depthChip}</Text>
-        </View>
       </View>
+      {entry.notes.length ? <Text style={[styles.detailLabel, { marginTop: 4 }]}>{tr.result.notesLabel}</Text> : null}
       {entry.notes.length ? (
         <View style={styles.noteRow}>
           {entry.notes.map((n) => (
@@ -395,6 +403,8 @@ const styles = StyleSheet.create({
   scoreLabel: { ...type.footnote, fontWeight: '600', color: colors.text },
   scoreSub: { ...type.footnote, marginTop: 2 },
   tiles: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  helpLink: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'center', marginTop: 8, paddingVertical: 6 },
+  helpText: { ...type.footnote, color: colors.accentText, fontWeight: '700' },
   extras: { ...type.caption, textAlign: 'center', marginTop: 10 },
   section: { ...type.title2, marginTop: 28, marginBottom: 12 },
   topButtons: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between' },
@@ -417,8 +427,6 @@ const styles = StyleSheet.create({
   details: { backgroundColor: colors.card, borderRadius: 20, padding: 18, marginTop: 18 },
   detailsHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   detailsTitle: { fontSize: 18, fontWeight: '900', color: colors.text },
-  depthChip: { backgroundColor: colors.accentSoft, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  depthChipText: { color: colors.accentText, fontWeight: '800', fontSize: 12 },
   noteRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 },
   noteChip: { backgroundColor: colors.black, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, marginRight: 6, marginBottom: 6 },
   noteChipText: { color: colors.white, fontWeight: '700', fontSize: 13 },

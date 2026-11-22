@@ -43,7 +43,8 @@ export default function Progress() {
   const trend = scoreTrend(entries, range, now);
   const trendAvg = trend.points.length ? Math.round(trend.points.reduce((s, p) => s + p.avg, 0) / trend.points.length) : 0;
   const trendMsg =
-    trend.change === null ? null : trend.change >= 2 ? tr.progress.trendUp(trend.change) : trend.change <= -2 ? tr.progress.trendDown(-trend.change) : tr.progress.trendFlat;
+    // Erken yargı olmasın: en az 4 günlük veri
+    trend.change === null || trend.points.length < 4 ? null : trend.change >= 2 ? tr.progress.trendUp(trend.change) : trend.change <= -2 ? tr.progress.trendDown(-trend.change) : tr.progress.trendFlat;
 
   return (
     <ScrollView

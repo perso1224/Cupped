@@ -45,21 +45,46 @@ Ek olarak yapılanlar (kod denetiminden):
 
 ## C. Kafa karıştıranlar (kurucu kararı gerekiyor)
 
-- ❓ **Damak tipi çok oynak:** Neredeyse her fincanda değişiyor. "Damak evrimi" kartı dakikalar içinde iki kez çıkabiliyor ve damak kodu sürekli değişiyor.
+- ☑ **Damak tipi çok oynak:** Neredeyse her fincanda değişiyor. "Damak evrimi" kartı dakikalar içinde iki kez çıkabiliyor ve damak kodu sürekli değişiyor.
   - Öneri: İlk 5–7 fincanda "tahmin" olarak göster, belirgin farkla değişsin, evrim kartı en fazla haftada bir çıksın.
-- ❓ **"Fincan Skoru" kahvenin puanı gibi duruyor ama değil:**
+- ☑ **"Fincan Skoru" kahvenin puanı gibi duruyor ama değil:**
   - Yıldızın skora etkisi yok.
   - Aynı kafeye tekrar gitmek puanı düşürüyor.
   - Emek, Keşif, Derinlik ve Taban hiçbir yerde açıklanmıyor.
   - Öneri: Tek satırlık bir açıklama ve "?" ekle; ya da adını değiştir.
-- ❓ **Aynı gün için 4 farklı sayı (85 / 71 / 76 / 73):** Ana sayfa günün en iyisini, İlerleme ortalamayı gösteriyor. Tek bir kural seçilmeli.
-- ☐ **Çıkış onayındaki "Vazgeç" düğmesi fincanı siliyor:** Uygulamanın geri kalanında "Vazgeç" iptal demek. Öneri: "Çık, kaydetme" / "Düzenlemeye dön".
-- ☐ **Seri kartı:** Bugün fincan eklendiği halde "Bugün de bir fincan ekle" diyor.
-- ☐ **Onboarding cevapları kullanılmıyor:** Seçilen favori yöntem formda öne çıkmıyor. 3. tat seçilince ilk seçim sessizce düşüyor.
-- ☐ **Tema değişince uygulama yeniden başlıyor:** Yazılan takma ad kaybolabiliyor.
-- ☐ **Düzenleme ekranı:** "Ne zaman?" yok, yanlış güne eklenen fincan düzeltilemiyor.
-- ☐ **Hatırlatma:** Satırın adı "Akşam hatırlatması" ama sabah saatleri de seçilebiliyor.
-- ☐ **Rozet koşulları:** "Bağımsız kafe" ve "zincir" kavramları kullanıcıya açıklanmıyor.
+- ☑ **Aynı gün için 4 farklı sayı (85 / 71 / 76 / 73):** Ana sayfa günün en iyisini, İlerleme ortalamayı gösteriyor. Tek bir kural seçilmeli.
+- ☑ **Çıkış onayındaki "Vazgeç" düğmesi fincanı siliyor:** Uygulamanın geri kalanında "Vazgeç" iptal demek. Öneri: "Çık, kaydetme" / "Düzenlemeye dön".
+- ☑ **Seri kartı:** Bugün fincan eklendiği halde "Bugün de bir fincan ekle" diyor.
+- ☑ **Onboarding cevapları kullanılmıyor:** Seçilen favori yöntem formda öne çıkmıyor. 3. tat seçilince ilk seçim sessizce düşüyor.
+- ☑ **Tema değişince uygulama yeniden başlıyor:** Yazılan takma ad kaybolabiliyor.
+- ☑ **Düzenleme ekranı:** "Ne zaman?" yok, yanlış güne eklenen fincan düzeltilemiyor.
+- ☑ **Hatırlatma:** Satırın adı "Akşam hatırlatması" ama sabah saatleri de seçilebiliyor.
+- ☑ **Rozet koşulları:** "Bağımsız kafe" ve "zincir" kavramları kullanıcıya açıklanmıyor.
+
+Kurucu uyurken verilen kararlar (22–23 Kas gecesi; değiştirilebilir):
+- **Damak tipi:**
+  - Tek bir farklı fincan tipi değiştirmiyor; yeni tip ancak art arda iki fincanla yerleşiyor.
+  - İlk 5 fincanda tipin yanında "tahmin (n/5 fincan)" yazıyor.
+  - Damak Evrimi kutlaması en az 5 fincanlık geçmişte ve en fazla haftada bir çıkıyor.
+  - Damak Uyumu'nda "Kodun zevkinle birlikte değişir" notu var.
+- **Skor:**
+  - Sonuç ve fincan ekranında "Skor nasıl hesaplanır?" bağlantısı var. Açıklaması: skor tadı değil kahve yolculuğunu ölçer; beğeni yıldızlarla verilir.
+  - Formül değişmedi.
+- **Sayılar:**
+  - Günde birden fazla fincan varsa ana sayfa "Bugünün en iyi fincanı" yazıyor.
+  - Grafik balonunda "ort." var.
+  - İlerleme aralıkları "1 ay · 3 ay · 1 yıl · Tümü".
+- **Çıkış onayı:** "Fincan kaydedilmeden çıkılsın mı?" → "Çık, kaydetme" / "Düzenlemeye dön". Yeni fincan ekranı tam ekran açıldığı için iOS'ta aşağı kaydırarak kapatılamıyor; tek çıkış ✕.
+- **Tema değişimi:** Uygulama yine yeniden yükleniyor, ama önce takma ad kaydediliyor ve yeniden açılınca Ayarlar'a dönülüyor.
+- **Ek düzeltmeler:**
+  - "Detay ekle" açılınca ekran ayrıntılara kayıyor.
+  - Menşei seçicide "Bitti" düğmesi var.
+  - Mekan adında 60 karakterden sonra sayaç çıkıyor.
+  - Kafein ortalaması ilk fincandan itibaren hesaplanıyor.
+  - "Sen bir akşam kahvecisisin" en az 3 fincanda, trend mesajı en az 4 günde çıkıyor.
+  - "18,5 g" ve "1:13,5" Türkçe biçimde.
+  - Metinler: "Evde/Ofiste", "1 dk önce", "Telefonunu uzat, kartını göster.", "Günlük hatırlatma".
+  - Rozet açıklamaları zincir/bağımsız ayrımını açıklıyor.
 
 ## D. Görsel cila
 

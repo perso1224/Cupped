@@ -15,7 +15,7 @@ import type { PalateGoal } from '../lib/onboarding';
 import { cancelReminders, refreshReminder, setReminderEnabled } from '../lib/reminders';
 import { CAFFEINE_REFS, REMINDER_TIMES, timeLabel } from '../lib/settings';
 import { shareFile } from '../lib/share';
-import { deleteAllData, exportAllData, importBackup, saveProfile, updateMetrics, updateSettings } from '../lib/storage';
+import { deleteAllData, exportAllData, importBackup, saveProfile, setReturnRoute, updateMetrics, updateSettings } from '../lib/storage';
 import { useMetrics } from '../lib/useMetrics';
 import { useProfile } from '../lib/useProfile';
 import { useSettings } from '../lib/useSettings';
@@ -185,8 +185,11 @@ export default function SettingsScreen() {
               (['system', 'light', 'dark'] as const).map((t) => ({ label: tr.settings.themes[t], value: t })),
               (t) => {
                 if (t === themePref) return;
-                saveThemePref(t)
-                  // Renkler uygulama açılırken seçilir: hemen yeniden yükle. Olmazsa kapatıp açınca geçerli olur.
+                // Renkler uygulama açılırken seçilir: hemen yeniden yüklenir. Önce yazılan takma ad kaydedilir ve
+                // yeniden açılınca bu ekrana dönülür (kullanıcı nerede kaldığını kaybetmesin).
+                saveNick()
+                  .then(() => saveThemePref(t))
+                  .then(() => setReturnRoute('/settings'))
                   .then(() => Updates.reloadAsync())
                   .catch(() => Alert.alert(tr.settings.themeRestart));
               },

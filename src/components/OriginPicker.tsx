@@ -47,7 +47,10 @@ export function OriginPicker({
         <View style={styles.head}>
           <CloseButton onPress={close} />
           <Text style={styles.title}>{tr.capture.originPickerTitle}</Text>
-          <View style={{ width: 36 }} />
+          {/* Seçim zaten kaydedilir; "Bitti" bunu açıkça gösterir (✕ "iptal" gibi algılanmasın) */}
+          <PressScale onPress={close} hitSlop={12} scaleTo={0.94} accessibilityRole="button" accessibilityLabel={tr.capture.keyboardDone}>
+            <Text style={styles.done}>{tr.capture.keyboardDone}</Text>
+          </PressScale>
         </View>
         {value ? (
           <View style={styles.current}>
@@ -112,6 +115,7 @@ export function OriginPicker({
 }
 
 const styles = StyleSheet.create({
+  done: { fontSize: 16, fontWeight: '800', color: colors.accentText, minWidth: 36, textAlign: 'right' },
   screen: { flex: 1, backgroundColor: colors.bg },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: layout.screenPad, paddingTop: 16 },
   title: { ...type.headline },

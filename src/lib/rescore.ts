@@ -21,8 +21,8 @@ export function rescoreAfter(list: CupEntry[], fromIso: string): CupEntry[] {
       const discovery = discoveryPoints(e, ix, e.createdAt);
       const parts = { ...e.parts, discovery };
       const total = Math.max(0, Math.min(100, parts.base + parts.effort + parts.depth + parts.discovery + parts.selectivity));
-      // Damak tipi yalnızca son N fincana bakar: tüm geçmişi vermeye gerek yok
-      const palateTypeId = computePalateTypeId([...done.slice(-PALATE_RULES.window), e]);
+      // Damak tipi yalnızca son N fincana (+ kararlılık için 2 önceki duruma) bakar: tüm geçmişi vermeye gerek yok
+      const palateTypeId = computePalateTypeId([...done.slice(-(PALATE_RULES.window + 2)), e]);
       if (total !== e.score || discovery !== e.parts.discovery || palateTypeId !== e.palateTypeId) {
         cur = { ...e, parts, score: total, palateTypeId };
         updated.set(e.id, cur);

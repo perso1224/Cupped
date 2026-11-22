@@ -85,12 +85,12 @@ export default function Profile() {
 
       {type_ ? (
         <Card style={{ marginTop: 12 }}>
-          <Text style={styles.cardTitle}>{palateTypeId ? tr.home.palateType : tr.profile.starter}</Text>
+          <Text style={styles.cardTitle}>{!palateTypeId ? tr.profile.starter : entries.length < 5 ? tr.home.palateGuess(entries.length) : tr.home.palateType}</Text>
           <Text style={styles.typeName}>{type_.name}</Text>
           <Text style={styles.tagline}>{type_.tagline}</Text>
           <View style={styles.metaRow}>
             {level ? <Meta icon="podium" text={`${tr.result.level}: ${level.level}`} /> : null}
-            {profile ? <Meta icon="flag" text={tr.onboarding.goal[profile.goal]} /> : null}
+            {profile ? <Meta icon="flag" text={`${tr.profile.goal}: ${tr.onboarding.goal[profile.goal]}`} /> : null}
           </View>
         </Card>
       ) : null}

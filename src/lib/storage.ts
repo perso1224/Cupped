@@ -66,6 +66,22 @@ async function keepCorrupt(raw: string) {
   await keepCorruptRaw(raw);
 }
 
+const RETURN_KEY = 'cupped.returnTo';
+/** Yeniden yüklemeden sonra açılacak ekran (ör. tema değişince Ayarlar'a dön). */
+export async function setReturnRoute(route: '/settings'): Promise<void> {
+  await AsyncStorage.setItem(RETURN_KEY, route);
+}
+/** Bekleyen dönüş ekranını bir kez verir. */
+export async function consumeReturnRoute(): Promise<'/settings' | null> {
+  try {
+    const v = await AsyncStorage.getItem(RETURN_KEY);
+    if (v) await AsyncStorage.removeItem(RETURN_KEY);
+    return v === '/settings' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Veri bozulup boş listeyle devam edildiyse bir kez true döner (ekranda haber vermek için). */
 export async function consumeRecoveryNotice(): Promise<boolean> {
   try {

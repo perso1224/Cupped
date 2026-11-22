@@ -63,7 +63,14 @@ export function isDetailed(e: Pick<CupEntry, 'notes' | 'origin' | 'brew' | 'note
 /** Kahve:su oranı, ör. 15 g / 250 ml → "1:16.7" yerine yuvarlanmış "1:17". */
 export function brewRatio(doseG: number | null | undefined, waterMl: number | null | undefined): string | null {
   if (!doseG || !waterMl || doseG <= 0 || waterMl <= 0) return null;
-  return `1:${Math.round(waterMl / doseG)}`;
+  // Yarımda yuvarlanır, Türkçe ondalık virgülüyle: 1:16 ya da 1:13,5
+  const r = Math.round((waterMl / doseG) * 2) / 2;
+  return `1:${trNum(r)}`;
+}
+
+/** Sayıyı Türkçe yazar: 18.5 → "18,5", 250 → "250". */
+export function trNum(n: number): string {
+  return String(n).replace('.', ',');
 }
 
 // ---------- Seri ve haftalık şerit ----------

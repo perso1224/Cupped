@@ -67,12 +67,19 @@ export default function Onboarding() {
     }
   }
 
+  const [noteLimit, setNoteLimit] = useState(false);
   function toggleNote(n: TasteNote) {
+    const cur = a.notes ?? [];
+    if (!cur.includes(n) && cur.length >= 2) {
+      // 3. seçim sessizce ilkini düşürmesin: uyarı göster
+      haptic.medium();
+      setNoteLimit(true);
+      return;
+    }
+    setNoteLimit(false);
     setA((p) => {
-      const cur = p.notes ?? [];
-      if (cur.includes(n)) return { ...p, notes: cur.filter((x) => x !== n) };
-      if (cur.length >= 2) return { ...p, notes: [cur[1], n] };
-      return { ...p, notes: [...cur, n] };
+      const now = p.notes ?? [];
+      return { ...p, notes: now.includes(n) ? now.filter((x) => x !== n) : [...now, n] };
     });
   }
 
@@ -141,7 +148,7 @@ export default function Onboarding() {
     );
   } else if (step === 4) {
     content = (
-      <Question title={tr.onboarding.notesQ} hint={tr.onboarding.notesHint}>
+      <Question title={tr.onboarding.notesQ} hint={noteLimit ? tr.onboarding.notesLimit : tr.onboarding.notesHint}>
         <View style={styles.chips}>
           {NOTES.map((n) => (
             <Chip key={n} label={tr.notes[n]} selected={(a.notes ?? []).includes(n)} onPress={() => toggleNote(n)} />

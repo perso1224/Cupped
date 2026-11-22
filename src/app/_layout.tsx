@@ -1,5 +1,5 @@
 import { Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_800ExtraBold, useFonts } from '@expo-google-fonts/fraunces';
-import { usePathname } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -8,7 +8,7 @@ import { Alert, Appearance, AppState, View } from 'react-native';
 import { BrandIntro } from '../components/BrandIntro';
 import { setIntroPlaying } from '../components/motion';
 import { refreshReminder } from '../lib/reminders';
-import { consumeRecoveryNotice, recordActiveDay } from '../lib/storage';
+import { consumeRecoveryNotice, consumeReturnRoute, recordActiveDay } from '../lib/storage';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
 import { colors, isDark, themePref } from '../theme';
@@ -83,7 +83,13 @@ export default function RootLayout() {
     setShowIntro(false);
     setIntroPlaying(false);
   }, []);
+
   const ready = profile !== undefined && (fontsLoaded || !!fontError);
+  // Tema değişikliği için yeniden yüklendiyse kullanıcıyı kaldığı ekrana (Ayarlar) geri götür
+  useEffect(() => {
+    if (!ready || !profile) return;
+    consumeReturnRoute().then((r) => r && router.push(r));
+  }, [ready, profile]);
   const intro = showIntro ? <BrandIntro ready={ready} onDone={endIntro} /> : null;
 
   if (!ready)

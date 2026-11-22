@@ -139,7 +139,7 @@ export default function Home() {
       <View style={styles.boardTop}>
         <CupGauge size={104} fraction={todays.length ? todayScore / 100 : 0} onDark={isDark} />
         <View style={{ flex: 1, marginLeft: 16 }}>
-          <Text style={styles.boardKicker}>{upper(tr.home.todayScore)}</Text>
+          <Text style={styles.boardKicker}>{upper(todays.length > 1 ? tr.home.todayBest : tr.home.todayScore)}</Text>
           <Text style={styles.boardScore}>{todays.length ? todayScore : '–'}</Text>
           <Text style={styles.boardSub}>{bestToday ? partsSummary(bestToday.parts, tr.result.breakdown) : tr.home.noCupToday}</Text>
         </View>
@@ -184,7 +184,7 @@ export default function Home() {
         ))}
       </View>
       <MenuLine color={tint.amber} label={tr.home.cupsToday} value={`${caffeine.cups} fincan`} />
-      <MenuLine color={tint.cherry} label={tr.home.lastCup} value={agoLabel(caffeine.minutesSinceLast)} />
+      <MenuLine color={tint.cherry} label={tr.home.lastCup} value={caffeine.minutesSinceLast === null ? '—' : tr.home.ago(agoLabel(caffeine.minutesSinceLast))} />
     </View>
   );
 
@@ -198,7 +198,7 @@ export default function Home() {
             {streak}
             <Text style={styles.boardUnit}> {tr.home.board.days}</Text>
           </Text>
-          <Text style={styles.boardSub}>{streak > 0 ? tr.home.board.streakKeep : tr.home.board.streakStart}</Text>
+          <Text style={styles.boardSub}>{todays.length ? tr.home.board.streakDone : streak > 0 ? tr.home.board.streakKeep : tr.home.board.streakStart}</Text>
         </View>
       </View>
       <View style={styles.boardRule} />
@@ -240,7 +240,7 @@ export default function Home() {
   const favPage = (
     <View key="fav" style={styles.board}>
       <Text style={styles.boardKicker}>{upper(tr.home.board.favorites)}</Text>
-      {fav.part ? <Text style={styles.boardTitle}>{tr.home.board.hourType(fav.part)}</Text> : null}
+      {fav.part && list.length >= 3 ? <Text style={styles.boardTitle}>{tr.home.board.hourType(fav.part)}</Text> : null}
       <View style={styles.boardRule} />
       <MenuLine color={tint.cherry} label={tr.home.board.place} value={fav.place ?? '—'} />
       {fav.loved ? <MenuLine color={STAR_COLOR} label={tr.home.board.loved} value={`${fav.loved.name} ${tr.rating.avg(fav.loved.avg)}`} /> : null}
@@ -374,7 +374,7 @@ export default function Home() {
                     <Icon name="color-palette" size={20} color={colors.white} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitle}>{tr.home.palateType}</Text>
+                    <Text style={styles.cardTitle}>{list.length < 5 ? tr.home.palateGuess(list.length) : tr.home.palateType}</Text>
                     <Text style={styles.typeName}>{type_.name}</Text>
                   </View>
                   <Icon name="chevron-forward" size={18} color={colors.tertiary} />

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PALATE_TYPES } from '../config/scoring.config';
-import { computePalateTypeId, getPalateType } from './palate';
+import { computePalateTypeId, rawPalateTypeId, getPalateType } from './palate';
 import type { CupEntry } from './types';
 
 let n = 0;
@@ -32,7 +32,18 @@ describe('Damak Tipi', () => {
 
   it('çok farklı mekan → Kafe Göçebesi', () => {
     const cups = ['A', 'B', 'C', 'D'].map((p) => cup({ method: 'milk', venueKind: 'independent', placeName: p }));
-    expect(computePalateTypeId(cups)).toBe('cafe_nomad');
+    expect(rawPalateTypeId(cups)).toBe('cafe_nomad');
+  });
+
+  it('kararlılık: tek bir farklı fincan tipi değiştirmez, art arda ikisi değiştirir', () => {
+    const at = (i: number) => new Date(2026, 10, 1 + i, 9).toISOString();
+    const base = Array.from({ length: 6 }, (_, i) => cup({ method: 'espresso', createdAt: at(i) }));
+    const typeBefore = computePalateTypeId(base);
+    const one = [...base, cup({ method: 'milk', createdAt: at(6) }), ...[]];
+    // tek sütlü: ham hesap değişmese de değişse de tip yerinde kalır
+    expect(computePalateTypeId(one)).toBe(typeBefore);
+    const withNotes = [...base, cup({ notes: ['bright', 'fruity'], createdAt: at(6) })];
+    expect(computePalateTypeId(withNotes)).toBe(typeBefore);
   });
 
   it('detay modu: tat notu çiftinden', () => {

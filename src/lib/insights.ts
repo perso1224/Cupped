@@ -62,7 +62,11 @@ export function insights(entries: CupEntry[], now: Date = new Date()): Insight[]
 
   // 4) Haftalık kafein ortalaması (günlük)
   if (thisWeek.length) {
-    const days = Math.max(1, Math.min(7, Math.floor((now.getTime() - ws.getTime()) / 86_400_000) + 1));
+    // Uygulamayı hafta ortasında kullanmaya başlayan için ilk fincandan önceki günler ortalamayı düşürmesin
+    const first = entries.reduce((m, e) => (e.createdAt < m ? e.createdAt : m), entries[0].createdAt);
+    const firstDay = new Date(first);
+    const from = firstDay > ws ? new Date(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate()) : ws;
+    const days = Math.max(1, Math.min(7, Math.floor((now.getTime() - from.getTime()) / 86_400_000) + 1));
     const mg = Math.round(thisWeek.reduce((s, e) => s + CAFFEINE_MG[e.method], 0) / days);
     out.push({ id: 'caffeine', icon: 'flash', title: 'Kafein', text: `Bu hafta günde ortalama ~${mg} mg.` });
   }

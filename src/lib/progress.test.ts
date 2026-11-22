@@ -199,7 +199,8 @@ describe('detay modu', () => {
   });
 
   it('kahve:su oranı', () => {
-    expect(brewRatio(15, 250)).toBe('1:17');
+    expect(brewRatio(15, 250)).toBe('1:16,5');
+    expect(brewRatio(16, 256)).toBe('1:16');
     expect(brewRatio(18, 36)).toBe('1:2');
     expect(brewRatio(null, 250)).toBeNull();
     expect(brewRatio(0, 250)).toBeNull();
