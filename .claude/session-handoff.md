@@ -122,3 +122,35 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - The privacy texts are synced.
   - APP_STORE.md declares Device ID (expo-updates client id), adds English review notes, and fixes the Instagram wording.
   - Note: `npx expo install` can't reach api.expo.dev here. Install with npm using the versions in `node_modules/expo/bundledNativeModules.json`.
+
+## Overnight (22–23 Nov), audit fixes — all of docs/DENETIM_RAPORU.md A–E done
+- Owner decisions made on their behalf (listed in the report, section C) and open to change:
+  - stable palate type with a "tahmin" label for the first 5 cups
+  - a score explanation link
+  - "en iyi" vs "ort." labels
+  - discard confirm "Çık, kaydetme" / "Düzenlemeye dön"
+  - theme reload returns to Settings
+- Architecture changes:
+  - `src/lib/entryStore.ts`: cups are stored in a file on native (Documents/data/entries.json + .bak), with an atomic write and AsyncStorage migration; web uses AsyncStorage.
+  - `storage.ts`:
+    - in-memory entries cache with `subscribeEntries`; `useEntries` subscribes
+    - rescore after a backdated save and after import
+    - `setReturnRoute` / `consumeReturnRoute`
+    - recovery notice
+    - thumbnails in `cups/thumbs/` (`thumbUrl`)
+  - `scoring.ts`: `HistoryIndex` + `discoveryPoints`. `rescore.ts` is now single-pass (equivalence test against the old algorithm).
+  - `palate.ts`: `computePalateTypeId` adds hysteresis (2 of the last 3 prefixes); `rawPalateTypeId` is the old logic.
+  - `src/lib/cupSave.ts`: `createCup` / `editCup` / `parseNum`. new.tsx only gathers the form.
+  - `src/lib/safe.ts`: `safely()` instead of try/finally in components (React Compiler can't handle try/finally). All .tsx files now compile with the compiler.
+  - `src/lib/build.ts`: `IS_STORE_BUILD` (channel "production").
+  - eas.json has `testflight` (channel preview) and `production` (channel production) profiles; the expo-update workflow runs only on the dev branch.
+  - `METHODS` / `NOTES` / `VENUES` / `GRINDS` constants live in `types.ts`.
+  - `src/config/methodStyle.ts`: method icons and inks.
+  - `src/components/Emblem.tsx` (shared by the card and onboarding), `src/components/EmptyState.tsx`.
+  - expo-splash-screen and expo-system-ui installed. `npx expo install` can't reach api.expo.dev here; use the versions in `node_modules/expo/bundledNativeModules.json`.
+- Tests: 141 (vitest), including storage regression tests (corrupt data, backdated save, import rescore, unknown fields) and cupSave parsing.
+- Not verified on device: all of the above. Key checks:
+  - the file-storage migration on an existing install (existing cups must still be there)
+  - the Android icon
+  - the splash screen
+  - VoiceOver on Wrapped
