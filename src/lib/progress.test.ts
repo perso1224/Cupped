@@ -8,6 +8,9 @@ import {
   earnedBadges,
   isDetailed,
   methodStats,
+  longestStreak,
+  noteShares,
+  favorites,
   scoreTrend,
   passport,
   periodReport,
@@ -295,5 +298,29 @@ describe('scoreTrend', () => {
     const r = scoreTrend([cup(at(2025, 0, 6), { score: 40 }), cup(at(2025, 0, 7), { score: 60 }), cup(at(2026, 10, 18), { score: 70 })], 'all', now);
     expect(r.points.map((p) => p.avg)).toEqual([50, 70]);
     expect(r.change).toBe(20);
+  });
+});
+
+describe('ana sayfa kaydırmalı kartlar', () => {
+  it('longestStreak en uzun art arda gün sayısını bulur', () => {
+    const l = [at(2026, 0, 1), at(2026, 0, 2), at(2026, 0, 2, 15), at(2026, 0, 3), at(2026, 0, 10), at(2026, 0, 11)].map((d) => cup(d));
+    expect(longestStreak(l)).toBe(3);
+    expect(longestStreak([])).toBe(0);
+  });
+  it('noteShares yüzdeleri not sayısına göre verir', () => {
+    const l = [cup(at(2026, 0, 1), { notes: ['chocolate', 'nutty'] }), cup(at(2026, 0, 2), { notes: ['chocolate'] }), cup(at(2026, 0, 3))];
+    expect(noteShares(l)).toEqual([
+      { note: 'chocolate', count: 2, pct: 67 },
+      { note: 'nutty', count: 1, pct: 33 },
+    ]);
+  });
+  it('favorites en sık mekan, yöntem, çekirdek ve saat', () => {
+    const l = [
+      cup(at(2026, 0, 1, 9), { method: 'filter', venueKind: 'independent', placeName: 'Kör Nokta', origin: 'Etiyopya Guji · Geisha (Gesha)' }),
+      cup(at(2026, 0, 2, 9), { method: 'filter', venueKind: 'independent', placeName: 'kör nokta', origin: 'Etiyopya Guji' }),
+      cup(at(2026, 0, 3, 15), { method: 'espresso', venueKind: 'home', placeName: null }),
+    ];
+    expect(favorites(l)).toEqual({ place: 'Kör Nokta', method: 'filter', origin: 'Etiyopya Guji', hour: 9 });
+    expect(favorites([])).toEqual({ place: null, method: null, origin: null, hour: null });
   });
 });

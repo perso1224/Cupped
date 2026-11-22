@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import { BackButton } from '../components/NavButtons';
 import { File } from 'expo-file-system';
 import { router } from 'expo-router';
+import * as Updates from 'expo-updates';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,7 +16,7 @@ import { deleteAllData, exportAllData, importBackup, saveProfile, updateSettings
 import { useMetrics } from '../lib/useMetrics';
 import { useProfile } from '../lib/useProfile';
 import { useSettings } from '../lib/useSettings';
-import { colors, tint, type, layout } from '../theme';
+import { colors, saveThemePref, themePref, tint, type, layout } from '../theme';
 
 const GOALS: PalateGoal[] = ['explore', 'brew', 'taste', 'log'];
 
@@ -159,6 +160,29 @@ export default function SettingsScreen() {
               async ([h, m]) => {
                 await updateSettings({ reminderHour: h, reminderMinute: m });
                 refreshReminder();
+              },
+            )
+          }
+        />
+      </ListSection>
+
+      <ListSection title={tr.settings.appearance} footer={tr.settings.appearanceFooter}>
+        <ListRow
+          icon="contrast"
+          tint={tint.slate}
+          title={tr.settings.theme}
+          value={tr.settings.themes[themePref]}
+          chevron
+          onPress={() =>
+            choose(
+              tr.settings.theme,
+              (['system', 'light', 'dark'] as const).map((t) => ({ label: tr.settings.themes[t], value: t })),
+              (t) => {
+                if (t === themePref) return;
+                saveThemePref(t)
+                  // Renkler uygulama açılırken seçilir: hemen yeniden yükle. Olmazsa kapatıp açınca geçerli olur.
+                  .then(() => Updates.reloadAsync())
+                  .catch(() => Alert.alert(tr.settings.themeRestart));
               },
             )
           }

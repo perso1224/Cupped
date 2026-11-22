@@ -7,7 +7,7 @@ import { Appearance, AppState, View } from 'react-native';
 import { refreshReminder } from '../lib/reminders';
 import { recordActiveDay } from '../lib/storage';
 import { useProfile } from '../lib/useProfile';
-import { colors, isDark } from '../theme';
+import { colors, isDark, themePref } from '../theme';
 
 /** Doğrudan bağlantıyla açılan ekranların altında her zaman sekmeler olsun (geri tuşu çıkmaza girmesin). */
 export const unstable_settings = { anchor: '(tabs)' };
@@ -38,7 +38,7 @@ export default function RootLayout() {
     const check = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        if (AppState.currentState !== 'active') return;
+        if (AppState.currentState !== 'active' || themePref !== 'system') return;
         if ((Appearance.getColorScheme() === 'dark') !== isDark) Updates.reloadAsync().catch(() => {});
       }, 400);
     };

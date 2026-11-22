@@ -1,7 +1,7 @@
 import { BADGE_RULES, BADGES, WEEKLY, type Badge } from '../config/scoring.config';
 import { computePalateTypeId, mostCommon } from './palate';
 import { matchChain, normalizePlace, placeKey } from './scoring';
-import type { CupEntry, Method } from './types';
+import type { CupEntry, Method, TasteNote } from './types';
 
 // ---------- Tarih yardımcıları (telefonun yerel saatiyle) ----------
 
@@ -368,4 +368,47 @@ export function scoreTrend(entries: CupEntry[], range: TrendRange, now: Date = n
 /** Bu haftanın günleri: o gün fincan var mı (seri kartındaki işaretler). */
 export function weekDots(entries: CupEntry[], today: Date = new Date()): { key: string; done: boolean; isToday: boolean; isFuture: boolean }[] {
   return weekStrip(entries, today).map((d) => ({ key: d.key, done: d.best !== null, isToday: d.isToday, isFuture: d.isFuture }));
+}
+
+/** Şimdiye kadarki en uzun seri (art arda fincan eklenen gün sayısı). */
+export function longestStreak(entries: CupEntry[]): number {
+  const days = [...new Set(entries.map((e) => dayKey(new Date(e.createdAt))))].sort();
+  let best = 0;
+  let run = 0;
+  let prev: string | null = null;
+  for (const k of days) {
+    run = prev !== null && dayKey(addDays(new Date(`${prev}T00:00:00`), 1)) === k ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = k;
+  }
+  return best;
+}
+
+export type NoteShare = { note: TasteNote; count: number; pct: number };
+
+/** Tat notlarının dağılımı (damak haritası): en sık olandan, yüzdeler toplam not sayısına göre. */
+export function noteShares(entries: CupEntry[]): NoteShare[] {
+  const counts = new Map<TasteNote, number>();
+  for (const e of entries) for (const n of e.notes ?? []) counts.set(n, (counts.get(n) ?? 0) + 1);
+  const total = [...counts.values()].reduce((s, x) => s + x, 0);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([note, count]) => ({ note, count, pct: Math.round((count / total) * 100) }));
+}
+
+export type Favorites = { place: string | null; method: Method | null; origin: string | null; hour: number | null };
+
+/** Favorilerin: en sık mekan, yöntem, çekirdek (menşei metninin ilk parçası) ve kahve saati. */
+export function favorites(entries: CupEntry[]): Favorites {
+  if (!entries.length) return { place: null, method: null, origin: null, hour: null };
+  const sorted = [...entries].sort(byDate);
+  const p = passport(sorted).places[0];
+  const origins = sorted.map((e) => e.origin?.split(' · ')[0]?.trim()).filter((o): o is string => !!o);
+  const hours = sorted.map((e) => String(new Date(e.createdAt).getHours()));
+  return {
+    place: p ? p.name : null,
+    method: mostCommon(sorted.map((e) => e.method))[0] ?? null,
+    origin: origins.length ? mostCommon(origins)[0] : null,
+    hour: Number(mostCommon(hours)[0]),
+  };
 }

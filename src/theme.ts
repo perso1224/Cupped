@@ -1,4 +1,47 @@
-import { Appearance } from 'react-native';
+import { File, Paths } from 'expo-file-system';
+import { Appearance, Platform } from 'react-native';
+
+/** Görünüm tercihi: telefonu izle, hep açık ya da hep koyu. */
+export type ThemePref = 'system' | 'light' | 'dark';
+const THEME_FILE = 'cupped-theme.txt';
+const THEME_WEB_KEY = 'cupped.theme';
+
+/**
+ * Tercih, renkler oluşturulmadan ÖNCE (uygulama açılırken) okunmalı; bu yüzden eşzamanlı okunan
+ * küçük bir dosyada durur (fincan kayıtlarına ve ayarlara dokunmaz). Okunamazsa "telefonu izle".
+ */
+function readThemePref(): ThemePref {
+  try {
+    const v =
+      Platform.OS === 'web'
+        ? globalThis.localStorage?.getItem(THEME_WEB_KEY)
+        : (() => {
+            const f = new File(Paths.document, THEME_FILE);
+            return f.exists ? f.textSync().trim() : null;
+          })();
+    return v === 'light' || v === 'dark' ? v : 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+export async function saveThemePref(p: ThemePref): Promise<void> {
+  if (Platform.OS === 'web') {
+    globalThis.localStorage?.setItem(THEME_WEB_KEY, p);
+    return;
+  }
+  const f = new File(Paths.document, THEME_FILE);
+  if (!f.exists) f.create();
+  await f.write(p);
+}
+
+export const themePref = readThemePref();
+// Sistem bileşenleri (anahtarlar, uyarılar, klavye, cam) da aynı temayı kullansın.
+try {
+  Appearance.setColorScheme(themePref === 'system' ? 'auto' : themePref);
+} catch {
+  // eski sürümlerde 'auto' yoksa sistemde kalır
+}
 
 /**
  * Renkler telefonun görünüm ayarını izler (Açık / Koyu). Tema uygulama açılırken seçilir;
@@ -46,7 +89,7 @@ const DARK: typeof LIGHT = {
   successSoft: '#22301F',
 };
 
-export const isDark = Appearance.getColorScheme() === 'dark';
+export const isDark = themePref === 'system' ? Appearance.getColorScheme() === 'dark' : themePref === 'dark';
 export const colors = isDark ? DARK : LIGHT;
 
 export const radius = {

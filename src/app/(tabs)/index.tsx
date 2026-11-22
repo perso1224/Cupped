@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { Fragment } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
 import { Icon } from '../../components/Icon';
 import { WeekChart } from '../../components/WeekChart';
 import { WeekStrip } from '../../components/WeekStrip';
 import { Bean, CupGauge } from '../../components/coffee';
+import { Pager } from '../../components/dashboard';
 import { FadeIn, Pop, PressScale, animateLayout, haptic } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
@@ -14,7 +15,7 @@ import { tr, upper } from '../../i18n/tr';
 import { agoLabel, caffeineToday, dailyNudge, levelProgress, weekPartAverages } from '../../lib/home';
 import { insights } from '../../lib/insights';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
-import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekStrip, weeklyPalateScore } from '../../lib/progress';
+import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekDots, weekStrip, weeklyPalateScore, longestStreak, noteShares, favorites } from '../../lib/progress';
 import { setReminderEnabled } from '../../lib/reminders';
 import { levelFor } from '../../lib/scoring';
 import { updateMetrics } from '../../lib/storage';
@@ -31,6 +32,7 @@ import { useTabBarSpace } from '../../components/TabBar';
  */
 export default function Home() {
   const insets = useSafeAreaInsets();
+  const { width: screenW } = useWindowDimensions();
   const tabSpace = useTabBarSpace();
   const entries = useEntries();
   const list = entries ?? [];
@@ -89,9 +91,14 @@ export default function Home() {
   })();
 
   const over = caffeine.mg > settings.caffeineRef;
-  // Bugünün "menü tahtası": kafe menüsü gibi noktalı satırlar, koyu kahve zemin (açık ve koyu temada aynı).
-  const todayBoard = (
-    <View style={styles.board}>
+  const pageW = screenW - 40;
+  const longest = longestStreak(list);
+  const notesMap = noteShares(list).slice(0, 4);
+  const fav = favorites(list);
+
+  // Ana sayfanın kaydırmalı "menü tahtası": en fazla 5 sayfa, hepsi aynı koyu kahve zeminde.
+  const todayPage = (
+    <View key="today" style={styles.board}>
       <View style={styles.boardTop}>
         <CupGauge size={104} fraction={todays.length ? todayScore / 100 : 0} onDark />
         <View style={{ flex: 1, marginLeft: 16 }}>
@@ -104,17 +111,108 @@ export default function Home() {
       <MenuLine color={tint.amber} label={tr.home.effortWeek} value={`+${parts.effort.avg}`} />
       <MenuLine color={tint.cherry} label={tr.home.discoveryWeek} value={`+${parts.discovery.avg}`} />
       <MenuLine color={SAGE_ON_DARK} label={tr.home.depthWeek} value={`+${parts.depth.avg}`} />
-      {settings.showCaffeine ? (
-        <>
-          <MenuLine color={over ? tint.cherry : BOARD.muted} label={tr.home.caffeineShort} value={`${caffeine.mg} mg`} />
-          <Text style={styles.boardFoot}>
-            {caffeine.cups ? `${tr.home.lastCup}: ${agoLabel(caffeine.minutesSinceLast)} · ` : ''}
-            {tr.home.caffeineRef(settings.caffeineRef)}
-          </Text>
-        </>
-      ) : null}
     </View>
   );
+
+  const caffeinePage = (
+    <View key="caffeine" style={styles.board}>
+      <Text style={styles.boardKicker}>{upper(tr.home.caffeineToday)}</Text>
+      <Text style={styles.boardScore}>
+        {caffeine.mg}
+        <Text style={styles.boardUnit}> mg</Text>
+      </Text>
+      <View style={styles.boardTrack}>
+        <View
+          style={[
+            styles.boardFill,
+            { width: `${Math.min(1, caffeine.mg / settings.caffeineRef) * 100}%`, backgroundColor: over ? tint.cherry : tint.amber },
+          ]}
+        />
+      </View>
+      <Text style={styles.boardSub}>{tr.home.caffeineRef(settings.caffeineRef)}</Text>
+      {/* Gün çizgisi: bugünkü kahveler saatine göre (06:00–24:00) */}
+      <View style={styles.timeline}>
+        <View style={styles.timelineLine} />
+        {todays.map((e) => {
+          const d = new Date(e.createdAt);
+          const h = d.getHours() + d.getMinutes() / 60;
+          return <View key={e.id} style={[styles.timelineDot, { left: `${Math.max(0, Math.min(1, (h - 6) / 18)) * 100}%` }]} />;
+        })}
+      </View>
+      <View style={styles.timelineLabels}>
+        {['06', '12', '18', '24'].map((t) => (
+          <Text key={t} style={styles.timelineLabel}>
+            {t}
+          </Text>
+        ))}
+      </View>
+      <MenuLine color={tint.amber} label={tr.home.cupsToday} value={String(caffeine.cups)} />
+      <MenuLine color={tint.cherry} label={tr.home.lastCup} value={agoLabel(caffeine.minutesSinceLast)} />
+    </View>
+  );
+
+  const streakPage = (
+    <View key="streak" style={styles.board}>
+      <View style={styles.boardTop}>
+        <Bean size={64} color="#7A4A2A" line={BOARD.text} />
+        <View style={{ flex: 1, marginLeft: 16 }}>
+          <Text style={styles.boardKicker}>{upper(tr.home.board.streak)}</Text>
+          <Text style={styles.boardScore}>
+            {streak}
+            <Text style={styles.boardUnit}> {tr.home.board.days}</Text>
+          </Text>
+          <Text style={styles.boardSub}>{streak > 0 ? tr.home.board.streakKeep : tr.home.board.streakStart}</Text>
+        </View>
+      </View>
+      <View style={styles.boardRule} />
+      <View style={styles.weekDots}>
+        {weekDots(list, now).map((d, i) => (
+          <View key={d.key} style={{ alignItems: 'center', gap: 4 }}>
+            <Text style={[styles.timelineLabel, d.isToday && { color: BOARD.text }]}>{tr.weekdaysShort[i]}</Text>
+            <View style={[styles.weekDot, d.done && styles.weekDotOn, d.isToday && styles.weekDotToday]} />
+          </View>
+        ))}
+      </View>
+      <MenuLine color={tint.amber} label={tr.home.board.longest} value={`${longest} ${tr.home.board.days}`} />
+    </View>
+  );
+
+  const tastePage = (
+    <View key="taste" style={styles.board}>
+      <Text style={styles.boardKicker}>{upper(tr.home.board.taste)}</Text>
+      {notesMap.length ? (
+        <View style={{ marginTop: 10, gap: 12 }}>
+          {notesMap.map((n, i) => (
+            <View key={n.note}>
+              <View style={styles.noteHead}>
+                <Text style={styles.menuLabel}>{tr.notes[n.note]}</Text>
+                <Text style={styles.menuValue}>%{n.pct}</Text>
+              </View>
+              <View style={styles.boardTrack}>
+                <View style={[styles.boardFill, { width: `${n.pct}%`, backgroundColor: NOTE_COLORS[i] }]} />
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <Text style={[styles.boardSub, { marginTop: 10, lineHeight: 20 }]}>{tr.home.board.tasteEmpty}</Text>
+      )}
+    </View>
+  );
+
+  const favPage = (
+    <View key="fav" style={styles.board}>
+      <Text style={styles.boardKicker}>{upper(tr.home.board.favorites)}</Text>
+      {fav.hour !== null ? <Text style={styles.boardTitle}>{tr.home.board.hourType(fav.hour)}</Text> : null}
+      <View style={styles.boardRule} />
+      <MenuLine color={tint.cherry} label={tr.home.board.place} value={fav.place ?? '—'} />
+      <MenuLine color={tint.amber} label={tr.home.board.method} value={fav.method ? tr.methods[fav.method] : '—'} />
+      <MenuLine color={SAGE_ON_DARK} label={tr.home.board.bean} value={fav.origin ?? '—'} />
+      <MenuLine color={BOARD.muted} label={tr.home.board.hour} value={fav.hour !== null ? `${String(fav.hour).padStart(2, '0')}:00` : '—'} />
+    </View>
+  );
+
+  const pages = [todayPage, ...(settings.showCaffeine ? [caffeinePage] : []), streakPage, tastePage, favPage];
 
   return (
     <ScrollView
@@ -146,8 +244,10 @@ export default function Home() {
       ) : (
         <>
           {/* BUGÜN */}
-          <SectionHeader title={tr.home.today} />
-          <FadeIn index={0}>{todayBoard}</FadeIn>
+          <View style={{ height: 22 }} />
+          <FadeIn index={0}>
+            <Pager key={pages.length} width={pageW} pages={pages} />
+          </FadeIn>
 
           {askReminder ? (
             <Card style={{ marginTop: 14 }}>
@@ -298,6 +398,7 @@ export default function Home() {
 /** Menü tahtası renkleri: koyu kahve zemin, krem yazı. Tema değişse de sabit. */
 const BOARD = { bg: '#2B1A12', text: '#F6EBDD', muted: '#CDBBA6', rule: 'rgba(246,235,221,0.18)' };
 const SAGE_ON_DARK = '#8FB08A';
+const NOTE_COLORS = ['#D98B2B', '#C9604C', '#8FB08A', '#B99A7A'];
 
 /** Kafe menüsü satırı: renkli nokta, ad, noktalı çizgi, değer. */
 function MenuLine({ color, label, value }: { color: string; label: string; value: string }) {
@@ -308,7 +409,9 @@ function MenuLine({ color, label, value }: { color: string; label: string; value
       <Text style={styles.menuLeader} numberOfLines={1} ellipsizeMode="clip">
         {' · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·'}
       </Text>
-      <Text style={styles.menuValue}>{value}</Text>
+      <Text style={styles.menuValue} numberOfLines={1}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -355,6 +458,8 @@ const styles = StyleSheet.create({
     padding: 18,
     borderWidth: isDark ? 1 : 0, // koyu temada zeminden ayrılsın
     borderColor: 'rgba(246,235,221,0.12)',
+    flex: 1, // kaydırmalı sayfalar aynı yükseklikte
+    minHeight: 300,
     shadowColor: '#2B1A12',
     shadowOpacity: 0.18,
     shadowRadius: 16,
@@ -365,12 +470,25 @@ const styles = StyleSheet.create({
   boardScore: { fontSize: 56, fontFamily: fonts.heavy, color: BOARD.text, letterSpacing: -1, marginTop: 2 },
   boardSub: { fontSize: 14, color: BOARD.muted, marginTop: 2 },
   boardRule: { height: 1, backgroundColor: BOARD.rule, marginTop: 16, marginBottom: 6 },
-  boardFoot: { fontSize: 12, color: BOARD.muted, marginTop: 8, lineHeight: 17 },
+  boardUnit: { fontSize: 20, fontFamily: fonts.semibold, color: BOARD.muted },
+  boardTitle: { fontSize: 24, fontFamily: fonts.display, color: BOARD.text, marginTop: 6 },
+  boardTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(246,235,221,0.14)', overflow: 'hidden', marginTop: 8 },
+  boardFill: { height: 8, borderRadius: 4 },
+  timeline: { height: 16, marginTop: 18, justifyContent: 'center' },
+  timelineLine: { height: 2, backgroundColor: 'rgba(246,235,221,0.2)', borderRadius: 1 },
+  timelineDot: { position: 'absolute', width: 12, height: 12, borderRadius: 6, marginLeft: -6, backgroundColor: '#D98B2B', borderWidth: 2, borderColor: '#2B1A12' },
+  timelineLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, marginBottom: 6 },
+  timelineLabel: { fontSize: 11, fontWeight: '600', color: BOARD.muted },
+  weekDots: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  weekDot: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: 'rgba(246,235,221,0.25)' },
+  weekDotOn: { backgroundColor: '#D98B2B', borderColor: '#D98B2B' },
+  weekDotToday: { borderColor: BOARD.text, borderWidth: 2 },
+  noteHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   menuLine: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
   menuDot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
   menuLabel: { fontSize: 15, fontWeight: '600', color: BOARD.text },
   menuLeader: { flex: 1, color: BOARD.muted, opacity: 0.6, marginHorizontal: 6, fontSize: 13, overflow: 'hidden' },
-  menuValue: { fontSize: 17, fontFamily: fonts.display, color: BOARD.text },
+  menuValue: { fontSize: 17, fontFamily: fonts.display, color: BOARD.text, maxWidth: '55%', flexShrink: 1 },
   cardTitle: { ...type.footnote, fontWeight: '600' },
   cardTitleDark: { ...type.headline },
   cardSub: { ...type.footnote, marginTop: 4, lineHeight: 18 },
