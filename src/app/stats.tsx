@@ -48,7 +48,7 @@ function StatsScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 40 }}>
       <BackButton label={tr.settings.title} />
-      <Text style={styles.title}>{tr.stats.title}</Text>
+      <Text accessibilityRole="header" style={styles.title}>{tr.stats.title}</Text>
       <Text style={styles.intro}>{tr.stats.intro}</Text>
 
       <ListSection title={tr.stats.h2}>

@@ -145,7 +145,7 @@ function TabItem({ name, icon, label, focused, onPress }: { name: string; icon: 
       <Animated.View style={{ transform: [{ scale: bump }] }}>
         {name === 'profile' ? <Avatar focused={focused} /> : <Icon name={(focused ? icon : `${icon}-outline`) as IconName} size={22} color={color} />}
       </Animated.View>
-      <Text style={[styles.label, { color }, compact && { fontSize: 9 }]} numberOfLines={1}>
+      <Text style={[styles.label, { color }, compact && { fontSize: 9 }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
         {label}
       </Text>
     </PressScale>

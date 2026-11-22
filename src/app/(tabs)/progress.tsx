@@ -53,7 +53,7 @@ export default function Progress() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: tabSpace }}
     >
-      <Text style={styles.title}>{tr.progress.title}</Text>
+      <Text accessibilityRole="header" style={styles.title}>{tr.progress.title}</Text>
 
       {/* Üstte yan yana: seviye kartı + seri kartı */}
       <View style={styles.topRow}>
@@ -122,7 +122,7 @@ export default function Progress() {
         ) : null}
       </Card>
 
-      <Text style={styles.section}>{tr.progress.periodReport}</Text>
+      <Text accessibilityRole="header" style={styles.section}>{tr.progress.periodReport}</Text>
       <Segmented
         value={kind}
         onChange={setKind}
@@ -163,7 +163,7 @@ export default function Progress() {
 
       {report.best ? (
         <FadeIn index={1} key={`best-${kind}`}>
-          <Text style={styles.section}>{kind === 'week' ? tr.progress.bestCup : tr.progress.bestCupMonth}</Text>
+          <Text accessibilityRole="header" style={styles.section}>{kind === 'week' ? tr.progress.bestCup : tr.progress.bestCupMonth}</Text>
           <CupRow entry={report.best} showParts />
         </FadeIn>
       ) : null}

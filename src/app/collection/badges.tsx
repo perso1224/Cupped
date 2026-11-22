@@ -22,7 +22,7 @@ export default function Badges() {
         </View>
       ) : null}
 
-      <Text style={styles.section}>{tr.collection.earned}</Text>
+      <Text accessibilityRole="header" style={styles.section}>{tr.collection.earned}</Text>
       {entries && earned.length === 0 ? <Text style={styles.empty}>{tr.collection.noBadges}</Text> : null}
       {earned.map((bp, i) => (
         <FadeIn key={bp.badge.id} index={i}>
@@ -30,7 +30,7 @@ export default function Badges() {
         </FadeIn>
       ))}
 
-      {next.length ? <Text style={styles.section}>{tr.collection.next}</Text> : null}
+      {next.length ? <Text accessibilityRole="header" style={styles.section}>{tr.collection.next}</Text> : null}
       {next.map((bp, i) => (
         <FadeIn key={bp.badge.id} index={earned.length + i}>
           <BadgeCard progress={bp} />

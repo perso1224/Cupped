@@ -3,7 +3,7 @@ import { Icon } from '../components/Icon';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Easing, Image, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PressScale, haptic, reduceMotionNow } from '../components/motion';
+import { PressScale, haptic, reduceMotionNow, screenReaderNow } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { BRAND } from '../config/brand';
 import { tr, upper } from '../i18n/tr';
@@ -65,7 +65,8 @@ export default function Onboarding() {
   function set<K extends keyof OnboardingAnswers>(k: K, v: OnboardingAnswers[K], autoNext = true) {
     haptic.select();
     setA((p) => ({ ...p, [k]: v }));
-    if (autoNext) {
+    // Ekran okuyucu açıkken otomatik geçilmez (ekran habersiz değişmesin); "Devam" düğmesi çıkar
+    if (autoNext && !screenReaderNow()) {
       clearAuto();
       const at = pos;
       autoTimer.current = setTimeout(() => setPos((p) => (p === at ? Math.min(FLOW.length - 1, p + 1) : p)), 180);
@@ -187,6 +188,7 @@ export default function Onboarding() {
         <TextInput
           value={a.nickname}
           onChangeText={(t) => setA((p) => ({ ...p, nickname: t.slice(0, 24) }))}
+          accessibilityLabel={tr.onboarding.nickQ}
           placeholder={tr.onboarding.nickPlaceholder}
           placeholderTextColor={colors.muted}
           returnKeyType="done"
@@ -284,7 +286,8 @@ const styles = StyleSheet.create({
   hint: { fontSize: 15, color: colors.muted, marginTop: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap' },
   option: {
-    height: 60,
+    minHeight: 60,
+    paddingVertical: 12,
     borderRadius: 18,
     backgroundColor: colors.card,
     borderWidth: 1,

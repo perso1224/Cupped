@@ -46,7 +46,7 @@ export function PassportView({ header }: { header: ReactNode }) {
       ) : null}
 
       {/* Pasaport sayfası: mürekkep damgaları (bakmak için; dokunulmaz) */}
-      <Text style={styles.section}>{tr.passport.methods}</Text>
+      <Text accessibilityRole="header" style={styles.section}>{tr.passport.methods}</Text>
       <View style={styles.page}>
         <View style={styles.stampRow}>
           {ALL_METHODS.map((m, i) => (
@@ -55,7 +55,7 @@ export function PassportView({ header }: { header: ReactNode }) {
         </View>
       </View>
 
-      <Text style={styles.section}>{tr.passport.types}</Text>
+      <Text accessibilityRole="header" style={styles.section}>{tr.passport.types}</Text>
       <View style={styles.page}>
         <View style={styles.visaRow}>
           {PALATE_TYPES.map((t, i) => (
@@ -64,7 +64,7 @@ export function PassportView({ header }: { header: ReactNode }) {
         </View>
       </View>
 
-      <Text style={styles.section}>{tr.passport.badges}</Text>
+      <Text accessibilityRole="header" style={styles.section}>{tr.passport.badges}</Text>
       {/* Kazanılan rozetler en üstte; kalanlar kendi sırasında */}
       {[...badgeProgress(entries)].sort((a, b) => Number(b.earned) - Number(a.earned)).map((bp, i) => (
         <FadeIn key={bp.badge.id} index={i}>
@@ -72,7 +72,7 @@ export function PassportView({ header }: { header: ReactNode }) {
         </FadeIn>
       ))}
 
-      <Text style={styles.section}>{tr.passport.places}</Text>
+      <Text accessibilityRole="header" style={styles.section}>{tr.passport.places}</Text>
       {p.places.length === 0 ? <Text style={styles.empty}>{tr.passport.noPlaces}</Text> : null}
       <View style={styles.stamps}>
         {p.places.map((pl, i) => (

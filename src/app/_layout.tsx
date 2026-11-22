@@ -4,9 +4,9 @@ import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
-import { Alert, Appearance, AppState, View } from 'react-native';
+import { Alert, Appearance, AppState, Platform, View } from 'react-native';
 import { BrandIntro } from '../components/BrandIntro';
-import { setIntroPlaying } from '../components/motion';
+import { setIntroPlaying, useReducedMotion } from '../components/motion';
 import { refreshReminder } from '../lib/reminders';
 import { consumeRecoveryNotice, consumeReturnRoute, recordActiveDay } from '../lib/storage';
 import { tr } from '../i18n/tr';
@@ -29,8 +29,14 @@ const single = { dangerouslySingular: true } as const;
 
 export default function RootLayout() {
   const profile = useProfile();
+  const reduceMotion = useReducedMotion();
   // Başlık yazı tipi. Yüklenemezse (hata) sistem yazı tipiyle devam edilir; uygulama beklemede kalmaz.
   const [fontsLoaded, fontError] = useFonts({ Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_800ExtraBold });
+
+  // Web (yalnızca test): sayfa dili Türkçe olsun (ekran okuyucu doğru sesle okusun)
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') document.documentElement.lang = 'tr';
+  }, []);
 
   // H4: uygulamanın açıldığı günleri kaydet; hatırlatmayı güncel tut.
   useEffect(() => {
@@ -102,7 +108,8 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+      {/* "Hareketi azalt" açıksa (telefon ya da uygulama ayarı) ekran geçişleri kayma yerine solma */}
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, ...(reduceMotion ? { animation: 'fade' as const } : {}) }}>
         {/* Profil varsa uygulama, yoksa tanıtım. Profil silinince/oluşunca yığın temizce değişir. */}
         <Stack.Protected guard={!!profile}>
           <Stack.Screen name="(tabs)" />

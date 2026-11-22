@@ -62,7 +62,7 @@ export default function MatchScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <BackButton label={tr.profile.title} />
-      <Text style={styles.title}>{tr.match.title}</Text>
+      <Text accessibilityRole="header" style={styles.title}>{tr.match.title}</Text>
       <Text style={styles.sub}>{tr.match.sub}</Text>
 
       <View style={styles.box}>
@@ -94,8 +94,9 @@ export default function MatchScreen() {
             value={input}
             // Arkadaşın gönderdiği mesajın tamamı yapıştırılırsa içindeki kod ayıklanır
             onChangeText={(t) => setInput((t.length > 8 ? (extractCode(t) ?? t) : t).replace(/[İı]/g, '1').toUpperCase().slice(0, 7))}
+            accessibilityLabel={tr.match.friendCode}
             placeholder={tr.match.placeholder}
-            placeholderTextColor={colors.tertiary}
+            placeholderTextColor={colors.muted}
             autoCapitalize="characters"
             autoCorrect={false}
             returnKeyType="done"

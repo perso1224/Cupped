@@ -114,7 +114,7 @@ export default function SettingsScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <BackButton label={tr.profile.title} />
-      <Text style={styles.title}>{tr.settings.title}</Text>
+      <Text accessibilityRole="header" style={styles.title}>{tr.settings.title}</Text>
 
       <ListSection title={tr.settings.profile}>
         <ListRow
@@ -126,8 +126,9 @@ export default function SettingsScreen() {
               value={nickValue}
               onChangeText={setNick}
               onEndEditing={saveNick}
+              accessibilityLabel={tr.settings.nickname}
               placeholder={tr.onboarding.nickPlaceholder}
-              placeholderTextColor={colors.tertiary}
+              placeholderTextColor={colors.muted}
               autoCapitalize="none"
               returnKeyType="done"
               style={styles.input}

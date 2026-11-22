@@ -1,3 +1,4 @@
+import { tr } from '../i18n/tr';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop } from 'react-native-svg';
@@ -53,7 +54,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
       onLayout={(e) => setW(e.nativeEvent.layout.width)}
       onPress={(e) => pick(e.nativeEvent.locationX)}
       accessibilityRole="image"
-      accessibilityLabel={`Skor grafiği: ${points.length} nokta, son değer ${points[points.length - 1].avg}`}
+      accessibilityLabel={tr.a11y.trend(points[0].avg, points[points.length - 1].avg, points.length)}
       style={{ height: H }}
     >
       {w > 0 ? (

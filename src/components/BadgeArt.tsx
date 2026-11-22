@@ -94,7 +94,8 @@ export function CelebratedBadge({ id, size = 64, delay = 0 }: { id: string; size
       Animated.delay(delay),
       Animated.spring(pop, { toValue: 1, useNativeDriver: true, speed: 9, bounciness: 16 }),
     ]).start();
-    const loop = Animated.loop(Animated.timing(spin, { toValue: 1, duration: 9000, easing: Easing.linear, useNativeDriver: true }));
+    // 5 sn içinde yavaşlayıp durur (sürekli hareket dikkat dağıtmasın; WCAG 2.2.2)
+    const loop = Animated.timing(spin, { toValue: 1, duration: 5000, delay, easing: Easing.out(Easing.quad), useNativeDriver: true });
     loop.start();
     return () => {
       clearTimeout(t);
@@ -111,7 +112,7 @@ export function CelebratedBadge({ id, size = 64, delay = 0 }: { id: string; size
           width: raySize,
           height: raySize,
           opacity: pop.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }),
-          transform: [{ rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }],
+          transform: [{ rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '160deg'] }) }],
         }}
       >
         <Rays size={raySize} />

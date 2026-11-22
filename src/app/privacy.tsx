@@ -13,7 +13,7 @@ export default function Privacy() {
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: insets.bottom + 40 }}
     >
       <BackButton label={tr.settings.title} />
-      <Text style={styles.title}>{tr.privacy.title}</Text>
+      <Text accessibilityRole="header" style={styles.title}>{tr.privacy.title}</Text>
       {tr.privacy.items.map(([h, b]) => (
         <Text key={h} style={styles.p}>
           <Text style={styles.h}>{h} </Text>

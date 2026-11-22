@@ -23,8 +23,10 @@ export function WeekChart({ days }: { days: StripDay[] }) {
     Animated.timing(grow, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [grow, scoresKey]); // yalnızca değerler değişince yeniden büyüsün (her çizimde değil)
 
+  // Ekran okuyucu: grafik tek cümleyle özetlenir
+  const cupDays = days.filter((d) => d.best !== null).length;
   return (
-    <View>
+    <View accessible accessibilityRole="image" accessibilityLabel={tr.a11y.weekChart(cupDays, avg === null ? null : Math.round(avg))}>
       <View style={{ height: H }}>
         {avg !== null ? (
           <Svg width="100%" height={H} style={StyleSheet.absoluteFill}>

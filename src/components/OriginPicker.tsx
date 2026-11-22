@@ -46,7 +46,7 @@ export function OriginPicker({
       <View style={styles.screen}>
         <View style={styles.head}>
           <CloseButton onPress={close} />
-          <Text style={styles.title}>{tr.capture.originPickerTitle}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{tr.capture.originPickerTitle}</Text>
           {/* Seçim zaten kaydedilir; "Bitti" bunu açıkça gösterir (✕ "iptal" gibi algılanmasın) */}
           <PressScale onPress={close} hitSlop={12} scaleTo={0.94} accessibilityRole="button" accessibilityLabel={tr.capture.keyboardDone}>
             <Text style={styles.done}>{tr.capture.keyboardDone}</Text>
@@ -67,6 +67,7 @@ export function OriginPicker({
           <TextInput
             value={q}
             onChangeText={setQ}
+            accessibilityLabel={tr.capture.originSearch}
             placeholder={tr.capture.originSearch}
             placeholderTextColor={colors.muted}
             style={styles.searchInput}
@@ -94,7 +95,7 @@ export function OriginPicker({
               <Text style={styles.rowText}>{tr.capture.originUseTyped(q.trim())}</Text>
             </PressScale>
           }
-          renderSectionHeader={({ section }) => <Text style={styles.section}>{upper(section.title)}</Text>}
+          renderSectionHeader={({ section }) => <Text accessibilityRole="header" style={styles.section}>{upper(section.title)}</Text>}
           renderItem={({ item }) => {
             const selected = parts.includes(item.label);
             const isRegion = !!item.region;

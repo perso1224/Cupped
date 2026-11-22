@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View, type ColorValue } from 'react-native';
+import { useRef, useState, type ReactNode } from 'react';
+import { Animated, ScrollView, StyleSheet, Text, View, type ColorValue, type ScrollViewInstance } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, fonts } from '../theme';
 import { Icon, type IconName } from './Icon';
 import { GrowBar, haptic } from './motion';
+import { tr } from '../i18n/tr';
 
 /** Küçük halka: Cal AI'daki makro halkalarının karşılığı (Emek / Keşif / Derinlik, kafein…). */
 export function MiniRing({
@@ -91,9 +92,16 @@ export function Pager({ pages, width: inner, bleed = 20 }: { pages: ReactNode[];
   const width = inner + bleed * 2;
   const [x] = useState(() => new Animated.Value(0));
   const [page, setPage] = useState(0);
+  const scroller = useRef<ScrollViewInstance>(null);
+  const goTo = (p: number) => {
+    const next = Math.max(0, Math.min(pages.length - 1, p));
+    scroller.current?.scrollTo({ x: next * width, animated: true });
+    setPage(next);
+  };
   return (
     <View>
       <ScrollView
+        ref={scroller}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -116,7 +124,15 @@ export function Pager({ pages, width: inner, bleed = 20 }: { pages: ReactNode[];
         ))}
       </ScrollView>
       {pages.length > 1 ? (
-      <View style={styles.dots}>
+      // Ekran okuyucu: "Sayfa 2 / 5"; yukarı/aşağı kaydırarak sayfa değişir
+      <View
+        style={styles.dots}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel={tr.a11y.pager(page + 1, pages.length)}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={(e) => goTo(page + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}
+      >
         {pages.map((_, i) => {
           const w = x.interpolate({
             inputRange: [(i - 1) * width, i * width, (i + 1) * width],

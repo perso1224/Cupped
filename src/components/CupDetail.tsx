@@ -21,7 +21,7 @@ import { getPalateType } from '../lib/palate';
 import { partsSummary } from '../lib/scoring';
 import { bumpCounter, deleteEntry, getEntry, photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
-import { colors, fonts, layout, tint, type } from '../theme';
+import { colors, fonts, layout, tint, type, isDark } from '../theme';
 
 /**
  * Fincan ekranı. mode='result': yeni kayıttan sonra alttan sayfa (Tamam + Paylaş).
@@ -185,7 +185,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
               <Icon name="time-outline" size={14} color={colors.muted} />
               <Text style={styles.timeText}>{when}</Text>
             </View>
-            <Text style={styles.title}>{tr.methods[entry.method]}</Text>
+            <Text accessibilityRole="header" style={styles.title}>{tr.methods[entry.method]}</Text>
             {place ? <Text style={styles.place}>{place}</Text> : null}
             {entry.rating ? (
               <View style={{ marginTop: 8 }}>
@@ -261,7 +261,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
 
           {isDetailed(entry) ? <Details entry={entry} /> : null}
 
-          <Text style={styles.section}>{tr.result.shareCard}</Text>
+          <Text accessibilityRole="header" style={styles.section}>{tr.result.shareCard}</Text>
           <View style={{ alignItems: 'center' }}>
             <ShareCard
               ref={cardRef}
@@ -439,7 +439,8 @@ const styles = StyleSheet.create({
   evoIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   evoBtn: { alignSelf: 'flex-start', marginTop: 10, backgroundColor: colors.accent, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
   evoBtnText: { color: colors.onColor, fontWeight: '800', fontSize: 13 },
-  newBadgeKicker: { color: colors.accent, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
+  // Kart koyu temada açık renkli (mürekkep çifti): turuncu yazı orada koyu tonla okunur
+  newBadgeKicker: { color: isDark ? '#8A5212' : colors.accent, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
   newBadgeName: { color: colors.white, fontSize: 18, fontWeight: '900', marginTop: 2 },
   newBadgeDesc: { color: colors.mutedOnDark, fontSize: 13, marginTop: 2 },
   deleteText: { fontSize: 15, fontWeight: '700', color: colors.danger },

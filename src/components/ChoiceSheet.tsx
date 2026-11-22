@@ -39,7 +39,7 @@ function ChoiceSheet({ choice, onClose }: { choice: Choice<unknown> | null; onCl
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={tr.settings.cancel}>
         {/* İçeriğe dokunmak listeyi kapatmasın */}
         <Pressable style={[styles.sheet, { paddingBottom: insets.bottom + 12 }]} onPress={() => {}}>
-          <Text style={styles.title}>{choice?.title}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{choice?.title}</Text>
           {choice?.options.map((o, i) => (
             <Pressable
               key={i}

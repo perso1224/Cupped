@@ -469,6 +469,7 @@ export default function NewCup() {
               else if (where?.kind === 'place' && placeNameKey(where.name) === typedKey) setWhere(null);
             }}
             onSubmitEditing={selectTyped}
+            accessibilityLabel={tr.capture.where}
             placeholder={tr.capture.placePlaceholder}
             maxLength={80}
             placeholderTextColor={colors.muted}
@@ -537,6 +538,7 @@ export default function NewCup() {
                 inputAccessoryViewID={KB_DONE}
                 value={origin}
                 onChangeText={setOrigin}
+                accessibilityLabel={tr.capture.originLabel}
                 placeholder={tr.capture.originPlaceholder}
                 maxLength={80}
                 placeholderTextColor={colors.muted}
@@ -570,6 +572,7 @@ export default function NewCup() {
               inputAccessoryViewID={KB_DONE}
                 value={dose}
                 onChangeText={setDose}
+                accessibilityLabel={tr.capture.doseLabel}
                 placeholder={tr.capture.dosePlaceholder}
                 placeholderTextColor={colors.muted}
                 keyboardType="decimal-pad"
@@ -579,6 +582,7 @@ export default function NewCup() {
               inputAccessoryViewID={KB_DONE}
                 value={water}
                 onChangeText={setWater}
+                accessibilityLabel={tr.capture.waterLabel}
                 placeholder={tr.capture.waterPlaceholder}
                 placeholderTextColor={colors.muted}
                 keyboardType="decimal-pad"
@@ -598,6 +602,7 @@ export default function NewCup() {
               inputAccessoryViewID={KB_DONE}
               value={note}
               onChangeText={setNote}
+              accessibilityLabel={tr.capture.noteLabel}
               placeholder={tr.capture.notePlaceholder}
               maxLength={500}
               placeholderTextColor={colors.muted}

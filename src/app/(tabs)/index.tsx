@@ -268,7 +268,7 @@ export default function Home() {
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.date}>{dateLabel}</Text>
-          <Text style={styles.largeTitle}>{tr.home.summary}</Text>
+          <Text accessibilityRole="header" style={styles.largeTitle}>{tr.home.summary}</Text>
         </View>
         <View style={styles.streak}>
           <Pop trigger={streak}>
@@ -470,7 +470,7 @@ export default function Home() {
           {/* SON FİNCANLAR */}
           <FadeIn index={7}>
           <View style={styles.sectionRow}>
-            <Text style={styles.sectionTitle}>{tr.home.recent}</Text>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>{tr.home.recent}</Text>
             {list.length > 5 ? (
               <PressScale onPress={() => router.push('/history')} hitSlop={10} scaleTo={0.94}>
                 <Text style={styles.link}>{tr.home.seeAll}</Text>
@@ -522,7 +522,7 @@ function MenuLine({ color, label, value }: { color: string; label: string; value
 }
 
 function SectionHeader({ title }: { title: string }) {
-  return <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 12 }]}>{title}</Text>;
+  return <Text accessibilityRole="header" style={[styles.sectionTitle, { marginTop: 28, marginBottom: 12 }]}>{title}</Text>;
 }
 
 function HighlightRow({ icon, color, title, text }: { icon: Parameters<typeof Icon>[0]['name']; color: string; title: string; text: string }) {

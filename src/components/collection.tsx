@@ -23,7 +23,7 @@ export function CollectionScreen({ title, summary, children }: { title: string; 
         <BackButton label={tr.profile.title} />
       </View>
       <ScrollView style={styles.screen} contentContainerStyle={{ paddingHorizontal: layout.screenPad, paddingBottom: insets.bottom + 48 }}>
-        <Text style={styles.title}>{title}</Text>
+        <Text accessibilityRole="header" style={styles.title}>{title}</Text>
         {summary ? <Text style={styles.summary}>{summary}</Text> : null}
         {children}
       </ScrollView>

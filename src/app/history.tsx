@@ -50,7 +50,7 @@ export default function History() {
       ListHeaderComponent={
         <>
           <BackButton label={tr.settings.back} />
-          <Text style={styles.title}>{heading}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{heading}</Text>
           {filtered && list.length ? <Text style={styles.summary}>{tr.history.filterSummary(list.length, avg)}</Text> : null}
           {entries && list.length === 0 ? <EmptyState title={tr.history.empty} body={filtered ? undefined : tr.history.emptyBody} cta={!filtered} /> : null}
         </>

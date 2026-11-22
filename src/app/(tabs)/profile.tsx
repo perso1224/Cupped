@@ -60,7 +60,7 @@ export default function Profile() {
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: tabSpace }}
     >
       <View style={styles.header}>
-        <Text style={styles.largeTitle}>{tr.profile.title}</Text>
+        <Text accessibilityRole="header" style={styles.largeTitle}>{tr.profile.title}</Text>
         <GlassIconButton icon="settings-outline" iconSize={22} label={tr.settings.title} onPress={() => router.push('/settings')} fallback={styles.gear} />
       </View>
 

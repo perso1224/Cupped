@@ -237,7 +237,14 @@ export function GrowBar({ fraction, style }: { fraction: number; style?: StylePr
     Animated.timing(v, { toValue: target, duration: 700, delay: 120, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [v, target]);
   return (
-    <View style={StyleSheet.absoluteFill} onLayout={(e) => setW(e.nativeEvent.layout.width)} pointerEvents="none">
+    <View
+      style={StyleSheet.absoluteFill}
+      onLayout={(e) => setW(e.nativeEvent.layout.width)}
+      pointerEvents="none"
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(target * 100) }}
+    >
       {w ? (
         <Animated.View
           style={[
@@ -363,4 +370,31 @@ const subscribeIntro = (cb: () => void) => {
 const introDoneNow = () => !introPlaying;
 export function useIntroDone(): boolean {
   return useSyncExternalStore(subscribeIntro, introDoneNow, introDoneNow);
+}
+
+/** Ekran okuyucu (VoiceOver / TalkBack) açık mı. Otomatik ilerleyen ekranlar buna göre durur. */
+let screenReader = false;
+const srListeners = new Set<() => void>();
+AccessibilityInfo.isScreenReaderEnabled()
+  .then((v) => {
+    screenReader = v;
+    srListeners.forEach((fn) => fn());
+  })
+  .catch(() => {});
+AccessibilityInfo.addEventListener('screenReaderChanged', (v) => {
+  screenReader = v;
+  srListeners.forEach((fn) => fn());
+});
+const subscribeSR = (cb: () => void) => {
+  srListeners.add(cb);
+  return () => {
+    srListeners.delete(cb);
+  };
+};
+const srNow = () => screenReader;
+export function useScreenReader(): boolean {
+  return useSyncExternalStore(subscribeSR, srNow, srNow);
+}
+export function screenReaderNow(): boolean {
+  return screenReader;
 }

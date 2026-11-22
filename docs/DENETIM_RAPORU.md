@@ -119,16 +119,28 @@ Ek olarak yapılanlar:
 
 ## E. Erişilebilirlik
 
-- ☐ **Karanlık modda turuncu düğmenin yazısı:** Okunmuyor, kontrast 2,3 (en az 4,5 gerekiyor).
-- ☐ **Damak Özeti:** Ekran okuyucuyla kullanılamıyor; slaytlar kendiliğinden geçiyor ve geri gidilemiyor.
-- ☐ **Ekran okuyucu eksikleri:**
+- ☑ **Karanlık modda turuncu düğmenin yazısı:** Okunmuyor, kontrast 2,3 (en az 4,5 gerekiyor).
+- ☑ **Damak Özeti:** Ekran okuyucuyla kullanılamıyor; slaytlar kendiliğinden geçiyor ve geri gidilemiyor.
+- ☑ **Ekran okuyucu eksikleri:**
   - Başlık, ilerleme çubuğu ve grafik etiketleri eksik.
   - Yazı kutularının adı okunmuyor.
-- ☐ **Büyük yazı boyutu:** Sabit yükseklikli düğme ve kutularda yazı taşıyor.
-- ☐ **Küçük dokunma alanları (44 pt altı):** Bölümlü seçici, paylaş düğmeleri, yıldızlar.
+- ☑ **Büyük yazı boyutu:** Sabit yükseklikli düğme ve kutularda yazı taşıyor.
+- ☑ **Küçük dokunma alanları (44 pt altı):** Bölümlü seçici, paylaş düğmeleri, yıldızlar.
 - ☑ **iPhone dil ayarı:** `CFBundleLocalizations: ["tr"]` yok. VoiceOver Türkçe metni İngilizce sesle okuyabilir.
 - ☑ **Android izinleri:** Gereksiz iki izin var, `WRITE_SETTINGS` ve `SYSTEM_ALERT_WINDOW`.
 - ☑ **Açılış ekranı:** Karanlık versiyonu yok. Android 12'de logo kenarlardan kesilebilir.
+
+Ek olarak yapılanlar:
+- ☑ Damak Özeti:
+  - Ekran okuyucu açıkken slaytlar kendiliğinden geçmiyor.
+  - Önceki/sonraki düğmeleri var ve her slayt duyuruluyor.
+  - Herkes için durdur/oynat düğmesi var.
+- ☑ Yıldız seçici tek bir ayarlanabilir öğe; ana sayfa kartları "Sayfa x/5" olarak okunuyor.
+- ☑ Hafta şeridinde gün başına "fincan var/yok" okunuyor.
+- ☑ Ekran okuyucu açıkken tanıtım kendiliğinden bir sonraki soruya geçmiyor.
+- ☑ Rozet ışıltısı 5 saniyede duruyor.
+- ☑ "Hareketi azalt" açıkken ekran geçişleri kayma yerine solma.
+- ☑ Cam geri düğmesi "Geri, Profil" diye okunuyor.
 
 ## Telefonda doğrulanacaklar
 

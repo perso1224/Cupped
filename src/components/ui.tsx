@@ -13,10 +13,11 @@ export function Chip({ label, selected, onPress }: { label: string; selected: bo
         onPress();
       }}
       scaleTo={0.93}
+      hitSlop={{ top: 4, bottom: 4 }}
       accessibilityState={{ selected }}
       style={[styles.chip, selected && styles.chipSelected]}
     >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]} numberOfLines={1}>
+      <Text style={[styles.chipText, selected && styles.chipTextSelected]} numberOfLines={1} maxFontSizeMultiplier={1.5}>
         {label}
       </Text>
     </PressScale>
@@ -55,7 +56,7 @@ export function PillButton({
         <GlassSurface style={styles.glassFill} interactive />
         <View style={styles.pillInner}>
           {icon ? <Icon name={icon} size={18} color={colors.text} /> : null}
-          <Text style={[styles.pillText, { color: colors.text }]}>{label}</Text>
+          <Text style={[styles.pillText, { color: colors.text }]} maxFontSizeMultiplier={1.4}>{label}</Text>
         </View>
       </PressScale>
     );
@@ -72,11 +73,12 @@ export function PillButton({
         onPress();
       }}
       disabled={disabled}
+      hitSlop={6}
       style={[styles.pill, { backgroundColor: bg, borderColor: border }, style]}
     >
       <View style={styles.pillInner}>
         {icon ? <Icon name={icon} size={18} color={fg} /> : null}
-        <Text style={[styles.pillText, { color: fg }]}>{label}</Text>
+        <Text style={[styles.pillText, { color: fg }]} maxFontSizeMultiplier={1.4}>{label}</Text>
       </View>
     </PressScale>
   );
@@ -105,7 +107,7 @@ export function Segmented<T extends string>({
     placed.current = true;
   }, [idx, itemW, x]);
   return (
-    <View style={styles.segment} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+    <View style={styles.segment} onLayout={(e) => setW(e.nativeEvent.layout.width)} accessibilityRole="tablist">
       {itemW ? <Animated.View pointerEvents="none" style={[styles.segmentOn, { width: itemW, transform: [{ translateX: x }] }]} /> : null}
       {options.map((o) => {
         const on = o.value === value;
@@ -120,10 +122,11 @@ export function Segmented<T extends string>({
             }}
             scaleTo={0.97}
             style={styles.segmentItem}
-            accessibilityRole="button"
+            accessibilityRole="tab"
             accessibilityState={{ selected: on }}
+            hitSlop={{ top: 6, bottom: 6 }}
           >
-            <Text style={[styles.segmentText, on && { color: colors.text }]}>{o.label}</Text>
+            <Text style={[styles.segmentText, on && { opacity: 1, fontWeight: '700' }]} maxFontSizeMultiplier={1.3}>{o.label}</Text>
           </PressScale>
         );
       })}
@@ -137,9 +140,10 @@ export function Card({ children, style }: { children: React.ReactNode; style?: S
 
 const styles = StyleSheet.create({
   segment: { flexDirection: 'row', backgroundColor: colors.line, borderRadius: 10, padding: 2 },
-  segmentItem: { flex: 1, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  segmentOn: { position: 'absolute', top: 2, left: 2, height: 32, borderRadius: 8, backgroundColor: colors.card, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
-  segmentText: { fontSize: 14, fontWeight: '600', color: colors.muted },
+  segmentItem: { flex: 1, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  segmentOn: { position: 'absolute', top: 2, left: 2, height: 36, borderRadius: 8, backgroundColor: colors.card, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  // Seçili olmayan yazı da okunur kontrastta (gri zemin üstünde gri yazı yetmiyordu)
+  segmentText: { fontSize: 14, fontWeight: '500', color: colors.text, opacity: 0.75 },
   chip: {
     maxWidth: '100%',
     paddingHorizontal: 16,
@@ -155,6 +159,7 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 15, fontWeight: '600', color: colors.text },
   chipTextSelected: { color: colors.white },
   pill: {
+    // Yükseklik sabit (bazı ekranlar 46/36 verir); büyük yazıda taşmasın diye yazı ölçeği sınırlı (maxFontSizeMultiplier)
     height: 56,
     borderRadius: radius.pill,
     alignItems: 'center',

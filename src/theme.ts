@@ -70,7 +70,7 @@ const LIGHT = {
   muted: '#706A62', // zemin üstünde ≥4.5:1 kontrast
   tertiary: '#C4BEB6', // ok (chevron), yer tutucu metin
   mutedOnDark: '#CFC8BE', // "black" kart üstünde ikincil metin
-  accentText: '#9C5F17', // turuncu METİN (bağlantı, geri) — accent dolgu/simge içindir
+  accentText: '#8A5212', // turuncu METİN (bağlantı, geri) — accent dolgu/simge içindir. Krem zeminde de ≥4.5:1
   line: '#ECE7E0',
   accent: '#D98B2B',
   accentSoft: '#F6E6D1',
@@ -78,7 +78,7 @@ const LIGHT = {
   white: '#FFFFFF',
   onColor: '#FFFFFF',
   danger: '#C0392B',
-  success: '#5E7D5A',
+  success: '#4A6A46', // yeşil metin açık yeşil zeminde ≥4.5:1
   successSoft: '#E8F0E6',
 };
 

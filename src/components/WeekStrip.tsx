@@ -15,17 +15,22 @@ export function WeekStrip({ days }: { days: StripDay[] }) {
       {days.map((d, i) => {
         const done = d.best !== null;
         return (
-          <View key={d.key} style={styles.day}>
-            <Text style={[styles.label, d.isToday && styles.labelToday]}>{tr.weekdaysShort[i]}</Text>
+          // Gün tek öğe olarak okunur: "Pt 16, fincan var, en iyi skor 72" (renk tek başına bilgi taşımasın)
+          <View
+            key={d.key}
+            style={styles.day}
+            accessible
+            accessibilityLabel={`${tr.weekdaysLong[i]} ${d.date.getDate()}${d.isToday ? `, ${tr.a11y.today}` : ''}, ${done ? tr.a11y.cupBest(d.best!) : d.isFuture ? tr.a11y.future : tr.a11y.noCup}`}
+          >
+            <Text maxFontSizeMultiplier={1.3} style={[styles.label, d.isToday && styles.labelToday]}>{tr.weekdaysShort[i]}</Text>
             <View
               style={[
                 styles.stamp,
                 done ? styles.done : d.isFuture ? styles.future : styles.empty,
                 d.isToday && (done ? styles.todayDone : styles.today),
               ]}
-              accessibilityLabel={`${tr.weekdaysShort[i]} ${d.date.getDate()}${done ? `, en iyi skor ${d.best}` : ''}`}
             >
-              <Text style={[styles.num, done && { color: colors.onColor }, d.isFuture && { color: colors.tertiary }]}>{d.date.getDate()}</Text>
+              <Text maxFontSizeMultiplier={1.2} style={[styles.num, done && { color: colors.onColor }, d.isFuture && { color: colors.muted }]}>{d.date.getDate()}</Text>
             </View>
           </View>
         );

@@ -48,7 +48,13 @@ export function ShareCard({
 
   return (
     // Önizlemede kartın kenarı belli olsun (çerçeve paylaşılan görsele girmez)
-    <View style={{ width, height, borderRadius: 28, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line }}>
+    <View
+      style={{ width, height, borderRadius: 28, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line }}
+      // Ekran okuyucu kartı tek cümleyle okur (her yazıyı tek tek tekrar etmesin)
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={tr.a11y.shareCardPreview(tr.methods[entry.method], entry.score, type.name)}
+    >
       <View ref={ref} collapsable={false} style={[styles.card, { width, height }]}>
         <View style={{ height: photoH, backgroundColor: colors.accentSoft }}>
           {photo ? (

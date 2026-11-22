@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { StyleSheet, Text, type ColorValue, type StyleProp, type ViewStyle } from 'react-native';
+import { tr } from '../i18n/tr';
 import { colors, type } from '../theme';
 import { GLASS, GlassSurface } from './Glass';
 import { Icon, type IconName } from './Icon';
@@ -70,14 +71,15 @@ export function BackButton({ label, onPress }: { label: string; onPress?: () => 
       <GlassIconButton
         icon="chevron-back"
         iconSize={22}
-        label={label}
+        // Yazısız cam düğme: ekran okuyucu "Geri, Profil" desin
+        label={tr.a11y.back(label)}
         onPress={onPress ?? goBack}
         fallback={null}
         style={styles.backGlass}
       />
     );
   return (
-    <PressScale onPress={onPress ?? goBack} hitSlop={12} scaleTo={0.94} style={styles.back} accessibilityRole="button" accessibilityLabel={label}>
+    <PressScale onPress={onPress ?? goBack} hitSlop={12} scaleTo={0.94} style={styles.back} accessibilityRole="button" accessibilityLabel={tr.a11y.back(label)}>
       <Icon name="chevron-back" size={24} color={colors.accentText} />
       <Text style={styles.backText}>{label}</Text>
     </PressScale>

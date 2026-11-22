@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   Alert,
   PanResponder,
   Animated,
@@ -16,7 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
-import { PressScale, haptic, reduceMotionNow } from '../components/motion';
+import { PressScale, haptic, reduceMotionNow, useScreenReader } from '../components/motion';
 import { Icon } from '../components/Icon';
 import { GLASS, GlassSurface } from '../components/Glass';
 import { CloseButton } from '../components/NavButtons';
@@ -89,6 +90,7 @@ export default function Wrapped() {
   }, [entries, startKey, kind]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const holdPaused = useRef(false);
   const [progress] = useState(() => new Animated.Value(0));
   const progressValue = useRef(0);
   const [enter] = useState(() => new Animated.Value(0));
@@ -126,8 +128,11 @@ export default function Wrapped() {
 
   // Otomatik ilerleme (goRef: aşağıdaki `go`nun güncel hali)
   const goRef = useRef<(i: number) => void>(() => {});
+  // Ekran okuyucu açıkken slaytlar kendiliğinden geçmez (okumaya yetişilmez); kullanıcı ilerletir
+  const sr = useScreenReader();
+  const stopped = paused || sr;
   useEffect(() => {
-    if (!slides.length || paused) return;
+    if (!slides.length || stopped) return;
     const anim = Animated.timing(progress, {
       toValue: 1,
       // Hareketi azalt açıksa slaytlar daha yavaş ilerler (okumaya zaman kalsın)
@@ -145,13 +150,16 @@ export default function Wrapped() {
       progress.stopAnimation((v) => (progressValue.current = v));
     };
     // `go` her render'da yeniden oluşur; zamanlayıcı yalnızca slayt/duraklatma değişince yeniden başlasın diye ref ile çağrılır.
-  }, [index, paused, slides.length, progress]);
+  }, [index, stopped, slides.length, progress]);
 
   function go(i: number) {
     if (i !== index && i >= 0 && i < slides.length) haptic.select();
     progressValue.current = 0;
     progress.setValue(0);
-    setIndex(Math.max(0, Math.min(slides.length - 1, i)));
+    const next = Math.max(0, Math.min(slides.length - 1, i));
+    setIndex(next);
+    // Ekran okuyucuya hangi slaytta olunduğunu söyle
+    if (next !== index) AccessibilityInfo.announceForAccessibility(tr.wrapped.slideOf(next + 1, slides.length));
   }
 
   // Otomatik ilerleme her zaman güncel `go`yu çağırsın
@@ -213,7 +221,30 @@ export default function Wrapped() {
           <SlideView slide={slide} theme={theme} W={W} H={H} enter={enter} periodLabel={periodLabel} kind={kind} index={index} pw={pw} code={damakCode} />
         </View>
 
-        <Pressable style={StyleSheet.absoluteFill} onPress={onTap} onLongPress={() => setPaused(true)} onPressOut={() => paused && setPaused(false)} />
+        {/* Dokunma alanı. Ekran okuyucuda ayarlanabilir öğe: yukarı/aşağı kaydırarak slayt değişir */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onTap}
+          onLongPress={() => {
+            // Basılı tutunca durur, bırakınca devam eder (durdur düğmesiyle durdurulduysa bırakınca devam etmez)
+            if (paused) return;
+            holdPaused.current = true;
+            setPaused(true);
+          }}
+          onPressOut={() => {
+            if (!holdPaused.current) return;
+            holdPaused.current = false;
+            setPaused(false);
+          }}
+          accessibilityRole="adjustable"
+          accessibilityLabel={tr.wrapped.slideOf(index + 1, slides.length)}
+          accessibilityHint={tr.wrapped.a11yHint}
+          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+          onAccessibilityAction={(e) => {
+            if (e.nativeEvent.actionName === 'increment') go(index + 1);
+            else if (e.nativeEvent.actionName === 'decrement') go(index - 1);
+          }}
+        />
 
         {/* İlerleme çubukları + kapat (kaydedilmez) */}
         <View style={styles.bars} pointerEvents="none">
@@ -234,8 +265,23 @@ export default function Wrapped() {
             </View>
           ))}
         </View>
-        {/* Instagram hikayeleri gibi sağ üstte */}
-        <View style={styles.close}>
+        {/* Instagram hikayeleri gibi sağ üstte; yanında durdur/oynat (otomatik ilerleme durdurulabilsin) */}
+        <View style={[styles.close, { flexDirection: 'row', gap: 10 }]}>
+          {!sr ? (
+            <PressScale
+              onPress={() => {
+                holdPaused.current = false;
+                setPaused((p) => !p);
+              }}
+              hitSlop={10}
+              scaleTo={0.9}
+              style={[styles.pauseBtn, { backgroundColor: theme.bg !== '#F1E3CF' ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.08)' }]}
+              accessibilityRole="button"
+              accessibilityLabel={paused ? tr.wrapped.play : tr.wrapped.pause}
+            >
+              <Icon name={paused ? 'play' : 'pause'} size={18} color={theme.fg} />
+            </PressScale>
+          ) : null}
           <CloseButton onPress={close} tint={theme.fg} dark={theme.bg !== '#F1E3CF'} />
         </View>
       </Animated.View>
@@ -246,6 +292,12 @@ export default function Wrapped() {
         </Text>
       ) : null}
       <View style={styles.bottomRow}>
+        {/* Ekran okuyucu: görünür önceki/sonraki düğmeleri (kenara dokunarak geri gitmek mümkün değil) */}
+        {sr ? (
+          <PressScale onPress={() => go(index - 1)} scaleTo={0.95} style={styles.navBtn} accessibilityRole="button" accessibilityLabel={tr.wrapped.prev} disabled={index === 0}>
+            <Icon name="chevron-back" size={22} color="#FAF8F5" />
+          </PressScale>
+        ) : null}
         <PressScale onPress={close} scaleTo={0.95} style={[styles.closeBtn, isLast && finished && styles.finishBtn]}>
           <Text style={[styles.closeBtnText, isLast && finished && { color: '#111' }]}>
             {isLast && finished ? tr.wrapped.finish : tr.wrapped.close}
@@ -256,6 +308,11 @@ export default function Wrapped() {
           {GLASS ? <GlassSurface style={styles.glassFill} interactive /> : null}
           <Text style={[styles.shareText, GLASS && { color: theme.fg }]}>{tr.wrapped.share}</Text>
         </PressScale>
+        {sr ? (
+          <PressScale onPress={() => go(index + 1)} scaleTo={0.95} style={styles.navBtn} accessibilityRole="button" accessibilityLabel={tr.wrapped.next} disabled={isLast}>
+            <Icon name="chevron-forward" size={22} color="#FAF8F5" />
+          </PressScale>
+        ) : null}
       </View>
     </View>
   );
@@ -264,7 +321,11 @@ export default function Wrapped() {
 /** Türkçe büyük harfli başlık (textTransform:'uppercase' "İ"yi bozar). */
 function Kicker({ style, children }: { style: React.ComponentProps<typeof Animated.Text>['style']; children: React.ReactNode }) {
   const up = (c: React.ReactNode): React.ReactNode => (typeof c === 'string' ? upper(c) : Array.isArray(c) ? c.map(up) : c);
-  return <Animated.Text style={style}>{up(children)}</Animated.Text>;
+  return (
+    <Animated.Text allowFontScaling={false} style={style}>
+      {up(children)}
+    </Animated.Text>
+  );
 }
 
 function hexA(hex: string, a: number) {
@@ -327,8 +388,8 @@ function SlideView({
 
   const footer = (
     <View style={[styles.footer, { paddingHorizontal: u * 7, paddingBottom: H * 0.16 }]}>
-      <Text style={[styles.footerBrand, t, { fontSize: u * 5.5 }]}>{BRAND.name}</Text>
-      <Text style={[styles.footerQ, { color: hexA(theme.fg, 0.7), fontSize: u * 3.4, textAlign: 'right' }]}>
+      <Text allowFontScaling={false} style={[styles.footerBrand, t, { fontSize: u * 5.5 }]}>{BRAND.name}</Text>
+      <Text allowFontScaling={false} style={[styles.footerQ, { color: hexA(theme.fg, 0.7), fontSize: u * 3.4, textAlign: 'right' }]}>
         {tr.card.question}
         {code ? `\n${tr.match.cardCode(code)}` : ''}
       </Text>
@@ -345,18 +406,18 @@ function SlideView({
           <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
             {kind === 'week' ? tr.wrapped.weekTitle : tr.wrapped.monthTitle}
           </Kicker>
-          <Animated.Text style={[styles.huge, t, { fontSize: u * 15, lineHeight: u * 16 }, rise(0.15)]}>{periodLabel}</Animated.Text>
-          <Animated.Text style={[styles.sub, t, { fontSize: u * 5, marginTop: u * 4 }, rise(0.35)]}>{tr.wrapped.introSub}</Animated.Text>
+          <Animated.Text allowFontScaling={false} style={[styles.huge, t, { fontSize: u * 15, lineHeight: u * 16 }, rise(0.15)]}>{periodLabel}</Animated.Text>
+          <Animated.Text allowFontScaling={false} style={[styles.sub, t, { fontSize: u * 5, marginTop: u * 4 }, rise(0.35)]}>{tr.wrapped.introSub}</Animated.Text>
         </View>
       );
       break;
     case 'cups':
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
-          <Animated.Text style={[styles.sub, t, { fontSize: u * 6 }, rise(0)]}>{tr.wrapped.cupsTitle(pw)}</Animated.Text>
-          <Animated.Text style={[styles.mega, t, { fontSize: u * 48, lineHeight: u * 50 }, pop]}>{slide.cups}</Animated.Text>
-          <Animated.Text style={[styles.huge, t, { fontSize: u * 11 }, rise(0.2)]}>{tr.wrapped.cupsUnit}</Animated.Text>
-          <Animated.Text style={[styles.sub, a, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.45)]}>{tr.wrapped.cupsFact(slide.ml)}</Animated.Text>
+          <Animated.Text allowFontScaling={false} style={[styles.sub, t, { fontSize: u * 6 }, rise(0)]}>{tr.wrapped.cupsTitle(pw)}</Animated.Text>
+          <Animated.Text allowFontScaling={false} style={[styles.mega, t, { fontSize: u * 48, lineHeight: u * 50 }, pop]}>{slide.cups}</Animated.Text>
+          <Animated.Text allowFontScaling={false} style={[styles.huge, t, { fontSize: u * 11 }, rise(0.2)]}>{tr.wrapped.cupsUnit}</Animated.Text>
+          <Animated.Text allowFontScaling={false} style={[styles.sub, a, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.45)]}>{tr.wrapped.cupsFact(slide.ml)}</Animated.Text>
         </View>
       );
       break;
@@ -364,10 +425,10 @@ function SlideView({
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
           <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.methodTitle}</Kicker>
-          <Animated.Text style={[styles.huge, t, { fontSize: u * 17, lineHeight: u * 18 }, pop]} adjustsFontSizeToFit numberOfLines={2}>
+          <Animated.Text allowFontScaling={false} style={[styles.huge, t, { fontSize: u * 17, lineHeight: u * 18 }, pop]} adjustsFontSizeToFit numberOfLines={2}>
             {tr.methods[slide.method]}
           </Animated.Text>
-          <Animated.Text style={[styles.sub, t, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.35)]}>
+          <Animated.Text allowFontScaling={false} style={[styles.sub, t, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.35)]}>
             {tr.wrapped.methodFact(slide.count, slide.pct)}
           </Animated.Text>
         </View>
@@ -380,10 +441,10 @@ function SlideView({
           <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
             {slide.kind === 'place' ? tr.wrapped.placeTitle : tr.wrapped.homeTitle}
           </Kicker>
-          <Animated.Text style={[styles.huge, t, { fontSize: u * 15, lineHeight: u * 16 }, pop]} adjustsFontSizeToFit numberOfLines={3}>
+          <Animated.Text allowFontScaling={false} style={[styles.huge, t, { fontSize: u * 15, lineHeight: u * 16 }, pop]} adjustsFontSizeToFit numberOfLines={3}>
             {slide.kind === 'place' ? slide.name : tr.card.homeBrew}
           </Animated.Text>
-          <Animated.Text style={[styles.sub, t, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.35)]}>
+          <Animated.Text allowFontScaling={false} style={[styles.sub, t, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.35)]}>
             {slide.kind === 'place' ? tr.wrapped.placeFact(slide.visits) : tr.wrapped.homeFact(slide.pct)}
           </Animated.Text>
         </View>
@@ -394,19 +455,19 @@ function SlideView({
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
           <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.discoverTitle}</Kicker>
           {slide.places + slide.methods === 0 ? (
-            <Animated.Text style={[styles.huge, t, { fontSize: u * 9, lineHeight: u * 11 }, rise(0.15)]}>{tr.wrapped.discoverNone}</Animated.Text>
+            <Animated.Text allowFontScaling={false} style={[styles.huge, t, { fontSize: u * 9, lineHeight: u * 11 }, rise(0.15)]}>{tr.wrapped.discoverNone}</Animated.Text>
           ) : (
             <>
               {slide.places > 0 ? (
               <Animated.View style={[styles.row, pop]}>
-                <Text style={[styles.mega, t, { fontSize: u * 30, lineHeight: u * 32 }]}>{slide.places}</Text>
-                <Text style={[styles.sub, t, { fontSize: u * 6.5, marginLeft: u * 3 }]}>{tr.wrapped.discoverPlaces}</Text>
+                <Text allowFontScaling={false} style={[styles.mega, t, { fontSize: u * 30, lineHeight: u * 32 }]}>{slide.places}</Text>
+                <Text allowFontScaling={false} style={[styles.sub, t, { fontSize: u * 6.5, marginLeft: u * 3 }]}>{tr.wrapped.discoverPlaces}</Text>
               </Animated.View>
               ) : null}
               {slide.methods > 0 ? (
               <Animated.View style={[styles.row, rise(0.3)]}>
-                <Text style={[styles.mega, t, { fontSize: u * 30, lineHeight: u * 32 }]}>{slide.methods}</Text>
-                <Text style={[styles.sub, t, { fontSize: u * 6.5, marginLeft: u * 3 }]}>{tr.wrapped.discoverMethods}</Text>
+                <Text allowFontScaling={false} style={[styles.mega, t, { fontSize: u * 30, lineHeight: u * 32 }]}>{slide.methods}</Text>
+                <Text allowFontScaling={false} style={[styles.sub, t, { fontSize: u * 6.5, marginLeft: u * 3 }]}>{tr.wrapped.discoverMethods}</Text>
               </Animated.View>
               ) : null}
             </>
@@ -427,8 +488,8 @@ function SlideView({
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(17,17,17,0.35)' }]} />
           <View style={[pad, { flex: 1, justifyContent: 'flex-end', paddingBottom: u * 22 }]}>
             <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.bestTitle(pw)}</Kicker>
-            <Animated.Text style={[styles.mega, { color: '#FAF8F5', fontSize: u * 40, lineHeight: u * 42 }, pop]}>{slide.entry.score}</Animated.Text>
-            <Animated.Text style={[styles.sub, { color: '#FAF8F5', fontSize: u * 5.5 }, rise(0.35)]}>
+            <Animated.Text allowFontScaling={false} style={[styles.mega, { color: '#FAF8F5', fontSize: u * 40, lineHeight: u * 42 }, pop]}>{slide.entry.score}</Animated.Text>
+            <Animated.Text allowFontScaling={false} style={[styles.sub, { color: '#FAF8F5', fontSize: u * 5.5 }, rise(0.35)]}>
               {tr.methods[slide.entry.method]} · {placeLabel(slide.entry)}
             </Animated.Text>
           </View>
@@ -439,7 +500,7 @@ function SlideView({
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
           <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.scoreTitle}</Kicker>
-          <Animated.Text style={[styles.mega, t, { fontSize: u * 48, lineHeight: u * 50 }, pop]}>{slide.avg}</Animated.Text>
+          <Animated.Text allowFontScaling={false} style={[styles.mega, t, { fontSize: u * 48, lineHeight: u * 50 }, pop]}>{slide.avg}</Animated.Text>
         </View>
       );
       break;
@@ -447,11 +508,11 @@ function SlideView({
       const type = getPalateType(slide.typeId);
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
-          <Animated.Text style={[styles.sub, t, { fontSize: u * 6 }, rise(0)]}>{tr.wrapped.typeTitle(pw)}</Animated.Text>
-          <Animated.Text style={[styles.huge, t, { fontSize: u * 17, lineHeight: u * 18, marginTop: u * 3 }, pop]} adjustsFontSizeToFit numberOfLines={3}>
+          <Animated.Text allowFontScaling={false} style={[styles.sub, t, { fontSize: u * 6 }, rise(0)]}>{tr.wrapped.typeTitle(pw)}</Animated.Text>
+          <Animated.Text allowFontScaling={false} style={[styles.huge, t, { fontSize: u * 17, lineHeight: u * 18, marginTop: u * 3 }, pop]} adjustsFontSizeToFit numberOfLines={3}>
             {type.name}
           </Animated.Text>
-          <Animated.Text style={[styles.sub, t, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.45)]}>{type.tagline}</Animated.Text>
+          <Animated.Text allowFontScaling={false} style={[styles.sub, t, { fontSize: u * 5.5, marginTop: u * 4 }, rise(0.45)]}>{type.tagline}</Animated.Text>
         </View>
       );
       break;
@@ -467,7 +528,7 @@ function SlideView({
           <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
             {tr.wrapped.summaryTitle} · {periodLabel}
           </Kicker>
-          <Animated.Text style={[styles.huge, t, { fontSize: u * 12, lineHeight: u * 13, marginTop: u * 3 }, rise(0.1)]} adjustsFontSizeToFit numberOfLines={2}>
+          <Animated.Text allowFontScaling={false} style={[styles.huge, t, { fontSize: u * 12, lineHeight: u * 13, marginTop: u * 3 }, rise(0.1)]} adjustsFontSizeToFit numberOfLines={2}>
             {type.name}
           </Animated.Text>
           <Animated.View style={[styles.statRow, { marginTop: u * 7 }, rise(0.25)]}>
@@ -477,16 +538,16 @@ function SlideView({
               [slide.best, tr.wrapped.summaryBest],
             ].map(([v, l]) => (
               <View key={String(l)} style={{ flex: 1 }}>
-                <Text style={[styles.mega, a, { fontSize: u * 14, lineHeight: u * 15 }]}>{v}</Text>
-                <Text style={[styles.sub, { color: hexA(theme.fg, 0.7), fontSize: u * 3.8 }]}>{l}</Text>
+                <Text allowFontScaling={false} style={[styles.mega, a, { fontSize: u * 14, lineHeight: u * 15 }]}>{v}</Text>
+                <Text allowFontScaling={false} style={[styles.sub, { color: hexA(theme.fg, 0.7), fontSize: u * 3.8 }]}>{l}</Text>
               </View>
             ))}
           </Animated.View>
           <Animated.View style={[{ marginTop: u * 7 }, rise(0.4)]}>
             {rows.map(([l, v]) => (
               <View key={l} style={{ marginBottom: u * 4 }}>
-                <Text style={[styles.sub, { color: hexA(theme.fg, 0.7), fontSize: u * 3.8 }]}>{l}</Text>
-                <Text style={[styles.huge, t, { fontSize: u * 7.5 }]} numberOfLines={1} adjustsFontSizeToFit>
+                <Text allowFontScaling={false} style={[styles.sub, { color: hexA(theme.fg, 0.7), fontSize: u * 3.8 }]}>{l}</Text>
+                <Text allowFontScaling={false} style={[styles.huge, t, { fontSize: u * 7.5 }]} numberOfLines={1} adjustsFontSizeToFit>
                   {v}
                 </Text>
               </View>
@@ -544,6 +605,8 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: 'center',
   },
+  pauseBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  navBtn: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(250,248,245,0.5)', alignItems: 'center', justifyContent: 'center' },
   shareClear: { backgroundColor: 'transparent' },
   glassFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 999 },
   shareText: { fontSize: 16, fontWeight: '800', color: '#111' },
