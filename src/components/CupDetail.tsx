@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
   },
-  scoreNumber: { fontSize: 60, fontFamily: fonts.heavy, letterSpacing: -1.5, color: colors.text },
+  scoreNumber: { fontSize: 60, fontFamily: fonts.heavy, color: colors.text },
   scoreLabel: { ...type.footnote, fontWeight: '600', color: colors.text },
   scoreSub: { ...type.footnote, marginTop: 2 },
   tiles: { flexDirection: 'row', gap: 10, marginTop: 10 },

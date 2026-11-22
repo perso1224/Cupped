@@ -70,6 +70,6 @@ const styles = StyleSheet.create({
   logo: { width: LOGO, height: LOGO, alignItems: 'center', justifyContent: 'center' },
   rings: { position: 'absolute', top: 0, left: 0, width: LOGO, height: LOGO },
   dot: { width: LOGO * 0.25, height: LOGO * 0.25, borderRadius: LOGO * 0.125, backgroundColor: colors.text },
-  word: { fontFamily: fonts.heavy, fontSize: 40, color: colors.text, marginTop: 28, letterSpacing: -0.5 },
+  word: { fontFamily: fonts.heavy, fontSize: 40, color: colors.text, marginTop: 28, paddingHorizontal: 6 },
   tag: { fontSize: 14, fontWeight: '600', color: colors.muted, marginTop: 4, letterSpacing: 0.4 },
 });

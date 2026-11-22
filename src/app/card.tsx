@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   kicker: { fontWeight: '800', letterSpacing: 1.6 },
   nick: { fontFamily: fonts.semibold, marginTop: 6 },
-  typeName: { fontFamily: fonts.heavy, letterSpacing: -0.5 },
+  typeName: { fontFamily: fonts.heavy },
   tagline: { fontStyle: 'italic' },
   stats: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 10 },
   stat: { flex: 1, alignItems: 'center' },
@@ -233,5 +233,5 @@ const styles = StyleSheet.create({
   statLabel: { fontWeight: '600', marginTop: 1, letterSpacing: 0.3 },
   since: { fontWeight: '600' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  brand: { fontFamily: fonts.heavy, letterSpacing: -0.3 },
+  brand: { fontFamily: fonts.heavy },
 });

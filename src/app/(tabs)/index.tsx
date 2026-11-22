@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   },
   boardTop: { flexDirection: 'row', alignItems: 'center' },
   boardKicker: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: BOARD.muted },
-  boardScore: { fontSize: 56, fontFamily: fonts.heavy, color: BOARD.text, letterSpacing: -1, marginTop: 2 },
+  boardScore: { fontSize: 56, fontFamily: fonts.heavy, color: BOARD.text, marginTop: 2 },
   boardSub: { fontSize: 14, color: BOARD.muted, marginTop: 2 },
   boardRule: { height: 1, backgroundColor: BOARD.rule, marginTop: 16, marginBottom: 6 },
   boardUnit: { fontSize: 20, fontFamily: fonts.semibold, color: BOARD.muted },

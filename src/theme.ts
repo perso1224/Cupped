@@ -108,6 +108,7 @@ export const space = (n: number) => n * 4;
  * Kahve kimliği: büyük başlık ve rakamlarda sıcak, tırnaklı Fraunces yazı tipi (kökteki _layout yükler).
  * Özel yazı tipinde fontWeight verilmez; kalınlık dosyanın kendisinden gelir.
  */
+/** Not: Fraunces'te harf aralığı (letterSpacing) daraltılmaz; iPhone son harfi kesebiliyor ("Cupped"ın d'si). */
 export const fonts = {
   display: 'Fraunces_700Bold',
   heavy: 'Fraunces_800ExtraBold',
@@ -116,8 +117,8 @@ export const fonts = {
 
 /** Yazı ölçeği (Apple'ın Dynamic Type sıralamasına benzer). */
 export const type = {
-  largeTitle: { fontSize: 34, fontFamily: fonts.display, letterSpacing: -0.4, color: colors.text },
-  title2: { fontSize: 22, fontFamily: fonts.display, letterSpacing: -0.2, color: colors.text },
+  largeTitle: { fontSize: 34, fontFamily: fonts.display, color: colors.text },
+  title2: { fontSize: 22, fontFamily: fonts.display, color: colors.text },
   title3: { fontSize: 20, fontWeight: '700' as const, color: colors.text },
   headline: { fontSize: 17, fontWeight: '600' as const, color: colors.text },
   body: { fontSize: 17, fontWeight: '400' as const, color: colors.text },
@@ -125,7 +126,7 @@ export const type = {
   footnote: { fontSize: 13, fontWeight: '400' as const, color: colors.muted },
   caption: { fontSize: 12, fontWeight: '500' as const, color: colors.muted },
   sectionHeader: { fontSize: 13, fontWeight: '600' as const, color: colors.muted, letterSpacing: 0.4 },
-  display: { fontSize: 48, fontFamily: fonts.heavy, letterSpacing: -1, color: colors.text },
+  display: { fontSize: 48, fontFamily: fonts.heavy, color: colors.text },
   stat: { fontSize: 28, fontFamily: fonts.display, color: colors.text },
 };
 
