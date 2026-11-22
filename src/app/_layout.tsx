@@ -1,3 +1,4 @@
+import { Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_800ExtraBold, useFonts } from '@expo-google-fonts/fraunces';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -15,6 +16,8 @@ const single = { dangerouslySingular: true } as const;
 
 export default function RootLayout() {
   const profile = useProfile();
+  // Başlık yazı tipi. Yüklenemezse (hata) sistem yazı tipiyle devam edilir; uygulama beklemede kalmaz.
+  const [fontsLoaded, fontError] = useFonts({ Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_800ExtraBold });
 
   // H4: uygulamanın açıldığı günleri kaydet; hatırlatmayı güncel tut.
   useEffect(() => {
@@ -27,7 +30,7 @@ export default function RootLayout() {
     return () => sub.remove();
   }, []);
 
-  if (profile === undefined) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  if (profile === undefined || (!fontsLoaded && !fontError)) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
 
   return (
     <>

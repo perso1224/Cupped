@@ -6,6 +6,7 @@ import { CupRow } from '../../components/CupRow';
 import { Icon } from '../../components/Icon';
 import { WeekChart } from '../../components/WeekChart';
 import { WeekStrip } from '../../components/WeekStrip';
+import { Bean, CupGauge } from '../../components/coffee';
 import { MetricTile, MiniRing, Pager } from '../../components/dashboard';
 import { FadeIn, Pop, PressScale, animateLayout, haptic } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
@@ -22,7 +23,7 @@ import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
 import { useSettings } from '../../lib/useSettings';
-import { colors, tint, type } from '../../theme';
+import { colors, fonts, tint, type } from '../../theme';
 import { useTabBarSpace } from '../../components/TabBar';
 
 /**
@@ -98,12 +99,7 @@ export default function Home() {
           <Text style={styles.cardTitle}>{tr.home.todayScore}</Text>
           <Text style={styles.cardSub}>{todays.length ? levelFor(todayScore) : tr.home.noCupToday}</Text>
         </View>
-        <MiniRing
-          size={112}
-          stroke={11}
-          fraction={todays.length ? todayScore / 100 : 0}
-          center={<Icon name={todays.length ? 'trophy' : 'cafe-outline'} size={32} color={colors.accent} />}
-        />
+        <CupGauge size={112} fraction={todays.length ? todayScore / 100 : 0} />
       </Card>
       <View style={styles.tiles}>
         <MetricTile value={`+${parts.effort.avg}`} label={tr.home.effortWeek} fraction={parts.effort.fraction} color={tint.amber} icon="hand-left" />
@@ -159,7 +155,7 @@ export default function Home() {
         </View>
         <View style={styles.streak}>
           <Pop trigger={streak}>
-            <Icon name="flame" size={16} color={streak > 0 ? tint.cherry : colors.muted} />
+            <Bean size={18} color={streak > 0 ? tint.espresso : colors.tertiary} />
           </Pop>
           <Text style={styles.streakText}>{streak}</Text>
         </View>
@@ -362,7 +358,7 @@ const styles = StyleSheet.create({
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 28, marginBottom: 12 },
   link: { ...type.body, color: colors.accentText },
   bigCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 22 },
-  bigNumber: { fontSize: 48, fontWeight: '800', color: colors.text, letterSpacing: -1.5 },
+  bigNumber: { fontSize: 52, fontFamily: fonts.heavy, color: colors.text, letterSpacing: -1 },
   bigUnit: { fontSize: 20, fontWeight: '700', color: colors.muted, letterSpacing: 0 },
   cardTitle: { ...type.footnote, fontWeight: '600' },
   cardTitleDark: { ...type.headline },

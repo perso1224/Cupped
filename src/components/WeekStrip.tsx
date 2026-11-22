@@ -1,51 +1,35 @@
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 import { tr } from '../i18n/tr';
 import type { StripDay } from '../lib/progress';
-import { colors } from '../theme';
+import { colors, tint } from '../theme';
 
 const SIZE = 36;
-const STROKE = 4;
 
-/** Haftalık gün şeridi: her gün için küçük halka (o günün en yüksek skoruna göre dolu). */
+/**
+ * Haftalık gün şeridi, pasaport damgası gibi: fincan eklenen gün koyu kahve dolu,
+ * bugün kesikli amber çerçeveli, gelecek günler soluk.
+ */
 export function WeekStrip({ days }: { days: StripDay[] }) {
-  const r = (SIZE - STROKE) / 2;
-  const c = 2 * Math.PI * r;
   return (
     <View style={styles.row}>
-      {days.map((d, i) => (
-        <View key={d.key} style={styles.day}>
-          <Text style={[styles.label, d.isToday && styles.labelToday]}>{tr.weekdaysShort[i]}</Text>
-          <View style={{ width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' }}>
-            <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
-              <Circle
-                cx={SIZE / 2}
-                cy={SIZE / 2}
-                r={r}
-                stroke={d.isFuture ? colors.line : colors.line}
-                strokeDasharray={d.isFuture ? '3 4' : undefined}
-                strokeWidth={STROKE}
-                fill={d.isToday ? colors.black : 'none'}
-              />
-              {d.best !== null ? (
-                <Circle
-                  cx={SIZE / 2}
-                  cy={SIZE / 2}
-                  r={r}
-                  stroke={colors.accent}
-                  strokeWidth={STROKE}
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeDasharray={`${c} ${c}`}
-                  strokeDashoffset={c * (1 - d.best / 100)}
-                  transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
-                />
-              ) : null}
-            </Svg>
-            <Text style={[styles.num, d.isToday && { color: colors.white }]}>{d.date.getDate()}</Text>
+      {days.map((d, i) => {
+        const done = d.best !== null;
+        return (
+          <View key={d.key} style={styles.day}>
+            <Text style={[styles.label, d.isToday && styles.labelToday]}>{tr.weekdaysShort[i]}</Text>
+            <View
+              style={[
+                styles.stamp,
+                done ? styles.done : d.isFuture ? styles.future : styles.empty,
+                d.isToday && (done ? styles.todayDone : styles.today),
+              ]}
+              accessibilityLabel={`${tr.weekdaysShort[i]} ${d.date.getDate()}${done ? `, en iyi skor ${d.best}` : ''}`}
+            >
+              <Text style={[styles.num, done && { color: colors.white }, d.isFuture && { color: colors.tertiary }]}>{d.date.getDate()}</Text>
+            </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -55,5 +39,11 @@ const styles = StyleSheet.create({
   day: { alignItems: 'center' },
   label: { fontSize: 12, fontWeight: '600', color: colors.muted, marginBottom: 6 },
   labelToday: { color: colors.text, fontWeight: '800' },
+  stamp: { width: SIZE, height: SIZE, borderRadius: SIZE / 2, alignItems: 'center', justifyContent: 'center' },
+  done: { backgroundColor: tint.espresso },
+  empty: { borderWidth: 1.5, borderColor: colors.line },
+  future: { borderWidth: 1.5, borderColor: colors.line, borderStyle: 'dashed' },
+  today: { borderWidth: 2, borderColor: colors.accent, borderStyle: 'dashed' },
+  todayDone: { borderWidth: 2.5, borderColor: colors.accent },
   num: { fontSize: 13, fontWeight: '700', color: colors.text },
 });

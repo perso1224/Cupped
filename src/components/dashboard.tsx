@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { Icon, type IconName } from './Icon';
 import { haptic } from './motion';
 
@@ -48,7 +48,7 @@ export function MiniRing({
   );
 }
 
-/** Altında küçük halka olan ölçü kartı (Cal AI'daki protein/karbonhidrat/yağ kartları gibi). */
+/** Ölçü kartı: değer, etiket ve altta dolum çubuğu. */
 export function MetricTile({
   value,
   label,
@@ -62,16 +62,21 @@ export function MetricTile({
   color: ColorValue;
   icon: IconName;
 }) {
+  const f = Math.max(0, Math.min(1, fraction));
   return (
     <View style={styles.tile}>
-      <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
-        {value}
-      </Text>
+      <View style={styles.tileTop}>
+        <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
+          {value}
+        </Text>
+        <Icon name={icon} size={18} color={color} />
+      </View>
       <Text style={styles.tileLabel} numberOfLines={2}>
         {label}
       </Text>
-      <View style={{ alignItems: 'center', marginTop: 10 }}>
-        <MiniRing fraction={fraction} color={color} center={<Icon name={icon} size={20} color={color} />} />
+      {/* Dolum çubuğu: bardağın dolması gibi soldan sağa */}
+      <View style={styles.tileTrack}>
+        <View style={[styles.tileFill, { width: `${Math.max(f > 0 ? 6 : 0, f * 100)}%`, backgroundColor: color }]} />
       </View>
     </View>
   );
@@ -138,7 +143,10 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
   },
-  tileValue: { fontSize: 20, fontWeight: '900', color: colors.text },
+  tileTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
+  tileValue: { fontSize: 22, fontFamily: fonts.display, color: colors.text, flexShrink: 1 },
+  tileTrack: { height: 8, borderRadius: 4, backgroundColor: colors.line, overflow: 'hidden', marginTop: 12 },
+  tileFill: { height: 8, borderRadius: 4 },
   tileLabel: { fontSize: 12, fontWeight: '600', color: colors.muted, marginTop: 1 },
   dots: { flexDirection: 'row', justifyContent: 'center', marginTop: 12, gap: 6 },
   dot: { height: 6, borderRadius: 3, backgroundColor: colors.text },

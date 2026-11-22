@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Image, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { placeLabel, ShareCard, type CardHandle } from './ShareCard';
-import { MetricTile, MiniRing } from './dashboard';
+import { CupGauge } from './coffee';
+import { MetricTile } from './dashboard';
 import { Icon, type IconName } from './Icon';
 import { ListRow, ListSection } from './List';
 import { goBack } from './NavButtons';
@@ -17,7 +18,7 @@ import { shareViewAsImage } from '../lib/share';
 import { levelFor } from '../lib/scoring';
 import { bumpCounter, deleteEntry, getEntry, photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
-import { colors, layout, tint, type } from '../theme';
+import { colors, fonts, layout, tint, type } from '../theme';
 
 /**
  * Fincan ekranı. mode='result': yeni kayıttan sonra alttan sayfa (Tamam + Paylaş).
@@ -184,7 +185,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
               <Text style={styles.scoreLabel}>{tr.card.cupScore}</Text>
               <Text style={styles.scoreSub}>{levelFor(entry.score)}</Text>
             </View>
-            <MiniRing size={96} stroke={10} fraction={entry.score / 100} center={<Icon name="trophy" size={28} color={colors.accent} />} />
+            <CupGauge size={104} fraction={entry.score / 100} animate={isFresh} />
           </Card>
 
           {/* Skor nereden geldi: üç küçük kutu (ana sayfadakiyle aynı renkler) */}
@@ -346,7 +347,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
   },
-  scoreNumber: { fontSize: 56, fontWeight: '800', letterSpacing: -2, color: colors.text },
+  scoreNumber: { fontSize: 60, fontFamily: fonts.heavy, letterSpacing: -1.5, color: colors.text },
   scoreLabel: { ...type.footnote, fontWeight: '600', color: colors.text },
   scoreSub: { ...type.footnote, marginTop: 2 },
   tiles: { flexDirection: 'row', gap: 10, marginTop: 10 },

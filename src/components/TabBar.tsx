@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
 import { colors, tint } from '../theme';
+import { GLASS, GlassSurface } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { haptic, PressScale, reduceMotionNow } from './motion';
 
@@ -35,7 +36,9 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.wrap, { bottom: barBottom(insets.bottom) }]} pointerEvents="box-none">
-      <View style={styles.pill} accessibilityRole="tablist">
+      {/* iOS 26+: gerçek Liquid Glass; daha eskide beyaz kapsül + gölge */}
+      <GlassSurface style={styles.pill} fallback={styles.pillSolid} interactive>
+        <View style={styles.pillRow} accessibilityRole="tablist">
         {state.routes.map((route, index) => {
           const meta = TABS[route.name];
           if (!meta) return null; // "add" yer tutucusu: menüde gösterilmez
@@ -55,7 +58,8 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
             />
           );
         })}
-      </View>
+        </View>
+      </GlassSurface>
       <PressScale
         accessibilityLabel={tr.home.ctaButton}
         onPress={() => {
@@ -63,9 +67,11 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
           router.push('/new');
         }}
         scaleTo={0.9}
-        style={styles.plus}
+        style={styles.plusWrap}
       >
-        <Icon name="add" size={32} color={colors.white} />
+        <GlassSurface style={styles.plus} fallback={styles.plusSolid} tint={tint.espresso} interactive>
+          <Icon name="add" size={32} color={colors.white} />
+        </GlassSurface>
       </PressScale>
     </View>
   );
@@ -119,28 +125,15 @@ const shadow = {
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  pill: {
-    flex: 1,
-    height: BAR_HEIGHT,
-    borderRadius: BAR_HEIGHT / 2,
-    backgroundColor: colors.card,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    ...shadow,
-  },
+  pill: { flex: 1, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2 },
+  pillSolid: { backgroundColor: colors.card, ...shadow },
+  pillRow: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 },
   item: { flex: 1, height: BAR_HEIGHT - 12, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  highlight: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: colors.accentSoft },
+  highlight: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: GLASS ? 'rgba(217,139,43,0.22)' : colors.accentSoft },
   label: { fontSize: 10, fontWeight: '600' },
-  plus: {
-    width: BAR_HEIGHT,
-    height: BAR_HEIGHT,
-    borderRadius: BAR_HEIGHT / 2,
-    backgroundColor: tint.espresso,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadow,
-  },
+  plusWrap: { width: BAR_HEIGHT, height: BAR_HEIGHT },
+  plus: { width: BAR_HEIGHT, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2, alignItems: 'center', justifyContent: 'center' },
+  plusSolid: { backgroundColor: tint.espresso, ...shadow },
   avatar: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.line },
   avatarOn: { backgroundColor: tint.espresso },
   avatarText: { fontSize: 11, fontWeight: '800', color: colors.text },
