@@ -83,7 +83,8 @@ function TabItem({ name, icon, label, focused, onPress }: { name: string; icon: 
     if (reduceMotionNow()) on.setValue(focused ? 1 : 0);
     else Animated.spring(on, { toValue: focused ? 1 : 0, useNativeDriver: true, speed: 22, bounciness: 6 }).start();
   }, [focused, on]);
-  const color = focused ? colors.text : colors.muted;
+  // Camda Apple gibi: seçili sekme renkli (kahve tonu), arkasında hafif gri mercek. Düz menüde siyah + krem vurgu.
+  const color = focused ? (GLASS ? colors.accentText : colors.text) : GLASS ? colors.text : colors.muted;
 
   return (
     <PressScale
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
   pillSolid: { backgroundColor: colors.card, ...shadow },
   pillRow: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 },
   item: { flex: 1, height: BAR_HEIGHT - 12, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  highlight: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: GLASS ? 'rgba(217,139,43,0.22)' : colors.accentSoft },
+  highlight: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: GLASS ? 'rgba(0,0,0,0.07)' : colors.accentSoft },
   label: { fontSize: 10, fontWeight: '600' },
   plusWrap: { width: BAR_HEIGHT, height: BAR_HEIGHT },
   plus: { width: BAR_HEIGHT, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2, alignItems: 'center', justifyContent: 'center' },
