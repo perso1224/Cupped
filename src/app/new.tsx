@@ -33,6 +33,7 @@ import { classifyPlace, normalizePlace, scoreCup } from '../lib/scoring';
 import { refreshReminder } from '../lib/reminders';
 import { discardPhoto, getEntry, knownPlaces, loadEntries, newId, persistPhoto, photoUrl, saveEntry, updateEntry, updateMetrics } from '../lib/storage';
 import { brewRatio, earnedBadges } from '../lib/progress';
+import { whenToDate, type When } from '../lib/when';
 import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from '../lib/types';
 import { colors, type } from '../theme';
 
@@ -66,6 +67,7 @@ export default function NewCup() {
   const photoWidth = useRef<number | undefined>(undefined);
   const [step, setStep] = useState<'photo' | 'details'>(editId ? 'details' : 'photo');
   const [method, setMethod] = useState<Method | null>(null);
+  const [when, setWhen] = useState<When>('now');
   const [where, setWhere] = useState<Where | null>(null);
   const [typed, setTyped] = useState('');
   const [history, setHistory] = useState<CupEntry[]>([]);
@@ -179,7 +181,7 @@ export default function NewCup() {
         water !== (original.brew?.waterMl ? String(original.brew.waterMl) : '') ||
         grind !== (original.brew?.grind ?? null) ||
         rating !== (original.rating ?? null)
-      : !!(photo || method || where || typed.trim() || notes.length || origin.trim() || dose || water || grind || note.trim() || rating);
+      : !!(photo || method || where || typed.trim() || notes.length || origin.trim() || dose || water || grind || note.trim() || rating || when !== 'now');
     if (!dirty) return goBack();
     if (Platform.OS === 'web') {
       if (globalThis.confirm?.(original ? tr.capture.discardEditTitle : tr.capture.discardTitle)) goBack();
@@ -251,9 +253,11 @@ export default function NewCup() {
       const waterMl = parseNum(water);
       const brew = doseG || waterMl || grind ? { doseG, waterMl, grind } : null;
       const noteText = note.trim() || null;
-      const createdAt = new Date().toISOString();
-      const { total, parts } = scoreCup(input, history, createdAt);
-      const palateTypeId = computePalateTypeId([...history, { ...input, createdAt }]);
+      const createdAt = whenToDate(when).toISOString();
+      // Dün olarak eklenen fincan yalnızca kendinden önceki fincanlara göre puanlanır (sonrakiler değişmez).
+      const earlier = history.filter((e) => e.createdAt < createdAt);
+      const { total, parts } = scoreCup(input, earlier, createdAt);
+      const palateTypeId = computePalateTypeId([...earlier, { ...input, createdAt }]);
       let photoUri: string | null = null;
       if (photo) {
         try {
@@ -467,6 +471,17 @@ export default function NewCup() {
         </View>
 
         {/* Kişisel beğeni: isteğe bağlı, skoru etkilemez */}
+        {/* Unutulan fincan: dün olarak eklenebilir (yalnızca yeni kayıtta; düzenlemede tarih değişmez) */}
+        {original ? null : (
+          <>
+            <Text style={styles.label}>{tr.capture.whenLabel}</Text>
+            <View style={styles.chips}>
+              <Chip label={tr.capture.whenNow} selected={when === 'now'} onPress={() => setWhen('now')} />
+              <Chip label={tr.capture.whenYesterday} selected={when === 'yesterday'} onPress={() => setWhen('yesterday')} />
+            </View>
+          </>
+        )}
+
         <Text style={styles.label}>{tr.rating.question}</Text>
         <StarInput value={rating} onChange={setRating} />
 
