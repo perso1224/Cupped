@@ -1,7 +1,8 @@
 import { Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_800ExtraBold, useFonts } from '@expo-google-fonts/fraunces';
+import { usePathname } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as Updates from 'expo-updates';
 import { Appearance, AppState, View } from 'react-native';
 import { refreshReminder } from '../lib/reminders';
@@ -11,6 +12,9 @@ import { colors, isDark, themePref } from '../theme';
 
 /** Doğrudan bağlantıyla açılan ekranların altında her zaman sekmeler olsun (geri tuşu çıkmaza girmesin). */
 export const unstable_settings = { anchor: '(tabs)' };
+
+/** Tema değişince yeniden yüklemenin güvenli olduğu ekranlar (yarım kalan giriş yok): ana sekmeler. */
+const SAFE_TO_RELOAD = new Set(['/', '/progress', '/passport', '/profile']);
 
 /** Aynı ekranın hızlı çift dokunuşla iki kez açılmasını engeller. */
 const single = { dangerouslySingular: true } as const;
@@ -31,17 +35,28 @@ export default function RootLayout() {
     return () => sub.remove();
   }, []);
 
-  // Karanlık mod: renkler açılışta seçilir. Telefonun görünümü değişirse, uygulama ÖNDEYKEN yeniden yükle.
+  // Karanlık mod: renkler açılışta seçilir. Telefonun görünümü değişirse uygulama yeniden yüklenir; ama
+  // yalnızca öndeyken VE bir ana sekmedeyken. Fincan eklerken/düzenlerken yeniden yükleme yazılanları siler,
+  // o yüzden kullanıcı bir sekmeye dönene kadar beklenir.
   // (iOS arka plana geçerken iki temada ekran görüntüsü alır ve görünümü kısa süre değiştirir; o an yüklemeyiz.)
+  const pathname = usePathname();
+  const pathRef = useRef(pathname);
+  const checkRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    pathRef.current = pathname;
+    checkRef.current(); // sekmeye dönüldüyse bekleyen tema değişikliğini şimdi uygula
+  }, [pathname]);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const check = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
         if (AppState.currentState !== 'active' || themePref !== 'system') return;
+        if (!SAFE_TO_RELOAD.has(pathRef.current)) return;
         if ((Appearance.getColorScheme() === 'dark') !== isDark) Updates.reloadAsync().catch(() => {});
       }, 400);
     };
+    checkRef.current = check;
     const a = Appearance.addChangeListener(check);
     const b = AppState.addEventListener('change', (s) => s === 'active' && check());
     return () => {
