@@ -13,6 +13,7 @@ import {
   favorites,
   placeRatings,
   coffeeTime,
+  yearWall,
   scoreTrend,
   passport,
   periodReport,
@@ -368,5 +369,18 @@ describe('kahve saati tek hesap', () => {
     const l = hs.map((h, i) => cup(at(2026, 10, 1 + i, h)));
     expect(coffeeTime(l)).toEqual({ part: 'noon', hour: 12 });
     expect(favorites(l)).toMatchObject({ part: 'noon', hour: 12 });
+  });
+});
+
+describe('Fincan Duvarı', () => {
+  it('12 ay, her ay kendi gün sayısı; gün başına en iyi fincan; gelecek günler işaretli', () => {
+    const l = [cup(at(2026, 1, 3, 8), { score: 50 }), cup(at(2026, 1, 3, 15), { score: 70 }), cup(at(2025, 1, 3), { score: 99 })];
+    const w = yearWall(l, 2026, new Date(2026, 5, 15));
+    expect(w).toHaveLength(12);
+    expect(w[1]).toHaveLength(28);
+    expect(w[1][2].best?.score).toBe(70);
+    expect(w[0][0].best).toBeNull();
+    expect(w[5][15].future).toBe(true);
+    expect(w[5][14].future).toBe(false);
   });
 });

@@ -475,3 +475,28 @@ export function coffeeTime(entries: CupEntry[]): { part: DayPart; hour: number }
   const inPart = hours.filter((h) => h >= DAY_PARTS[i].from && h < DAY_PARTS[i].to).map(String);
   return { part: DAY_PARTS[i].key, hour: Number(mostCommon(inPart)[0]) };
 }
+
+export type WallDay = { key: string; month: number; day: number; best: CupEntry | null; future: boolean };
+
+/**
+ * Fincan Duvarı: yılın her günü için o günün en yüksek skorlu fincanı (12 ay × gün sayısı).
+ * future: bugünden sonraki günler (posterde soluk).
+ */
+export function yearWall(entries: CupEntry[], year: number, today: Date = new Date()): WallDay[][] {
+  const byDay = new Map<string, CupEntry>();
+  for (const e of entries) {
+    const d = new Date(e.createdAt);
+    if (d.getFullYear() !== year) continue;
+    const k = dayKey(d);
+    const cur = byDay.get(k);
+    if (!cur || e.score > cur.score) byDay.set(k, e);
+  }
+  const todayKey = dayKey(today);
+  return Array.from({ length: 12 }, (_, m) => {
+    const days = new Date(year, m + 1, 0).getDate();
+    return Array.from({ length: days }, (_, i) => {
+      const key = dayKey(new Date(year, m, i + 1));
+      return { key, month: m, day: i + 1, best: byDay.get(key) ?? null, future: key > todayKey };
+    });
+  });
+}

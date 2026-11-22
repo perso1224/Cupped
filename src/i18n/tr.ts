@@ -319,6 +319,15 @@ export const tr = {
   intro: {
     tagline: 'Damak kimliğin',
   },
+  wall: {
+    title: 'Fincan Duvarı',
+    kicker: 'Fincan Duvarım',
+    sub: (cups: number, days: number) => `${cups} fincan · ${days} gün`,
+    days: 'Gün',
+    streak: 'En uzun seri',
+    empty: 'Bu yıl henüz fincan yok. Her fincan duvara bir kare ekler.',
+    open: 'Yılın Fincan Duvarı',
+  },
   match: {
     title: 'Damak Uyumu',
     sub: 'Kodunu arkadaşına gönder, onun kodunu buraya yaz; uyumunuzu görün. Kod yalnızca zevk özetini taşır, adını ya da fincanlarını değil.',

@@ -174,6 +174,9 @@ export default function Progress() {
             style={{ marginTop: 20 }}
           />
         ) : null}
+        {entries.length > 0 ? (
+          <PillButton label={tr.wall.open} icon="grid-outline" variant="light" onPress={() => router.push('/wall')} style={{ marginTop: 12 }} />
+        ) : null}
         {hasPrev ? (
           <PillButton
             label={kind === 'week' ? tr.wrapped.lastWeek : tr.wrapped.lastMonth}
