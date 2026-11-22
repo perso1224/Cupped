@@ -12,6 +12,7 @@ import {
   noteShares,
   favorites,
   placeRatings,
+  coffeeTime,
   scoreTrend,
   passport,
   periodReport,
@@ -321,8 +322,8 @@ describe('ana sayfa kaydırmalı kartlar', () => {
       cup(at(2026, 0, 2, 9), { method: 'filter', venueKind: 'independent', placeName: 'kör nokta', origin: 'Etiyopya Guji' }),
       cup(at(2026, 0, 3, 15), { method: 'espresso', venueKind: 'home', placeName: null }),
     ];
-    expect(favorites(l)).toEqual({ place: 'Kör Nokta', method: 'filter', origin: 'Etiyopya Guji', hour: 9, loved: null });
-    expect(favorites([])).toEqual({ place: null, method: null, origin: null, hour: null, loved: null });
+    expect(favorites(l)).toEqual({ place: 'Kör Nokta', method: 'filter', origin: 'Etiyopya Guji', hour: 9, part: 'morning', loved: null });
+    expect(favorites([])).toEqual({ place: null, method: null, origin: null, hour: null, part: null, loved: null });
   });
 });
 
@@ -357,5 +358,15 @@ describe('rozet kuralları (22 Kas)', () => {
     const many = Array.from({ length: 100 }, (_, i) => cup(new Date(2026, 0, 1 + Math.floor(i / 3)).toISOString()));
     expect(ids(many)).toContain('hundred_cups');
     expect(badgeProgress(many.slice(0, 40)).find((b) => b.badge.id === 'hundred_cups')).toMatchObject({ current: 40, target: 100 });
+  });
+});
+
+describe('kahve saati tek hesap', () => {
+  it('en sık gün dilimi, saat o dilimin içinden (tek saat çok tekrar etse de)', () => {
+    // 3 kez 9'da (sabah) ama 4 kez öğle dilimi (11, 12, 12, 13): dilim öğle, saat 12
+    const hs = [9, 9, 9, 11, 12, 12, 13];
+    const l = hs.map((h, i) => cup(at(2026, 10, 1 + i, h)));
+    expect(coffeeTime(l)).toEqual({ part: 'noon', hour: 12 });
+    expect(favorites(l)).toMatchObject({ part: 'noon', hour: 12 });
   });
 });

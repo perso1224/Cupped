@@ -86,7 +86,8 @@ export const tr = {
       taste: 'Damak haritan',
       tasteEmpty: 'Fincan eklerken "Detay ekle"den tat notu seçtikçe damak haritan burada oluşur.',
       favorites: 'Favorilerin',
-      hourType: (h: number) => (h < 12 ? 'Sen bir sabah kahvecisisin' : h < 17 ? 'Sen bir öğleden sonra kahvecisisin' : 'Sen bir akşam kahvecisisin'),
+      hourType: (p: 'morning' | 'noon' | 'afternoon' | 'evening' | 'night') =>
+        ({ morning: 'Sen bir sabah kahvecisisin', noon: 'Sen bir öğle kahvecisisin', afternoon: 'Sen bir öğleden sonra kahvecisisin', evening: 'Sen bir akşam kahvecisisin', night: 'Sen bir gece kuşusun' })[p],
       place: 'Mekan',
       loved: 'En sevdiğin',
       method: 'Yöntem',

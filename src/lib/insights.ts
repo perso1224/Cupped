@@ -1,5 +1,5 @@
 import { CAFFEINE_MG } from '../config/scoring.config';
-import { addDays, inRange, startOfWeek } from './progress';
+import { addDays, coffeeTime, inRange, startOfWeek, type DayPart } from './progress';
 import { normalizePlace } from './scoring';
 import type { CupEntry } from './types';
 
@@ -8,13 +8,13 @@ export type Insight = { id: string; icon: 'trending-up' | 'trending-down' | 'rem
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
-const DAY_PARTS: { from: number; to: number; label: string }[] = [
-  { from: 5, to: 11, label: 'sabahları' },
-  { from: 11, to: 14, label: 'öğle saatlerinde' },
-  { from: 14, to: 18, label: 'öğleden sonraları' },
-  { from: 18, to: 24, label: 'akşamları' },
-  { from: 0, to: 5, label: 'gece yarısından sonra' },
-];
+const PART_LABEL: Record<DayPart, string> = {
+  morning: 'sabahları',
+  noon: 'öğle saatlerinde',
+  afternoon: 'öğleden sonraları',
+  evening: 'akşamları',
+  night: 'gece yarısından sonra',
+};
 const WEEKDAYS = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
 
 export function insights(entries: CupEntry[], now: Date = new Date()): Insight[] {
@@ -41,12 +41,8 @@ export function insights(entries: CupEntry[], now: Date = new Date()): Insight[]
 
   // 2) En sık içilen gün dilimi (en az 4 fincan)
   if (entries.length >= 4) {
-    const counts = DAY_PARTS.map((p) => entries.filter((e) => {
-      const h = new Date(e.createdAt).getHours();
-      return h >= p.from && h < p.to;
-    }).length);
-    const i = counts.indexOf(Math.max(...counts));
-    out.push({ id: 'time', icon: 'time', title: 'Kahve saatin', text: `En çok ${DAY_PARTS[i].label} içiyorsun.` });
+    const t = coffeeTime(entries)!; // ana sayfadaki Favoriler kartıyla aynı hesap
+    out.push({ id: 'time', icon: 'time', title: 'Kahve saatin', text: `En çok ${PART_LABEL[t.part]} içiyorsun.` });
   }
 
   // 3) En sadık olunan mekan (en az 2 ziyaret)

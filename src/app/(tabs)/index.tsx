@@ -204,7 +204,7 @@ export default function Home() {
   const favPage = (
     <View key="fav" style={styles.board}>
       <Text style={styles.boardKicker}>{upper(tr.home.board.favorites)}</Text>
-      {fav.hour !== null ? <Text style={styles.boardTitle}>{tr.home.board.hourType(fav.hour)}</Text> : null}
+      {fav.part ? <Text style={styles.boardTitle}>{tr.home.board.hourType(fav.part)}</Text> : null}
       <View style={styles.boardRule} />
       <MenuLine color={tint.cherry} label={tr.home.board.place} value={fav.place ?? '—'} />
       {fav.loved ? <MenuLine color={STAR_COLOR} label={tr.home.board.loved} value={`${fav.loved.name} ${tr.rating.avg(fav.loved.avg)}`} /> : null}

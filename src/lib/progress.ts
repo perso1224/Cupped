@@ -413,20 +413,21 @@ export function noteShares(entries: CupEntry[]): NoteShare[] {
     .map(([note, count]) => ({ note, count, pct: Math.round((count / total) * 100) }));
 }
 
-export type Favorites = { place: string | null; method: Method | null; origin: string | null; hour: number | null; loved: { name: string; avg: number } | null };
+export type Favorites = { place: string | null; method: Method | null; origin: string | null; hour: number | null; part: DayPart | null; loved: { name: string; avg: number } | null };
 
 /** Favorilerin: en sık mekan, yöntem, çekirdek (menşei metninin ilk parçası) ve kahve saati. */
 export function favorites(entries: CupEntry[]): Favorites {
-  if (!entries.length) return { place: null, method: null, origin: null, hour: null, loved: null };
+  if (!entries.length) return { place: null, method: null, origin: null, hour: null, part: null, loved: null };
   const sorted = [...entries].sort(byDate);
   const p = passport(sorted).places[0];
   const origins = sorted.map((e) => e.origin?.split(' · ')[0]?.trim()).filter((o): o is string => !!o);
-  const hours = sorted.map((e) => String(new Date(e.createdAt).getHours()));
+  const time = coffeeTime(sorted);
   return {
     place: p ? p.name : null,
     method: mostCommon(sorted.map((e) => e.method))[0] ?? null,
     origin: origins.length ? mostCommon(origins)[0] : null,
-    hour: Number(mostCommon(hours)[0]),
+    hour: time?.hour ?? null,
+    part: time?.part ?? null,
     loved: lovedPlace(sorted),
   };
 }
@@ -451,4 +452,26 @@ function lovedPlace(entries: CupEntry[]): { name: string; avg: number } | null {
   if (!best) return null;
   const p = passport(entries).places.find((x) => x.key === best.key);
   return p ? { name: p.name, avg: best.avg } : null;
+}
+
+export type DayPart = 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
+export const DAY_PARTS: { key: DayPart; from: number; to: number }[] = [
+  { key: 'morning', from: 5, to: 11 },
+  { key: 'noon', from: 11, to: 14 },
+  { key: 'afternoon', from: 14, to: 18 },
+  { key: 'evening', from: 18, to: 24 },
+  { key: 'night', from: 0, to: 5 },
+];
+
+/**
+ * Kahve saati (uygulamanın her yerinde aynı hesap): en çok içilen gün dilimi ve o dilimdeki en sık saat.
+ * Ana sayfa Favoriler kartı ve Öne Çıkanlar bunu kullanır; birbirini tutmayan mesaj çıkmaz.
+ */
+export function coffeeTime(entries: CupEntry[]): { part: DayPart; hour: number } | null {
+  if (!entries.length) return null;
+  const hours = entries.map((e) => new Date(e.createdAt).getHours());
+  const counts = DAY_PARTS.map((p) => hours.filter((h) => h >= p.from && h < p.to).length);
+  const i = counts.indexOf(Math.max(...counts));
+  const inPart = hours.filter((h) => h >= DAY_PARTS[i].from && h < DAY_PARTS[i].to).map(String);
+  return { part: DAY_PARTS[i].key, hour: Number(mostCommon(inPart)[0]) };
 }
