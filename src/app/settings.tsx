@@ -32,8 +32,13 @@ function confirm(title: string, body: string, ok: string, onOk: () => void) {
   ]);
 }
 
+/** Gizli deneme bölümü bu açılışta açıldı mı (ekrandan çıkıp girince kapanmasın). */
+let betaUnlocked = false;
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const [beta, setBeta] = useState(betaUnlocked);
+  const versionTaps = useRef(0);
   // iPhone'da sistem penceresi; Android'de alttan liste (4-5 seçenek sığsın)
   const [choose, choiceSheet] = useChoice();
   const settings = useSettings();
@@ -211,13 +216,28 @@ export default function SettingsScreen() {
         <ListRow icon="download-outline" tint={tint.sky} title={tr.settings.import} chevron onPress={doImport} />
       </ListSection>
 
-      <ListSection title={tr.settings.beta}>
-        <ListRow icon="stats-chart" tint={tint.slate} title={tr.profile.testStats} chevron onPress={() => router.push('/stats')} />
-      </ListSection>
+      {/* Deneme bölümü normal kullanıcıdan gizli: Sürüm satırına 5 kez dokununca açılır (uygulama açık kaldıkça) */}
+      {beta ? (
+        <ListSection title={tr.settings.beta}>
+          <ListRow icon="stats-chart" tint={tint.slate} title={tr.profile.testStats} chevron onPress={() => router.push('/stats')} />
+        </ListSection>
+      ) : null}
 
       <ListSection title={tr.settings.about}>
         <ListRow icon="lock-closed" tint={tint.espresso} title={tr.settings.privacy} chevron onPress={() => router.push('/privacy')} />
-        <ListRow icon="information-circle" tint={tint.slate} title={tr.settings.version} value={Constants.expoConfig?.version ?? '1.0.0'} />
+        <ListRow
+          icon="information-circle"
+          tint={tint.slate}
+          title={tr.settings.version}
+          value={Constants.expoConfig?.version ?? '1.0.0'}
+          onPress={() => {
+            versionTaps.current += 1;
+            if (versionTaps.current >= 5 && !beta) {
+              betaUnlocked = true;
+              setBeta(true);
+            }
+          }}
+        />
       </ListSection>
 
       <ListSection>
