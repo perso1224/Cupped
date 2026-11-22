@@ -10,7 +10,7 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - Before declaring work done, run:
   - `npx tsc --noEmit`
   - `CI=1 npx expo lint`
-  - `npx vitest run` (104 tests)
+  - `npx vitest run` (122 tests)
   - a web export plus Playwright checks in the scratchpad
 - Commit messages are in Turkish and end with the attribution lines.
 - The "no schema change" rule from earlier in this session was lifted, for the star rating only.
@@ -109,3 +109,4 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - `docs/APP_STORE.md` has the TestFlight test info, store texts (checked against character limits), category, age rating, App Privacy ("Data Not Collected") and a screenshot plan.
   - `docs/gizlilik.html` is the public privacy policy.
   - Waiting on the owner: a contact e-mail, and where to host the privacy page (GitHub Pages needs a public repo).
+- Audit by 5 agents: the consolidated findings are in `docs/DENETIM_RAPORU.md` (A–E, with ☐/☑/❓ status).
