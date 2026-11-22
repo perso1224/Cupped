@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { Fragment, useMemo } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
@@ -45,6 +45,10 @@ export default function Home() {
   const profile = useProfile();
   const settings = useSettings();
   const [metrics, reloadMetrics] = useMetrics();
+  // Sekmeye her dönüşte yeniden çizilsin: "son fincan … önce" ve gün değişimi güncel kalsın
+  // (fincan listesi bellekten aynı geldiği için başka türlü yeniden çizilmez)
+  const [nowMs, setNowMs] = useState(0);
+  useFocusEffect(useCallback(() => setNowMs(Date.now()), []));
   const todayKey = dayKey(new Date());
 
   // Tüm geçmişe bakan hesaplar yalnızca fincanlar ya da gün değişince yapılır (her çizimde değil;
@@ -133,6 +137,9 @@ export default function Home() {
   })();
 
   const over = caffeine.mg > settings.caffeineRef;
+  // Son fincandan bu yana geçen süre her çizimde (önbelleğe alınmaz)
+  const lastAt = list.reduce<string | null>((m, e) => (!m || e.createdAt > m ? e.createdAt : m), null);
+  const minutesSinceLast = lastAt && nowMs ? Math.max(0, Math.round((Math.max(nowMs, Date.parse(lastAt)) - Date.parse(lastAt)) / 60000)) : null;
   const pageW = screenW - 40;
 
   // Ana sayfanın kaydırmalı "menü tahtası": en fazla 5 sayfa, hepsi aynı koyu kahve zeminde.
@@ -186,7 +193,7 @@ export default function Home() {
         ))}
       </View>
       <MenuLine color={tint.amber} label={tr.home.cupsToday} value={`${caffeine.cups} fincan`} />
-      <MenuLine color={tint.cherry} label={tr.home.lastCup} value={caffeine.minutesSinceLast === null ? '—' : tr.home.ago(agoLabel(caffeine.minutesSinceLast))} />
+      <MenuLine color={tint.cherry} label={tr.home.lastCup} value={minutesSinceLast === null ? '—' : tr.home.ago(agoLabel(minutesSinceLast))} />
     </View>
   );
 

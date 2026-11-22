@@ -35,6 +35,14 @@ describe('Damak Tipi', () => {
     expect(rawPalateTypeId(cups)).toBe('cafe_nomad');
   });
 
+  it('iki yöntem arasında gidip gelmek tipi her fincanda değiştirmez', () => {
+    const at = (i: number) => new Date(2026, 9, 1 + i, 9).toISOString();
+    const cups = Array.from({ length: 20 }, (_, i) => cup({ method: i % 2 ? 'espresso' : 'filter', venueKind: 'home', createdAt: at(i) }));
+    const types = cups.map((_, i) => computePalateTypeId(cups.slice(0, i + 1)));
+    const changes = types.filter((t, i) => i > 0 && t !== types[i - 1]).length;
+    expect(changes).toBeLessThanOrEqual(1);
+  });
+
   it('kararlılık: tek bir farklı fincan tipi değiştirmez, art arda ikisi değiştirir', () => {
     const at = (i: number) => new Date(2026, 10, 1 + i, 9).toISOString();
     const base = Array.from({ length: 6 }, (_, i) => cup({ method: 'espresso', createdAt: at(i) }));

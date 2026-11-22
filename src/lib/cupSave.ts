@@ -52,6 +52,17 @@ function brewOf(f: Pick<CupForm, 'dose' | 'water' | 'grind'>) {
   return doseG || waterMl || f.grind ? { doseG, waterMl, grind: f.grind } : null;
 }
 
+/**
+ * Fincanın gününü değiştirirken saati korunur (sabah 08:10'daki fincan "dün" yapılınca dün 08:10 olur).
+ * Sonuç gelecekte kalırsa (ör. akşamki fincan bugüne alınırken) şimdiki ana çekilir.
+ */
+export function movedToDay(origIso: string, when: When, now: Date = new Date()): string {
+  const d = whenToDate(when, now);
+  const o = new Date(origIso);
+  d.setHours(o.getHours(), o.getMinutes(), o.getSeconds(), o.getMilliseconds());
+  return (d > now ? now : d).toISOString();
+}
+
 /** Damak Evrimi kutlaması en fazla haftada bir ve yeterli geçmişte (tip her fincanda "evrilmiş" görünmesin). */
 export const EVOLUTION_RULES = { minHistory: 5, minDays: 7 };
 
@@ -129,7 +140,7 @@ export async function editCup(orig: CupEntry, f: CupForm & { photoChanged: boole
   let newPhoto: string | null = null;
   try {
     const all = await loadEntries();
-    const createdAt = f.dateChanged ? whenToDate(f.when).toISOString() : orig.createdAt;
+    const createdAt = f.dateChanged ? movedToDay(orig.createdAt, f.when) : orig.createdAt;
     const before = all.filter((e) => e.id !== orig.id && e.createdAt < createdAt);
     const input = cupInput(f);
     // Skoru etkileyen bilgiler değişmediyse (ör. sadece yıldız, not ya da fotoğraf) skor olduğu gibi kalır.

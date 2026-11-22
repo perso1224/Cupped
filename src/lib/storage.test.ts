@@ -69,3 +69,18 @@ describe('veri katmanı', () => {
     expect(raw.find((e: { id: string }) => e.id === 'x').futureField).toBe('kalsın');
   });
 });
+
+describe('bir kerelik damak tipi taşıma', () => {
+  it('eski fincanların tipini kararlı hesapla yeniler ve bir kez çalışır', async () => {
+    const { migratePalateTypes } = await import('./storage');
+    const old = [cup('a', '2026-11-01T09:00:00.000Z', null), cup('b', '2026-11-02T09:00:00.000Z', null)].map((e) => ({ ...e, palateTypeId: 'yanlis' }));
+    mem.set('cupped.entries.v1', JSON.stringify(old));
+    await migratePalateTypes();
+    const after = JSON.parse(mem.get('cupped.entries.v1')!);
+    expect(after.every((e: { palateTypeId: string }) => e.palateTypeId !== 'yanlis')).toBe(true);
+    expect(mem.get('cupped.migrated.palateStable')).toBe('1');
+    mem.set('cupped.entries.v1', JSON.stringify(old));
+    await migratePalateTypes(); // ikinci kez dokunmaz
+    expect(JSON.parse(mem.get('cupped.entries.v1')!)[0].palateTypeId).toBe('yanlis');
+  });
+});

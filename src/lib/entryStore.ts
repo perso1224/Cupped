@@ -26,39 +26,71 @@ function dir(): Directory {
 }
 const file = (name: string) => new File(dir(), name);
 
-/** Ham metni okur (yoksa null). Telefonda dosya yoksa eski AsyncStorage verisini dosyaya taşır. */
+/**
+ * Ham metni okur (yoksa null). Telefonda:
+ * - Yarım kalmış bir yazma varsa (ana dosya taşınırken uygulama kapandıysa) tamamlanmış yeni metin geri getirilir.
+ * - Dosya hiç yoksa eski sürümün AsyncStorage verisi dosyaya taşınır.
+ * - Ana liste hiç bulunamıyor ama yedek dosyası varsa yedek döner (boş liste gösterilip yedeğin üzerine yazılmasın).
+ */
 export async function readRaw(slot: Slot): Promise<string | null> {
   if (!useFiles) return AsyncStorage.getItem(KEYS[slot]);
-  const f = file(FILES[slot]);
-  if (f.exists) return f.text();
+  const name = FILES[slot];
+  if (file(name).exists) return file(name).text();
+  const recovered = recoverInterrupted(name);
+  if (recovered !== null) return recovered;
   const legacy = await AsyncStorage.getItem(KEYS[slot]);
-  if (legacy == null) return null;
-  // Taşıma: önce dosyaya yaz, dosya gerçekten oluştuysa eski kopyayı sil (yer açılsın)
-  await writeRaw(slot, legacy);
-  if (file(FILES[slot]).exists) await AsyncStorage.removeItem(KEYS[slot]).catch(() => {});
-  return legacy;
+  if (legacy != null) {
+    // Taşıma: önce dosyaya yaz; yazılınca eski kopya silinir (writeRaw içinde)
+    await writeRaw(slot, legacy);
+    return legacy;
+  }
+  if (slot === 'main' && file(FILES.backup).exists) return file(FILES.backup).text();
+  return null;
 }
 
-/** Ham metni güvenli yazar (geçici dosya → yerine taşı). */
+/**
+ * Yazma sırası: 1) yeni metin geçici dosyaya, 2) eski ana dosya ".old" olur, 3) geçici dosya ana dosya olur,
+ * 4) ".old" silinir. 2 ile 3 arasında uygulama kapanırsa ana dosya yoktur ama ".tmp" tamdır (1 bitmeden 2 başlamaz):
+ * okurken ".tmp" (yoksa ".old") yerine konur. 1 sırasında kapanırsa ana dosyaya hiç dokunulmamıştır.
+ */
+function recoverInterrupted(name: string): string | null {
+  const old = file(`${name}.old`);
+  if (!old.exists) return null;
+  const tmp = file(`${name}.tmp`);
+  const source = tmp.exists ? tmp : old;
+  const text = source.textSync();
+  source.moveSync(file(name), { overwrite: true });
+  const leftover = file(`${name}.old`);
+  if (leftover.exists) leftover.delete();
+  return text;
+}
+
+const legacyCleared: Record<Slot, boolean> = { main: false, backup: false };
+
+/** Ham metni güvenli yazar. Yazılamazsa hata fırlatır ve var olan dosyaya dokunmaz (veri kaybolmaz). */
 export async function writeRaw(slot: Slot, text: string): Promise<void> {
   if (!useFiles) {
     await AsyncStorage.setItem(KEYS[slot], text);
     return;
   }
+  const name = FILES[slot];
+  const tmp = file(`${name}.tmp`);
+  tmp.create({ overwrite: true });
+  tmp.writeSync(text); // burada hata olursa ana dosya olduğu gibi kalır
+  const hadMain = file(name).exists;
+  if (hadMain) file(name).moveSync(file(`${name}.old`), { overwrite: true });
   try {
-    const tmp = file(`${FILES[slot]}.tmp`);
-    tmp.create({ overwrite: true });
-    tmp.writeSync(text);
-    tmp.moveSync(file(FILES[slot]), { overwrite: true });
-  } catch {
-    // Dosyaya yazılamazsa (çok nadir) eski yere yaz; eski dosya silinir ki okurken bayat dosya öne geçmesin
-    try {
-      const f = file(FILES[slot]);
-      if (f.exists) f.delete();
-    } catch {
-      // silinemezse de devam
-    }
-    await AsyncStorage.setItem(KEYS[slot], text);
+    file(`${name}.tmp`).moveSync(file(name));
+  } catch (err) {
+    // Yeni dosya yerine konamadıysa eskisini geri koy
+    if (hadMain && file(`${name}.old`).exists && !file(name).exists) file(`${name}.old`).moveSync(file(name));
+    throw err;
+  }
+  if (file(`${name}.old`).exists) file(`${name}.old`).delete();
+  // Eski sürümden kalan AsyncStorage kopyası artık gereksiz (Android'de yer kaplamasın)
+  if (!legacyCleared[slot]) {
+    legacyCleared[slot] = true;
+    await AsyncStorage.removeItem(KEYS[slot]).catch(() => {});
   }
 }
 

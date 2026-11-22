@@ -8,7 +8,7 @@ import { Alert, Appearance, AppState, Platform, View } from 'react-native';
 import { BrandIntro } from '../components/BrandIntro';
 import { setIntroPlaying, useReducedMotion } from '../components/motion';
 import { refreshReminder } from '../lib/reminders';
-import { consumeRecoveryNotice, consumeReturnRoute, recordActiveDay } from '../lib/storage';
+import { consumeRecoveryNotice, consumeReturnRoute, migratePalateTypes, recordActiveDay } from '../lib/storage';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
 import { colors, isDark, themePref } from '../theme';
@@ -45,6 +45,8 @@ export default function RootLayout() {
       refreshReminder();
     };
     onActive();
+    // Bir kerelik: eski fincanların damak tipi yeni kararlı hesaba geçer
+    migratePalateTypes().catch(() => {});
     // Kayıtlar okunamayacak kadar bozulduysa (çok nadir) kullanıcıya bir kez söyle
     consumeRecoveryNotice().then((v) => v && Alert.alert(tr.recovered.title, tr.recovered.body));
     const sub = AppState.addEventListener('change', (s) => s === 'active' && onActive());

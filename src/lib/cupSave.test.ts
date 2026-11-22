@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('./storage', () => ({}));
 vi.mock('./reminders', () => ({ refreshReminder: () => {} }));
 
-const { parseNum, cupInput } = await import('./cupSave');
+const { parseNum, cupInput, movedToDay } = await import('./cupSave');
 
 describe('sayı girişi', () => {
   it('Türkçe ondalık ve binlik ayırıcıyı anlar', () => {
@@ -33,5 +33,16 @@ describe('form → skor girdisi', () => {
       origin: null,
     });
     expect(cupInput({ method: 'filter', where: { kind: 'home' }, notes: ['fruity'], origin: 'Etiyopya' }).placeName).toBeNull();
+  });
+});
+
+describe('düzenlemede gün değiştirme', () => {
+  it('saati korur, geleceğe taşmaz', () => {
+    const now = new Date(2026, 10, 22, 10, 0);
+    const orig = new Date(2026, 10, 20, 8, 10).toISOString();
+    const y = new Date(movedToDay(orig, 'yesterday', now));
+    expect([y.getDate(), y.getHours(), y.getMinutes()]).toEqual([21, 8, 10]);
+    const late = new Date(2026, 10, 20, 23, 0).toISOString();
+    expect(movedToDay(late, 'now', now)).toBe(now.toISOString());
   });
 });

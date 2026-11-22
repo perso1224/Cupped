@@ -25,16 +25,26 @@ export function mostCommon<T extends string>(items: T[]): T[] {
  */
 export function computePalateTypeId(entries: PalateSource[], opts: { wholePeriod?: boolean } = {}): string {
   if (opts.wholePeriod) return rawPalateTypeId(entries, opts);
-  // Kararlı tip: tek bir farklı fincan tipi değiştirmesin. Son fincanla, ondan bir önce ve iki önceki duruma göre
-  // hesaplanan üç tipten en az ikisi aynıysa o tip; yeni bir tip ancak art arda iki fincanla yerleşir.
+  // Kararlı tip: ham hesap fincan fincan izlenir; tip yalnızca ham sonuç art arda iki fincanda AYNI yeni tipi
+  // gösterince değişir. İki yöntem arasında gidip gelen kullanıcının tipi her fincanda değişmez.
   const sorted = [...entries].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  const c0 = rawPalateTypeId(sorted);
-  if (sorted.length < 2) return c0;
-  const c1 = rawPalateTypeId(sorted.slice(0, -1));
-  if (c0 === c1) return c0;
-  if (sorted.length < 3) return c1;
-  const c2 = rawPalateTypeId(sorted.slice(0, -2));
-  return c0 === c2 ? c0 : c1;
+  if (sorted.length === 0) return rawPalateTypeId(sorted);
+  const t = createPalateTracker();
+  for (let i = 0; i < sorted.length; i++) palateStep(t, sorted.slice(Math.max(0, i + 1 - PALATE_RULES.window), i + 1));
+  return t.stable!;
+}
+
+/** Kararlı damak tipini fincan fincan izleyen durum (toplu yeniden puanlamada da kullanılır). */
+export type PalateTracker = { stable: string | null; prev: string | null };
+export function createPalateTracker(): PalateTracker {
+  return { stable: null, prev: null };
+}
+/** Bir fincan ilerletir. `recent`: bu fincanla biten son N fincan (tarih sırasıyla). Kararlı tipi döner. */
+export function palateStep(t: PalateTracker, recent: PalateSource[]): string {
+  const c = rawPalateTypeId(recent);
+  if (t.stable === null || c === t.prev) t.stable = c;
+  t.prev = c;
+  return t.stable;
 }
 
 /** Damak tipinin ham hesabı (son N fincan; dönem raporunda dönemin tamamı). */

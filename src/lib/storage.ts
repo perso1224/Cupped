@@ -4,6 +4,8 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { parseEntries, parseEntriesDetailed } from './entries';
 import { deleteAllRaw, keepCorruptRaw, readRaw, writeRaw } from './entryStore';
 import { rescoreAfter } from './rescore';
+import { createPalateTracker, palateStep } from './palate';
+import { PALATE_RULES } from '../config/scoring.config';
 import { appLabel, normalizeMetrics, type Metrics, type ShareSource } from './metrics';
 import { normalizeSettings, type Settings } from './settings';
 import { placeNameKey } from './scoring';
@@ -185,6 +187,28 @@ export function deleteEntry(id: string): Promise<void> {
   });
 }
 
+const PALATE_MIGRATION_KEY = 'cupped.migrated.palateStable';
+
+/**
+ * Bir kerelik: eski fincanlardaki damak tipini yeni kararlı hesapla yeniler (Pasaport vizeleri ve eski kartlar
+ * ekranda gösterilen tiple tutarlı olsun). Skorlara dokunulmaz. Uygulama açılışında çağrılır.
+ */
+export function migratePalateTypes(): Promise<void> {
+  return enqueue(async () => {
+    if (await AsyncStorage.getItem(PALATE_MIGRATION_KEY)) return;
+    const list = await readEntriesStrict();
+    const chrono = [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const tracker = createPalateTracker();
+    const changed = new Map<string, string>();
+    chrono.forEach((e, i) => {
+      const t = palateStep(tracker, chrono.slice(Math.max(0, i + 1 - PALATE_RULES.window), i + 1));
+      if (t !== e.palateTypeId) changed.set(e.id, t);
+    });
+    if (changed.size) await writeEntries(list.map((e) => (changed.has(e.id) ? { ...e, palateTypeId: changed.get(e.id)! } : e)));
+    await AsyncStorage.setItem(PALATE_MIGRATION_KEY, '1');
+  });
+}
+
 export async function getEntry(id: string): Promise<CupEntry | undefined> {
   return (await loadEntries()).find((e) => e.id === id);
 }
@@ -246,9 +270,20 @@ async function makeThumb(stored: string): Promise<void> {
   if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
   const img = await ImageManipulator.manipulate(src.uri).resize({ width: THUMB_WIDTH }).renderAsync();
   const saved = await img.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
+  // Bu sırada fincan silindiyse küçük kopya sahipsiz kalmasın
+  if (!new File(Paths.document, stored).exists) {
+    new File(saved.uri).delete();
+    return;
+  }
   const dest = new File(Paths.document, thumbPath(stored));
   if (dest.exists) dest.delete();
   new File(saved.uri).moveSync(dest);
+}
+
+// Eski fotoğrafların küçük kopyaları tek tek hazırlanır (yüzlerce fotoğraf aynı anda çözülüp bellek taşmasın)
+let thumbQueue: Promise<unknown> = Promise.resolve();
+function queueThumb(stored: string) {
+  thumbQueue = thumbQueue.then(() => makeThumb(stored)).catch(() => {});
 }
 
 /**
@@ -266,7 +301,7 @@ export function thumbUrl(stored: string | null | undefined): string | null {
   }
   if (!thumbPending.has(stored)) {
     thumbPending.add(stored);
-    makeThumb(stored).catch(() => {});
+    queueThumb(stored);
   }
   return photoUrl(stored);
 }

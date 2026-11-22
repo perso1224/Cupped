@@ -1,5 +1,5 @@
 import { PALATE_RULES } from '../config/scoring.config';
-import { computePalateTypeId } from './palate';
+import { createPalateTracker, palateStep } from './palate';
 import { addToIndex, createHistoryIndex, discoveryPoints } from './scoring';
 import type { CupEntry } from './types';
 
@@ -14,15 +14,16 @@ export function rescoreAfter(list: CupEntry[], fromIso: string): CupEntry[] {
   const chrono = [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const updated = new Map<string, CupEntry>();
   const ix = createHistoryIndex();
+  const tracker = createPalateTracker(); // kararlı damak tipi baştan itibaren izlenir
   const done: CupEntry[] = [];
   for (const e of chrono) {
     let cur = e;
+    const stableType = palateStep(tracker, [...done.slice(-(PALATE_RULES.window - 1)), e]);
     if (e.createdAt > fromIso) {
       const discovery = discoveryPoints(e, ix, e.createdAt);
       const parts = { ...e.parts, discovery };
       const total = Math.max(0, Math.min(100, parts.base + parts.effort + parts.depth + parts.discovery + parts.selectivity));
-      // Damak tipi yalnızca son N fincana (+ kararlılık için 2 önceki duruma) bakar: tüm geçmişi vermeye gerek yok
-      const palateTypeId = computePalateTypeId([...done.slice(-(PALATE_RULES.window + 2)), e]);
+      const palateTypeId = stableType;
       if (total !== e.score || discovery !== e.parts.discovery || palateTypeId !== e.palateTypeId) {
         cur = { ...e, parts, score: total, palateTypeId };
         updated.set(e.id, cur);
