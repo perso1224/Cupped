@@ -5,7 +5,7 @@ import { tr } from '../i18n/tr';
 import type { BadgeProgress } from '../lib/progress';
 import type { Method } from '../lib/types';
 import { colors, layout, type } from '../theme';
-import { Icon } from './Icon';
+import { BadgeArt } from './BadgeArt';
 import { BackButton } from './NavButtons';
 import { Card } from './ui';
 
@@ -45,8 +45,8 @@ export function ProgressBar({ value, height = 6 }: { value: number; height?: num
 export function BadgeCard({ progress: { badge: b, current, target, earned } }: { progress: BadgeProgress }) {
   return (
     <Card style={styles.badge}>
-      <View style={[styles.badgeIcon, { backgroundColor: earned ? colors.accent : colors.line }]}>
-        <Icon name={earned ? 'ribbon' : 'lock-closed'} size={18} color={earned ? colors.onColor : colors.muted} />
+      <View style={{ marginRight: 14 }}>
+        <BadgeArt id={b.id} earned={earned} size={60} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[styles.badgeName, !earned && { color: colors.muted }]}>{b.name}</Text>
@@ -74,7 +74,6 @@ const styles = StyleSheet.create({
   track: { backgroundColor: colors.line, overflow: 'hidden' },
   fill: { backgroundColor: colors.accent },
   badge: { flexDirection: 'row', alignItems: 'center', padding: 14, marginBottom: 10 },
-  badgeIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   badgeName: { ...type.headline },
   badgeDesc: { ...type.footnote, marginTop: 2 },
   progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },

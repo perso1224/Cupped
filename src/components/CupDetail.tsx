@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { placeLabel, ShareCard, type CardHandle } from './ShareCard';
 import { CupGauge } from './coffee';
 import { MetricTile } from './dashboard';
+import { BadgeArt } from './BadgeArt';
 import { Stars } from './Stars';
 import { Icon, type IconName } from './Icon';
 import { ListRow, ListSection } from './List';
@@ -173,8 +174,8 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
 
           {newBadges.map((b, i) => (
             <Pop key={b.id} delay={1300 + i * 250} style={styles.newBadge}>
-              <View style={styles.newBadgeIcon}>
-                <Icon name="ribbon" size={22} color={colors.onColor} />
+              <View style={{ marginRight: 12 }}>
+                <BadgeArt id={b.id} earned size={64} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.newBadgeKicker}>{tr.result.newBadge}</Text>
@@ -369,7 +370,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 16,
   },
-  newBadgeIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   newBadgeKicker: { color: colors.accent, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
   newBadgeName: { color: colors.white, fontSize: 18, fontWeight: '900', marginTop: 2 },
   newBadgeDesc: { color: colors.mutedOnDark, fontSize: 13, marginTop: 2 },
