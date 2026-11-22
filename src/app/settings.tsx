@@ -6,6 +6,7 @@ import * as Updates from 'expo-updates';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useChoice } from '../components/ChoiceSheet';
 import { ListRow, ListSection } from '../components/List';
 import { tr } from '../i18n/tr';
 import type { PalateGoal } from '../lib/onboarding';
@@ -20,15 +21,6 @@ import { colors, saveThemePref, themePref, tint, type, layout } from '../theme';
 
 const GOALS: PalateGoal[] = ['explore', 'brew', 'taste', 'log'];
 
-/** Seçenek listesi: iOS'ta sistem uyarısı, web'de (test) ilk seçenek. */
-function choose<T>(title: string, options: { label: string; value: T }[], onPick: (v: T) => void) {
-  if (Platform.OS === 'web') return;
-  Alert.alert(title, undefined, [
-    ...options.map((o) => ({ text: o.label, onPress: () => onPick(o.value) })),
-    { text: tr.settings.cancel, style: 'cancel' as const },
-  ]);
-}
-
 function confirm(title: string, body: string, ok: string, onOk: () => void) {
   if (Platform.OS === 'web') {
     if (globalThis.confirm?.(`${title}\n${body}`)) onOk();
@@ -42,6 +34,8 @@ function confirm(title: string, body: string, ok: string, onOk: () => void) {
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  // iPhone'da sistem penceresi; Android'de alttan liste (4-5 seçenek sığsın)
+  const [choose, choiceSheet] = useChoice();
   const settings = useSettings();
   const profile = useProfile();
   const [metrics, reloadMetrics] = useMetrics();
@@ -231,6 +225,7 @@ export default function SettingsScreen() {
       </ListSection>
 
       <Text style={styles.signature}>{tr.settings.signature}</Text>
+      {choiceSheet}
     </ScrollView>
   );
 }
