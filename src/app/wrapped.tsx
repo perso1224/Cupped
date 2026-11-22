@@ -30,6 +30,7 @@ import { shareViewSafely } from '../lib/share';
 import { photoUrl } from '../lib/storage';
 import { useEntries } from '../lib/useEntries';
 import { buildWrapped, type WrappedSlide } from '../lib/wrapped';
+import { fonts } from '../theme';
 
 const SLIDE_MS = 5500;
 
@@ -525,15 +526,16 @@ const styles = StyleSheet.create({
   finishBtn: { backgroundColor: '#D98B2B', borderColor: '#D98B2B' },
   closeBtnText: { fontSize: 16, fontWeight: '800', color: '#FAF8F5' },
   kicker: { fontWeight: '800', letterSpacing: 1.4, marginBottom: 8 },
-  huge: { fontWeight: '900', letterSpacing: -1 },
-  mega: { fontWeight: '900', letterSpacing: -4 },
+  // Diğer kartlarla aynı yazı ailesi (Fraunces)
+  huge: { fontFamily: fonts.heavy, letterSpacing: -0.5 },
+  mega: { fontFamily: fonts.heavy, letterSpacing: -2 },
   sub: { fontWeight: '600', lineHeight: undefined },
   row: { flexDirection: 'row', alignItems: 'center' },
   pill: { alignSelf: 'flex-start', borderRadius: 999 },
   pillText: { fontWeight: '900' },
   statRow: { flexDirection: 'row' },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  footerBrand: { fontWeight: '900', letterSpacing: -0.5 },
+  footerBrand: { fontFamily: fonts.heavy },
   footerQ: { fontWeight: '600' },
   shareBtn: {
     backgroundColor: '#FAF8F5',

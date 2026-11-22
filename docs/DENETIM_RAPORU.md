@@ -88,28 +88,34 @@ Kurucu uyurken verilen kararlar (22–23 Kas gecesi; değiştirilebilir):
 
 ## D. Görsel cila
 
-- ☐ **Ayarlar:** Değerler yarıda kesiliyor ("Telefonu i…", "Yeni meka…").
-- ☐ **Fincan paylaşım kartı:**
+- ☑ **Ayarlar:** Değerler yarıda kesiliyor ("Telefonu i…", "Yeni meka…").
+- ☑ **Fincan paylaşım kartı:**
   - Uzun tip adı kesiliyor.
   - Küçük ekranda alt yazı ile slogan üst üste biniyor.
   - Stil öteki kartlarla uyumsuz (☕ emoji, düz yazı tipi).
-- ☐ **Onboarding:** Uygulamanın kahve havası yok; Fraunces yazı tipi ve damga görseli kullanılmıyor.
-- ☐ **Pasif düğmeler:** Soluk ve zor okunuyor.
-- ☐ **Fincan listeleri:** Her satırda aynı simge var; Pasaport'taki yöntem simgeleri ve renkleri kullanılabilir.
-- ☐ **Karanlık mod:**
+- ☑ **Onboarding:** Uygulamanın kahve havası yok; Fraunces yazı tipi ve damga görseli kullanılmıyor.
+- ☑ **Pasif düğmeler:** Soluk ve zor okunuyor.
+- ☑ **Fincan listeleri:** Her satırda aynı simge var; Pasaport'taki yöntem simgeleri ve renkleri kullanılabilir.
+- ☑ **Karanlık mod:**
   - Pasaport'taki espresso ve sütlü damgaları zor okunuyor.
   - Android'deki alt menü kartlarla karışıyor.
-- ☐ **Fincan detayı:** Kaydırınca geri ve paylaş daireleri yazının üstüne biniyor.
-- ☐ **Küçük ekran (320 px):**
+- ☑ **Fincan detayı:** Kaydırınca geri ve paylaş daireleri yazının üstüne biniyor.
+- ☑ **Küçük ekran (320 px):**
   - Ana sayfa düğmeleri iki satıra kayıyor.
   - Fincan satırları çok uzun.
   - Fincan Duvarı ay etiketleri çok küçük.
-- ☐ **Boş durumlar:** Geçmiş ve Pasaport çıplak görünüyor; bir "İlk fincanını ekle" düğmesi eklenebilir.
-- ☐ **Fincan ekleme formu:**
+- ☑ **Boş durumlar:** Geçmiş ve Pasaport çıplak görünüyor; bir "İlk fincanını ekle" düğmesi eklenebilir.
+- ☑ **Fincan ekleme formu:**
   - Başlık stilleri karışık.
   - "Kahve (g)" hem etiket hem örnek metin olarak tekrar ediyor.
   - Menşei örnek metni kesiliyor.
-- ☐ **İlerleme:** Ekran 4 düğmeyle bitiyor; bunlar bir listeye dönüştürülebilir.
+- ☑ **İlerleme:** Ekran 4 düğmeyle bitiyor; bunlar bir listeye dönüştürülebilir.
+
+Ek olarak yapılanlar:
+- ☑ Tanıtım ekranlarına halkalı logo eklendi; başlangıç tipi Damak Kartı'ndaki damga amblemiyle gösteriliyor.
+- ☑ Damak Özeti ve paylaşım kartı Fraunces yazı tipine geçti.
+- ☑ Tema notu yalnızca "Telefonu izle" seçiliyken görünüyor.
+- ☑ Ana sayfadaki menü noktaları artık çizgi olarak çiziliyor.
 
 ## E. Erişilebilirlik
 

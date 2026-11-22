@@ -94,7 +94,7 @@ export default function Wall() {
             <View>
               {wall.map((days, m) => (
                 <View key={m} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: gap * 3 }}>
-                  <T style={{ width: labelW, color: th.muted, fontSize: u * 2.6, fontWeight: '700' }}>{MONTHS[m]}</T>
+                  <T style={{ width: labelW, color: th.muted, fontSize: Math.max(8, u * 2.6), fontWeight: '700' }}>{MONTHS[m]}</T>
                   {days.map((d) => {
                     const uri = d.best?.photoUri ? thumbUrl(d.best.photoUri) : null;
                     const base = { width: cell, height: cellH, marginRight: gap, borderRadius: cell * 0.22 };
@@ -107,6 +107,8 @@ export default function Wall() {
             </View>
 
             <View>
+              {/* Hiç fincan yoksa boş çerçeve çizilmez */}
+              {list.length ? (
               <View style={[styles.stats, { borderColor: th.muted }]}>
                 {(
                   [
@@ -123,6 +125,7 @@ export default function Wall() {
                     </View>
                   ))}
               </View>
+              ) : null}
               <View style={[styles.rowBetween, { marginTop: u * 4 }]}>
                 <View>
                   <T style={{ color: th.muted, fontSize: u * 3.3, fontWeight: '600' }}>{typeId ? getPalateType(typeId).name : tr.card.question}</T>
