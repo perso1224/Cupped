@@ -301,15 +301,6 @@ export const tr = {
     lastCup: (date: string) => `Son: ${date}`,
     untriedSub: 'Bir fincanla damganı al',
   },
-  discover: {
-    title: 'Keşfet',
-    subtitle: 'Her gün yeni bir kahve bilgisi.',
-    today: 'Bugün',
-    earlier: 'Önceki günler',
-    open: 'Keşfet’te oku',
-    tryIt: 'Dene ve fincanını ekle',
-    kinds: { bean: 'Çekirdek', term: 'Terim', tip: 'Demleme', fact: 'Bilgi' },
-  },
   rating: {
     question: 'Nasıl buldun? (isteğe bağlı)',
     label: (n: number) => `${n} yıldız`,

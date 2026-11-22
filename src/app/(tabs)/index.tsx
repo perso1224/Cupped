@@ -8,8 +8,6 @@ import { WeekChart } from '../../components/WeekChart';
 import { WeekStrip } from '../../components/WeekStrip';
 import { Bean, CupGauge } from '../../components/coffee';
 import { Pager } from '../../components/dashboard';
-import { DiscoverCard } from '../../components/DiscoverCard';
-import { DISCOVER, discoverIndex } from '../../content/discover';
 import { FadeIn, Pop, PressScale, animateLayout, haptic } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
@@ -267,12 +265,6 @@ export default function Home() {
           ) : null}
 
           {/* BU HAFTA */}
-          {/* KEŞFET (deneme): günün kahve bilgisi */}
-          <SectionHeader title={tr.discover.title} />
-          <FadeIn index={1}>
-            <DiscoverCard item={DISCOVER[discoverIndex(now)]} compact today />
-          </FadeIn>
-
           <SectionHeader title={tr.home.thisWeek} />
           <FadeIn index={0}>
             <Card>

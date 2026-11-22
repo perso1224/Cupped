@@ -69,7 +69,6 @@ export default function RootLayout() {
           <Stack.Screen name="settings" {...single} />
           <Stack.Screen name="privacy" {...single} />
           <Stack.Screen name="stats" {...single} />
-          <Stack.Screen name="discover" {...single} />
           {/* Modallar */}
           <Stack.Screen name="new" {...single} options={{ presentation: 'fullScreenModal' }} />
           <Stack.Screen name="result/[id]" {...single} options={{ presentation: 'modal', sheetGrabberVisible: true }} />
