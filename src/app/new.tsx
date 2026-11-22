@@ -21,6 +21,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../components/Icon';
 import { CloseButton, goBack } from '../components/NavButtons';
+import { OriginPicker } from '../components/OriginPicker';
 import { PressScale, animateLayout, haptic, reduceMotionNow } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
@@ -74,6 +75,7 @@ export default function NewCup() {
   const [showDetail, setShowDetail] = useState(false);
   const [notes, setNotes] = useState<TasteNote[]>([]);
   const [origin, setOrigin] = useState('');
+  const [originPicker, setOriginPicker] = useState(false);
   const [dose, setDose] = useState('');
   const [water, setWater] = useState('');
   const [grind, setGrind] = useState<Grind | null>(null);
@@ -449,15 +451,30 @@ export default function NewCup() {
             </View>
 
             <Text style={styles.label}>{tr.capture.originLabel}</Text>
-            <TextInput
-              inputAccessoryViewID={KB_DONE}
-              value={origin}
-              onChangeText={setOrigin}
-              placeholder={tr.capture.originPlaceholder}
-              maxLength={80}
-              placeholderTextColor={colors.muted}
-              style={styles.input}
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TextInput
+                inputAccessoryViewID={KB_DONE}
+                value={origin}
+                onChangeText={setOrigin}
+                placeholder={tr.capture.originPlaceholder}
+                maxLength={80}
+                placeholderTextColor={colors.muted}
+                style={[styles.input, { flex: 1, flexBasis: 0, minWidth: 0, marginRight: 8 }]}
+              />
+              <PressScale
+                onPress={() => {
+                  haptic.select();
+                  setOriginPicker(true);
+                }}
+                scaleTo={0.94}
+                style={styles.originBtn}
+                accessibilityLabel={tr.capture.originChoose}
+              >
+                <Icon name="globe-outline" size={18} color={colors.white} />
+                <Text style={styles.originBtnText}>{tr.capture.originChoose}</Text>
+              </PressScale>
+            </View>
+            <OriginPicker visible={originPicker} value={origin} onChange={setOrigin} onClose={() => setOriginPicker(false)} />
 
             <Text style={styles.label}>
               {tr.capture.recipeLabel}
@@ -566,6 +583,8 @@ const styles = StyleSheet.create({
   detailHint: { fontSize: 14, color: colors.muted, lineHeight: 20, marginTop: 8 },
   label: { ...type.headline, marginTop: 20, marginBottom: 10 },
   unit: { fontSize: 12, fontWeight: '700', color: colors.muted, marginBottom: 6 },
+  originBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.black, borderRadius: 14, paddingHorizontal: 12, height: 50 },
+  originBtnText: { color: colors.white, fontSize: 14, fontWeight: '700' },
   input: {
     height: 50,
     borderRadius: 14,
