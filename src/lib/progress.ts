@@ -334,3 +334,38 @@ export function methodStats(entries: CupEntry[], methods: readonly Method[]): Me
     return { method, cups: list.length, avg, lastAt };
   });
 }
+
+export type TrendRange = '1m' | '3m' | '1y' | 'all';
+export type TrendPoint = { t: number; avg: number };
+export type ScoreTrend = { points: TrendPoint[]; change: number | null };
+
+/**
+ * İlerleme grafiği: seçilen aralıkta skorun gidişatı.
+ * 1A/3A: gün başına ortalama; 1Y/Tümü: hafta başına ortalama (nokta sayısı makul kalsın).
+ * change: aralığın ikinci yarısının ortalaması − ilk yarısının ortalaması (en az 2 nokta gerekir).
+ */
+export function scoreTrend(entries: CupEntry[], range: TrendRange, now: Date = new Date()): ScoreTrend {
+  const end = addDays(startOfDay(now), 1);
+  const days = range === '1m' ? 30 : range === '3m' ? 91 : range === '1y' ? 365 : null;
+  const start = days ? addDays(end, -days) : null;
+  const list = entries.filter((e) => !start || inRange(e, start, end)).filter((e) => new Date(e.createdAt) < end);
+  const weekly = range === '1y' || range === 'all';
+  const buckets = new Map<number, number[]>();
+  for (const e of list) {
+    const d = new Date(e.createdAt);
+    const t = (weekly ? startOfWeek(d) : startOfDay(d)).getTime();
+    buckets.set(t, [...(buckets.get(t) ?? []), e.score]);
+  }
+  const points = [...buckets.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([t, s]) => ({ t, avg: Math.round(s.reduce((x, y) => x + y, 0) / s.length) }));
+  if (points.length < 2) return { points, change: null };
+  const half = Math.floor(points.length / 2);
+  const mean = (p: TrendPoint[]) => p.reduce((s, x) => s + x.avg, 0) / p.length;
+  return { points, change: Math.round(mean(points.slice(points.length - half)) - mean(points.slice(0, half))) };
+}
+
+/** Bu haftanın günleri: o gün fincan var mı (seri kartındaki işaretler). */
+export function weekDots(entries: CupEntry[], today: Date = new Date()): { key: string; done: boolean; isToday: boolean; isFuture: boolean }[] {
+  return weekStrip(entries, today).map((d) => ({ key: d.key, done: d.best !== null, isToday: d.isToday, isFuture: d.isFuture }));
+}

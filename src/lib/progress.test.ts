@@ -8,6 +8,7 @@ import {
   earnedBadges,
   isDetailed,
   methodStats,
+  scoreTrend,
   passport,
   periodReport,
   periodRange,
@@ -271,5 +272,28 @@ describe('methodStats', () => {
     expect(s[0]).toEqual({ method: 'espresso', cups: 2, avg: 56, lastAt: at(2026, 0, 3) });
     expect(s[1]).toMatchObject({ method: 'filter', cups: 1, avg: 70 });
     expect(s[2]).toEqual({ method: 'turkish', cups: 0, avg: 0, lastAt: null });
+  });
+});
+
+describe('scoreTrend', () => {
+  const now = new Date(2026, 10, 22, 12);
+  it('1A: gün başına ortalama, aralık dışını atar, değişimi yarılardan hesaplar', () => {
+    const list = [
+      cup(at(2026, 6, 1), { score: 10 }), // aralık dışı
+      cup(at(2026, 10, 1), { score: 40 }),
+      cup(at(2026, 10, 1, 15), { score: 50 }),
+      cup(at(2026, 10, 10), { score: 60 }),
+      cup(at(2026, 10, 20), { score: 70 }),
+      cup(at(2026, 10, 21), { score: 80 }),
+    ];
+    const r = scoreTrend(list, '1m', now);
+    expect(r.points.map((p) => p.avg)).toEqual([45, 60, 70, 80]);
+    expect(r.change).toBe(23); // (70+80)/2 - (45+60)/2 = 22.5 -> 23
+  });
+  it('tek noktada değişim yok; Tümü haftalık gruplar', () => {
+    expect(scoreTrend([cup(at(2026, 10, 20), { score: 50 })], '1m', now).change).toBeNull();
+    const r = scoreTrend([cup(at(2025, 0, 6), { score: 40 }), cup(at(2025, 0, 7), { score: 60 }), cup(at(2026, 10, 18), { score: 70 })], 'all', now);
+    expect(r.points.map((p) => p.avg)).toEqual([50, 70]);
+    expect(r.change).toBe(20);
   });
 });

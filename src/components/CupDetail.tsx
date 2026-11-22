@@ -1,23 +1,23 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Image, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ShareCard, type CardHandle } from './ShareCard';
-import { Icon } from './Icon';
+import { placeLabel, ShareCard, type CardHandle } from './ShareCard';
+import { MetricTile, MiniRing } from './dashboard';
+import { Icon, type IconName } from './Icon';
 import { ListRow, ListSection } from './List';
-import { BackButton, goBack } from './NavButtons';
-import { PillButton } from './ui';
-import { Pop, haptic } from './motion';
-import { BADGES } from '../config/scoring.config';
+import { goBack } from './NavButtons';
+import { Card, PillButton } from './ui';
+import { CountUp, Pop, PressScale, haptic } from './motion';
+import { BADGES, PART_MAX } from '../config/scoring.config';
 import { tr } from '../i18n/tr';
 import { brewRatio, isDetailed } from '../lib/progress';
 import { refreshReminder } from '../lib/reminders';
 import { shareViewAsImage } from '../lib/share';
-import { bumpCounter, deleteEntry, getEntry } from '../lib/storage';
-import type { CupEntry, ScoreParts } from '../lib/types';
-import { colors, layout } from '../theme';
-
-const PART_ORDER: (keyof ScoreParts)[] = ['base', 'effort', 'discovery', 'depth', 'selectivity'];
+import { levelFor } from '../lib/scoring';
+import { bumpCounter, deleteEntry, getEntry, photoUrl } from '../lib/storage';
+import type { CupEntry } from '../lib/types';
+import { colors, layout, tint, type } from '../theme';
 
 /**
  * Fincan ekranı. mode='result': yeni kayıttan sonra alttan sayfa (Tamam + Paylaş).
@@ -130,57 +130,85 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
     );
   }
 
-  const cardWidth = Math.min(width - 32, 420);
+  const cardWidth = Math.min(width - layout.screenPad * 2, 420);
+  const photo = photoUrl(entry.photoUri);
+  const heroH = photo ? Math.min(Math.round(width * 0.92), 440) : 190;
+  const shareReady = !sharing && animDone && imageDone;
+  const when = new Date(entry.createdAt).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const place = placeLabel(entry);
+  const extras = [
+    `${tr.result.breakdown.base} ${entry.parts.base}`,
+    entry.parts.selectivity ? `${tr.result.breakdown.selectivity} ${entry.parts.selectivity > 0 ? '+' : ''}${entry.parts.selectivity}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView
-        contentContainerStyle={{ paddingTop: mode === 'detail' ? insets.top + layout.topPad : 16, paddingBottom: 160, alignItems: 'center' }}
-      >
-        {mode === 'detail' ? (
-          <View style={{ alignSelf: 'stretch', paddingHorizontal: layout.screenPad, marginBottom: 12 }}>
-            <BackButton label={tr.settings.back} />
-          </View>
-        ) : null}
-        {newBadges.map((b, i) => (
-          <Pop key={b.id} delay={1300 + i * 250} style={[styles.newBadge, { width: cardWidth }]}>
-            <View style={styles.newBadgeIcon}>
-              <Icon name="ribbon" size={22} color={colors.white} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.newBadgeKicker}>{tr.result.newBadge}</Text>
-              <Text style={styles.newBadgeName}>{b.name}</Text>
-              <Text style={styles.newBadgeDesc}>{b.description}</Text>
-            </View>
-          </Pop>
-        ))}
-
-        <View style={[styles.parts, { width: cardWidth, marginTop: 0, marginBottom: 12 }]}>
-          {PART_ORDER.filter((k) => entry.parts[k] !== 0).map((k) => (
-            <View key={k} style={styles.part}>
-              <Text style={styles.partValue}>
-                {entry.parts[k] > 0 ? '+' : ''}
-                {entry.parts[k]}
-              </Text>
-              <Text style={styles.partLabel} numberOfLines={1} adjustsFontSizeToFit>
-                {tr.result.breakdown[k]}
-              </Text>
-            </View>
-          ))}
+      <ScrollView contentContainerStyle={{ paddingBottom: mode === 'result' ? insets.bottom + 110 : insets.bottom + 40 }}>
+        {/* Fotoğraf ekranın yıldızı: üstte tam genişlik. Fotoğraf yoksa sıcak bir yer tutucu. */}
+        <View style={[styles.hero, { height: heroH }]}>
+          {photo ? (
+            <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityIgnoresInvertColors />
+          ) : (
+            <Icon name="cafe" size={64} color={colors.accent} />
+          )}
         </View>
 
-        <ShareCard
-          ref={cardRef}
-          entry={entry}
-          width={cardWidth}
-          animate={isFresh}
-          onAnimationEnd={() => setAnimDone(true)}
-          onImageLoaded={() => setImageDone(true)}
-        />
+        {/* Fotoğrafın üstüne doğru çekilmiş bilgi kartı */}
+        <View style={styles.sheet}>
+          <View style={styles.timeChip}>
+            <Icon name="time-outline" size={14} color={colors.muted} />
+            <Text style={styles.timeText}>{when}</Text>
+          </View>
+          <Text style={styles.title}>{tr.methods[entry.method]}</Text>
+          {place ? <Text style={styles.place}>{place}</Text> : null}
 
-        {isDetailed(entry) ? <Details entry={entry} width={cardWidth} /> : null}
+          {newBadges.map((b, i) => (
+            <Pop key={b.id} delay={1300 + i * 250} style={styles.newBadge}>
+              <View style={styles.newBadgeIcon}>
+                <Icon name="ribbon" size={22} color={colors.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.newBadgeKicker}>{tr.result.newBadge}</Text>
+                <Text style={styles.newBadgeName}>{b.name}</Text>
+                <Text style={styles.newBadgeDesc}>{b.description}</Text>
+              </View>
+            </Pop>
+          ))}
 
-        <View style={{ alignSelf: 'stretch', paddingHorizontal: 16 }}>
+          {/* Tek, kocaman skor */}
+          <Card style={styles.scoreCard}>
+            <View style={{ flex: 1 }}>
+              {isFresh ? <CountUp value={entry.score} style={styles.scoreNumber} duration={1100} /> : <Text style={styles.scoreNumber}>{entry.score}</Text>}
+              <Text style={styles.scoreLabel}>{tr.card.cupScore}</Text>
+              <Text style={styles.scoreSub}>{levelFor(entry.score)}</Text>
+            </View>
+            <MiniRing size={96} stroke={10} fraction={entry.score / 100} center={<Icon name="trophy" size={28} color={colors.accent} />} />
+          </Card>
+
+          {/* Skor nereden geldi: üç küçük kutu (ana sayfadakiyle aynı renkler) */}
+          <View style={styles.tiles}>
+            <MetricTile value={signed(entry.parts.effort)} label={tr.result.breakdown.effort} fraction={entry.parts.effort / PART_MAX.effort} color={tint.amber} icon="hand-left" />
+            <MetricTile value={signed(entry.parts.discovery)} label={tr.result.breakdown.discovery} fraction={entry.parts.discovery / PART_MAX.discovery} color={tint.cherry} icon="compass" />
+            <MetricTile value={signed(entry.parts.depth)} label={tr.result.breakdown.depth} fraction={entry.parts.depth / PART_MAX.depth} color={tint.espresso} icon="leaf" />
+          </View>
+          <Text style={styles.extras}>{extras}</Text>
+
+          {isDetailed(entry) ? <Details entry={entry} /> : null}
+
+          <Text style={styles.section}>{tr.result.shareCard}</Text>
+          <View style={{ alignItems: 'center' }}>
+            <ShareCard
+              ref={cardRef}
+              entry={entry}
+              width={cardWidth}
+              animate={isFresh}
+              onAnimationEnd={() => setAnimDone(true)}
+              onImageLoaded={() => setImageDone(true)}
+            />
+          </View>
+
           <ListSection footer={tr.result.editHint}>
             {mode === 'detail' ? (
               <ListRow
@@ -190,28 +218,56 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
                 onPress={() => router.push({ pathname: '/new', params: { again: String(id) } })}
               />
             ) : null}
-            <ListRow
-              icon="create"
-              tint={colors.accent}
-              title={tr.result.edit}
-              onPress={() => router.push({ pathname: '/new', params: { edit: String(id) } })}
-            />
+            {mode === 'detail' ? (
+              <ListRow icon="create" tint={colors.accent} title={tr.result.edit} onPress={edit} />
+            ) : null}
             <ListRow icon="trash" tint={colors.danger} title={tr.result.delete} destructive onPress={confirmDelete} />
           </ListSection>
         </View>
       </ScrollView>
 
-      <View style={[styles.bar, { paddingBottom: insets.bottom + 12 }]}>
-        {mode === 'result' ? (
-          <PillButton label={tr.result.done} variant="light" onPress={goBack} style={{ flex: 1, marginRight: 10 }} />
-        ) : null}
-        <PillButton label={tr.result.share} onPress={share} disabled={sharing || !animDone || !imageDone} style={{ flex: 2 }} />
+      {/* Fotoğrafın üstünde yüzen düğmeler: solda geri (detayda), sağda paylaş */}
+      <View style={[styles.topButtons, { top: (mode === 'detail' ? insets.top : 0) + 12 }]} pointerEvents="box-none">
+        {mode === 'detail' ? <RoundButton icon="chevron-back" label={tr.settings.back} onPress={goBack} /> : <View />}
+        <RoundButton icon="share-outline" label={tr.result.share} onPress={share} disabled={!shareReady} />
       </View>
+
+      {mode === 'result' ? (
+        <View style={[styles.bar, { paddingBottom: insets.bottom + 12 }]}>
+          <PillButton label={tr.result.edit} variant="light" onPress={edit} style={{ flex: 1, marginRight: 10 }} />
+          <PillButton label={tr.result.done} onPress={goBack} style={{ flex: 1 }} />
+        </View>
+      ) : null}
     </View>
+  );
+
+  function edit() {
+    router.push({ pathname: '/new', params: { edit: String(id) } });
+  }
+}
+
+const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;
+
+/** Fotoğraf üstünde yarı saydam koyu daire düğme. */
+function RoundButton({ icon, label, onPress, disabled }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean }) {
+  return (
+    <PressScale
+      onPress={() => {
+        haptic.select();
+        onPress();
+      }}
+      disabled={disabled}
+      hitSlop={10}
+      scaleTo={0.9}
+      accessibilityLabel={label}
+      style={[styles.round, disabled && { opacity: 0.5 }]}
+    >
+      <Icon name={icon} size={22} color={colors.white} />
+    </PressScale>
   );
 }
 
-function Details({ entry, width }: { entry: CupEntry; width: number }) {
+function Details({ entry }: { entry: CupEntry }) {
   const b = entry.brew;
   const recipe = b
     ? [
@@ -224,7 +280,7 @@ function Details({ entry, width }: { entry: CupEntry; width: number }) {
         .join(' · ')
     : '';
   return (
-    <View style={[styles.details, { width }]}>
+    <View style={styles.details}>
       <View style={styles.detailsHead}>
         <Text style={styles.detailsTitle}>{tr.result.details}</Text>
         <View style={styles.depthChip}>
@@ -257,20 +313,61 @@ function DetailLine({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  hero: { width: '100%', backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  sheet: {
+    marginTop: -28,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    backgroundColor: colors.bg,
+    paddingHorizontal: layout.screenPad,
+    paddingTop: 18,
+  },
+  timeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.card,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  timeText: { ...type.caption, color: colors.muted },
+  title: { ...type.largeTitle, fontSize: 30, marginTop: 10 },
+  place: { ...type.subhead, marginTop: 2 },
+  scoreCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 20,
+    marginTop: 18,
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.1,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  scoreNumber: { fontSize: 56, fontWeight: '800', letterSpacing: -2, color: colors.text },
+  scoreLabel: { ...type.footnote, fontWeight: '600', color: colors.text },
+  scoreSub: { ...type.footnote, marginTop: 2 },
+  tiles: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  extras: { ...type.caption, textAlign: 'center', marginTop: 10 },
+  section: { ...type.title2, marginTop: 28, marginBottom: 12 },
+  topButtons: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between' },
+  round: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.42)', alignItems: 'center', justifyContent: 'center' },
   newBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.black,
     borderRadius: 20,
     padding: 16,
-    marginBottom: 12,
+    marginTop: 16,
   },
   newBadgeIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   newBadgeKicker: { color: colors.accent, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
   newBadgeName: { color: colors.white, fontSize: 18, fontWeight: '900', marginTop: 2 },
   newBadgeDesc: { color: colors.mutedOnDark, fontSize: 13, marginTop: 2 },
   deleteText: { fontSize: 15, fontWeight: '700', color: colors.danger },
-  details: { backgroundColor: colors.card, borderRadius: 20, padding: 18, marginTop: 16 },
+  details: { backgroundColor: colors.card, borderRadius: 20, padding: 18, marginTop: 18 },
   detailsHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   detailsTitle: { fontSize: 18, fontWeight: '900', color: colors.text },
   depthChip: { backgroundColor: colors.accentSoft, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
@@ -282,20 +379,6 @@ const styles = StyleSheet.create({
   detailValue: { fontSize: 15, color: colors.text, marginTop: 2, lineHeight: 21 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg, padding: 24 },
   muted: { color: colors.muted, fontSize: 16 },
-  // Skor parçaları tek satırda (SE'de de 4-5 parça sığar)
-  parts: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 20 },
-  part: {
-    flex: 1,
-    maxWidth: 90,
-    minWidth: 0,
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 6,
-    alignItems: 'center',
-  },
-  partValue: { fontSize: 20, fontWeight: '900', color: colors.text },
-  partLabel: { fontSize: 12, color: colors.muted, marginTop: 2 },
   bar: {
     position: 'absolute',
     left: 0,
