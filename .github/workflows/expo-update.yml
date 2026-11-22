@@ -1,5 +1,5 @@
 # Her kod gönderiminde uygulamanın yeni halini Expo'ya yükler.
-# Sonra iPhone'da Expo Go ile açılabilir. Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar.
+# Sonra iPhone ve Android'de Expo Go ile açılabilir. Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar.
 name: Expo'ya yayınla
 
 on:
@@ -43,7 +43,7 @@ jobs:
         run: npx eas-cli@latest init --force --non-interactive
 
       - name: Güncelleme ayarlarını hazırla
-        run: npx eas-cli@latest update:configure --platform ios --environment preview --non-interactive
+        run: npx eas-cli@latest update:configure --platform all --environment preview --non-interactive
 
       - name: Yayınla
-        run: npx eas-cli@latest update --branch preview --message "$COMMIT_MESSAGE" --platform ios --environment preview --non-interactive
+        run: npx eas-cli@latest update --branch preview --message "$COMMIT_MESSAGE" --platform all --environment preview --non-interactive

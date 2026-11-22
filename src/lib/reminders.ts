@@ -1,4 +1,6 @@
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
+import { Platform } from 'react-native';
 import { currentStreak, dayKey } from './progress';
 import { reminderPlan } from './reminderTime';
 import { loadEntries, loadMetrics, loadSettings, updateMetrics } from './storage';
@@ -18,6 +20,16 @@ Notifications.setNotificationHandler({
 });
 
 const REMINDER_ID = 'cupped-daily';
+const CHANNEL_ID = 'reminders';
+
+/** Android 8+ bildirimleri bir kanala bağlar; kullanıcı telefon ayarlarında "Hatırlatmalar" adıyla görür. */
+async function ensureAndroidChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+    name: 'Hatırlatmalar',
+    importance: AndroidImportance.DEFAULT,
+  });
+}
 let chain: Promise<void> = Promise.resolve();
 
 /**
@@ -48,12 +60,13 @@ async function doRefresh(): Promise<void> {
     const entries = await loadEntries();
     const days = new Set(entries.map((e) => dayKey(new Date(e.createdAt))));
     const s = await loadSettings();
+    await ensureAndroidChannel();
     const plan = reminderPlan(days, currentStreak(entries), new Date(), s.reminderHour, s.reminderMinute);
     for (const [i, r] of plan.entries()) {
       await Notifications.scheduleNotificationAsync({
         identifier: i === 0 ? REMINDER_ID : `${REMINDER_ID}-${i}`,
         content: { title: r.title, body: r.body },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at, channelId: CHANNEL_ID },
       });
     }
   } catch {
