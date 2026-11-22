@@ -15,7 +15,7 @@ import { tr, upper } from '../../i18n/tr';
 import { agoLabel, caffeineToday, dailyNudge, levelProgress, weekPartAverages } from '../../lib/home';
 import { insights } from '../../lib/insights';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
-import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekDots, weekStrip, weeklyPalateScore, longestStreak, noteShares, favorites } from '../../lib/progress';
+import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekDots, weekStrip, longestStreak, noteShares, favorites } from '../../lib/progress';
 import { setReminderEnabled } from '../../lib/reminders';
 import { partsSummary } from '../../lib/scoring';
 import { updateMetrics } from '../../lib/storage';
@@ -271,13 +271,15 @@ export default function Home() {
             <Card>
               <View style={styles.chartHeader}>
                 <View>
-                  <Text style={styles.cardTitle}>{tr.progress.weeklyScore}</Text>
-                  <Text style={styles.chartValue}>{weeklyPalateScore(weekEntries)}</Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.cardTitle}>{tr.home.weekCups}</Text>
-                  <Text style={styles.chartValueSmall}>{weekEntries.length}</Text>
+                  <Text style={styles.chartValue}>{weekEntries.length}</Text>
                 </View>
+                {weekEntries.length ? (
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.cardTitle}>{tr.progress.avg}</Text>
+                    <Text style={styles.chartValueSmall}>{Math.round(weekEntries.reduce((s, e) => s + e.score, 0) / weekEntries.length)}</Text>
+                  </View>
+                ) : null}
               </View>
               <WeekChart days={weekStrip(list, now)} />
               <View style={styles.goalRow}>
@@ -318,7 +320,7 @@ export default function Home() {
                       <View style={[styles.barFill, { backgroundColor: colors.black, width: `${Math.max(4, level.fraction * 100)}%` }]} />
                     </View>
                     <Text style={styles.cardSub}>
-                      {level.next ? tr.home.levelNext(level.level, level.next, level.toNext) : tr.home.levelTop(level.level)}
+                      {level.next ? tr.home.levelLine(level.level, level.xp, level.next, level.toNext) : tr.home.levelTopXp(level.level, level.xp)}
                     </Text>
                   </>
                 ) : null}

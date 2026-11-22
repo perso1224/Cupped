@@ -72,9 +72,9 @@ export const tr = {
     thisWeek: 'Bu hafta',
     highlights: 'Öne çıkanlar',
     weekCups: 'Fincan',
-    effortWeek: 'Emek · hafta',
-    discoveryWeek: 'Keşif · hafta',
-    depthWeek: 'Derinlik · hafta',
+    effortWeek: 'Emek (hafta ort.)',
+    discoveryWeek: 'Keşif (hafta ort.)',
+    depthWeek: 'Derinlik (hafta ort.)',
     caffeineToday: 'Bugünkü kafein (yaklaşık)',
     caffeineShort: 'Kafein · bugün',
     board: {
@@ -98,6 +98,9 @@ export const tr = {
     lastCup: 'Son kahve',
     cupsWeek: 'Bu hafta',
     levelNext: (cur: string, next: string, pts: number) => `${cur} · ${LEVEL_DATIVE[next] ?? next} ${pts} puan`,
+    levelLine: (cur: string, xp: number, next: string, pts: number) =>
+      `${cur} · ${xp.toLocaleString('tr-TR')} kahve puanı · ${LEVEL_DATIVE[next] ?? next} ${pts.toLocaleString('tr-TR')} puan`,
+    levelTopXp: (cur: string, xp: number) => `${cur} · ${xp.toLocaleString('tr-TR')} kahve puanı · en üst seviye`,
     levelTop: (cur: string) => `${cur} · en üst seviye`,
     nudgeTitle: 'Günün önerisi',
     ctaTitle: 'İlk fincanını ekle',
