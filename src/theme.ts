@@ -91,6 +91,8 @@ const DARK: typeof LIGHT = {
 
 export const isDark = themePref === 'system' ? Appearance.getColorScheme() === 'dark' : themePref === 'dark';
 export const colors = isDark ? DARK : LIGHT;
+/** Temadan bağımsız açık renkler: paylaşılan görseller (fincan kartı) her zaman aynı görünsün. */
+export const lightColors = LIGHT;
 
 export const radius = {
   card: 22,

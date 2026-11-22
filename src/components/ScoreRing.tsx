@@ -15,6 +15,7 @@ export function ScoreRing({
   caption,
   empty,
   onAnimationEnd,
+  palette = colors,
 }: {
   score: number;
   size?: number;
@@ -24,6 +25,8 @@ export function ScoreRing({
   /** Skor yokken halkada "–" göster (0 kötü bir not gibi görünmesin). */
   empty?: boolean;
   onAnimationEnd?: () => void;
+  /** Renkleri sabitlemek için (paylaşım kartı temadan bağımsız). Verilmezse uygulama teması. */
+  palette?: { line: string; accent: string; text: string; muted: string };
 }) {
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
@@ -63,12 +66,12 @@ export function ScoreRing({
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={colors.line} strokeWidth={stroke} fill="none" />
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={palette.line} strokeWidth={stroke} fill="none" />
         <AnimatedCircle
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke={colors.accent}
+          stroke={palette.accent}
           strokeWidth={stroke}
           fill="none"
           strokeLinecap="round"
@@ -77,8 +80,8 @@ export function ScoreRing({
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <Text style={[styles.number, { fontSize: size * 0.32 }]}>{empty ? '–' : shown}</Text>
-      {caption ? <Text style={styles.caption}>{caption}</Text> : null}
+      <Text style={[styles.number, { fontSize: size * 0.32, color: palette.text }]}>{empty ? '–' : shown}</Text>
+      {caption ? <Text style={[styles.caption, { color: palette.muted }]}>{caption}</Text> : null}
     </View>
   );
 }
