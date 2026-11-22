@@ -393,6 +393,8 @@ export const tr = {
     visits: (n: number) => `${n} ziyaret`,
     noPlaces: 'Henüz mekan damgan yok. İlk kafeni ekle!',
     locked: 'Henüz kazanılmadı',
+    cups: (n: number) => `${n} fincan`,
+    visa: 'VİZE',
   },
   wrapped: {
     monthTitle: 'Damak Özeti',

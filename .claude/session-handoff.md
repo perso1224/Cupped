@@ -99,3 +99,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - Then the header, week strip, pager, cards and recent cups stagger in.
   - The body is not rendered while entries is null.
 - Not yet verified on device.
+- Passport tab redesign:
+  - Methods are round ink stamps (`MethodStamp`): icon plus cup count, a slight tilt, and a "stamping" pop.
+  - Palate types are rectangular "VİZE" stamps (`VisaStamp`).
+  - Locked items are faint dashed blanks.
+  - These stamps are non-interactive (the owner's decision). The method → history filter is still in Profile > Koleksiyon > Yöntemler.
