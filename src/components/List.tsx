@@ -1,5 +1,5 @@
 import { Children, Fragment, type ReactNode } from 'react';
-import { StyleSheet, Switch, Text, View, type ColorValue } from 'react-native';
+import { Platform, StyleSheet, Switch, Text, View, type ColorValue } from 'react-native';
 import { upper } from '../i18n/tr';
 import { colors, type } from '../theme';
 import { Icon, type IconName } from './Icon';
@@ -79,7 +79,8 @@ export function ListRow({
             haptic.select();
           }}
           trackColor={{ true: colors.accent, false: colors.line }}
-          thumbColor="#fff"
+          // iOS: topuzu sisteme bırak (iOS 26'da basılı tutunca Liquid Glass olur); Android'de beyaz.
+          thumbColor={Platform.OS === 'android' ? '#fff' : undefined}
           ios_backgroundColor={colors.line}
         />
       ) : null}
