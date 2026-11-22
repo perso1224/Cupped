@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appLabel, computeStats, EMPTY_METRICS, normalizeMetrics, type Metrics } from './metrics';
+import { appLabel, computeStats, EMPTY_METRICS, needsBackupNudge, normalizeMetrics, type Metrics } from './metrics';
 import type { CupEntry } from './types';
 
 const cup = (id: string, captureMs: number | null = null): CupEntry => ({
@@ -60,5 +60,16 @@ describe('ölçüm', () => {
     expect(s.shareRate).toBeNull();
     expect(s.medianCaptureSec).toBeNull();
     expect(s.daysSinceInstall).toBeNull();
+  });
+});
+
+describe('yedek hatırlatması', () => {
+  const base = normalizeMetrics(null);
+  const now = new Date(2026, 10, 22);
+  it('10 fincandan önce ya da son 30 günde yedek/erteleme varsa gösterilmez', () => {
+    expect(needsBackupNudge(base, 9, now)).toBe(false);
+    expect(needsBackupNudge(base, 10, now)).toBe(true);
+    expect(needsBackupNudge({ ...base, lastBackupAt: new Date(2026, 10, 1).toISOString() }, 50, now)).toBe(false);
+    expect(needsBackupNudge({ ...base, backupNudgeAt: new Date(2026, 9, 1).toISOString() }, 50, now)).toBe(true);
   });
 });

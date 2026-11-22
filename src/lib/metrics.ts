@@ -18,6 +18,8 @@ export type Metrics = {
   clubViews: number;
   clubInterestAt: string | null;
   reminderEnabled: boolean | null; // null = henüz sorulmadı
+  lastBackupAt: string | null; // son yedeğin (dışa aktarma) tarihi
+  backupNudgeAt: string | null; // ana sayfadaki yedek hatırlatması en son ne zaman ertelendi
 };
 
 export const EMPTY_METRICS: Metrics = {
@@ -32,6 +34,8 @@ export const EMPTY_METRICS: Metrics = {
   clubViews: 0,
   clubInterestAt: null,
   reminderEnabled: null,
+  lastBackupAt: null,
+  backupNudgeAt: null,
 };
 
 /** Bozuk/eksik veriyi güvenli varsayılanlarla birleştirir. */
@@ -57,6 +61,8 @@ export function normalizeMetrics(raw: unknown): Metrics {
     clubViews: n(r.clubViews),
     clubInterestAt: typeof r.clubInterestAt === 'string' ? r.clubInterestAt : null,
     reminderEnabled: typeof r.reminderEnabled === 'boolean' ? r.reminderEnabled : null,
+    lastBackupAt: typeof r.lastBackupAt === 'string' ? r.lastBackupAt : null,
+    backupNudgeAt: typeof r.backupNudgeAt === 'string' ? r.backupNudgeAt : null,
   };
 }
 
@@ -136,4 +142,14 @@ export function computeStats(m: Metrics, entries: CupEntry[], onboardedAt: strin
     clubInterested: !!m.clubInterestAt,
     clubViews: m.clubViews,
   };
+}
+
+const BACKUP_EVERY_DAYS = 30;
+
+/** Ana sayfada "yedek al" hatırlatması gösterilsin mi: en az 10 fincan ve son 30 günde yedek/erteleme yok. */
+export function needsBackupNudge(m: Metrics, cups: number, now: Date = new Date()): boolean {
+  if (cups < 10) return false;
+  const last = [m.lastBackupAt, m.backupNudgeAt].filter((x): x is string => !!x).map((x) => Date.parse(x));
+  if (!last.length) return true;
+  return now.getTime() - Math.max(...last) >= BACKUP_EVERY_DAYS * DAY_MS;
 }

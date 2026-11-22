@@ -382,7 +382,7 @@ export class InvalidBackupError extends Error {}
 
 export function importBackup(json: string): Promise<number> {
   return enqueue(async () => {
-    let data: { app?: unknown; format?: unknown; entries?: unknown; profile?: unknown; settings?: unknown };
+    let data: { app?: unknown; format?: unknown; entries?: unknown; profile?: unknown; settings?: unknown; metrics?: unknown };
     try {
       data = JSON.parse(json);
     } catch {
@@ -399,6 +399,15 @@ export function importBackup(json: string): Promise<number> {
     // Yedekteki fotoğraflar bu telefonda yok: fotoğrafsız eklenir
     const added = incoming.filter((e) => !ids.has(e.id)).map((e) => ({ ...e, photoUri: null }));
     await writeEntries([...added, ...current]);
+    // Hatırlatma açık/kapalı bilgisi ölçümlerde duruyor: bu telefonda henüz seçilmediyse yedektekini al
+    const backupReminder = (data as { metrics?: { reminderEnabled?: unknown } }).metrics?.reminderEnabled;
+    if (typeof backupReminder === 'boolean') {
+      const m = await loadMetrics();
+      if (m.reminderEnabled === null) {
+        m.reminderEnabled = backupReminder;
+        await AsyncStorage.setItem(METRICS_KEY, JSON.stringify(m));
+      }
+    }
     // Ayarlar: bu telefonda hâlâ varsayılanlar kullanılıyorsa yedekteki ayarları al (hatırlatma saati, kafein…)
     if (data.settings && JSON.stringify(await loadSettings()) === JSON.stringify(normalizeSettings(null))) {
       const next = normalizeSettings(data.settings);

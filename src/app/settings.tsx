@@ -13,7 +13,7 @@ import type { PalateGoal } from '../lib/onboarding';
 import { cancelReminders, refreshReminder, setReminderEnabled } from '../lib/reminders';
 import { CAFFEINE_REFS, REMINDER_TIMES, timeLabel } from '../lib/settings';
 import { shareFile } from '../lib/share';
-import { deleteAllData, exportAllData, importBackup, saveProfile, updateSettings } from '../lib/storage';
+import { deleteAllData, exportAllData, importBackup, saveProfile, updateMetrics, updateSettings } from '../lib/storage';
 import { useMetrics } from '../lib/useMetrics';
 import { useProfile } from '../lib/useProfile';
 import { useSettings } from '../lib/useSettings';
@@ -69,7 +69,12 @@ export default function SettingsScreen() {
 
   async function doExport() {
     try {
-      await shareFile(await exportAllData());
+      if (await shareFile(await exportAllData())) {
+        await updateMetrics((m) => {
+          m.lastBackupAt = new Date().toISOString();
+        });
+        reloadMetrics();
+      }
     } catch {
       Alert.alert(tr.profile.exportError);
     }
@@ -211,7 +216,10 @@ export default function SettingsScreen() {
         />
       </ListSection>
 
-      <ListSection title={tr.settings.data} footer={tr.settings.dataFooter}>
+      <ListSection
+        title={tr.settings.data}
+        footer={`${metrics?.lastBackupAt ? tr.settings.lastBackup(new Date(metrics.lastBackupAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })) : tr.settings.noBackup} ${tr.settings.dataFooter}`}
+      >
         <ListRow icon="share-outline" tint={tint.sage} title={tr.profile.export} chevron onPress={doExport} />
         <ListRow icon="download-outline" tint={tint.sky} title={tr.settings.import} chevron onPress={doImport} />
       </ListSection>

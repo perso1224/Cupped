@@ -18,7 +18,9 @@ import { computePalateTypeId, getPalateType } from '../../lib/palate';
 import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, weekDots, weekStrip, longestStreak, noteShares, favorites } from '../../lib/progress';
 import { setReminderEnabled } from '../../lib/reminders';
 import { partsSummary } from '../../lib/scoring';
-import { updateMetrics } from '../../lib/storage';
+import { exportAllData, updateMetrics } from '../../lib/storage';
+import { shareFile } from '../../lib/share';
+import { needsBackupNudge } from '../../lib/metrics';
 import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
@@ -59,6 +61,28 @@ export default function Home() {
     .slice(0, 3);
   const type_ = list.length ? getPalateType(computePalateTypeId(list)) : profile ? getPalateType(profile.starterTypeId) : null;
   const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
+  // Yedek hatırlatması: 10+ fincan ve 30 gündür yedek yok (hatırlatma sorusuyla aynı anda çıkmaz)
+  const askBackup = !!metrics && !askReminder && needsBackupNudge(metrics, list.length, now);
+
+  async function answerBackup(yes: boolean) {
+    animateLayout();
+    if (yes) {
+      try {
+        if (await shareFile(await exportAllData())) {
+          await updateMetrics((m) => {
+            m.lastBackupAt = new Date().toISOString();
+          });
+        }
+      } catch {
+        Alert.alert(tr.profile.exportError);
+      }
+    } else {
+      await updateMetrics((m) => {
+        m.backupNudgeAt = new Date().toISOString();
+      }).catch(() => {});
+    }
+    reloadMetrics();
+  }
   const dateLabel = upper(now.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }));
 
   async function answerReminder(yes: boolean) {
@@ -250,6 +274,20 @@ export default function Home() {
           <FadeIn index={0}>
             <Pager key={pages.length} width={pageW} pages={pages} />
           </FadeIn>
+
+          {askBackup ? (
+            <Card style={{ marginTop: 14 }}>
+              <View style={styles.inlineTitle}>
+                <Icon name="cloud-upload" size={18} color={tint.sky} />
+                <Text style={styles.cardTitleDark}>{tr.homePrompt.backupTitle}</Text>
+              </View>
+              <Text style={styles.cardSub}>{tr.homePrompt.backupBody}</Text>
+              <View style={{ flexDirection: 'row', marginTop: 12 }}>
+                <PillButton label={tr.homePrompt.backupLater} variant="light" onPress={() => answerBackup(false)} style={{ flex: 1, marginRight: 8, height: 46 }} />
+                <PillButton label={tr.homePrompt.backupYes} onPress={() => answerBackup(true)} style={{ flex: 2, height: 46 }} />
+              </View>
+            </Card>
+          ) : null}
 
           {askReminder ? (
             <Card style={{ marginTop: 14 }}>
