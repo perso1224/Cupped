@@ -8,6 +8,7 @@ import { BRAND } from '../config/brand';
 import { tr, upper } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
 import { fingerprintRings, memberNo } from '../lib/fingerprint';
+import { encodeProfile, tasteProfile } from '../lib/match';
 import { noteShares, profileSummary, type NoteShare } from '../lib/progress';
 import { shareViewAsImage } from '../lib/share';
 import { useEntries } from '../lib/useEntries';
@@ -66,6 +67,8 @@ export default function PalateCard() {
   const frameH = (frameW * 16) / 9;
   const u = frameW / 100;
   const th = cardTheme(typeId);
+  const taste = s.cups && typeId ? tasteProfile(entries ?? [], typeId) : null;
+  const damakCode = taste ? encodeProfile(taste) : null;
   const notes = noteShares(entries ?? []).slice(0, 4);
   const since = profile?.onboardedAt ? new Date(profile.onboardedAt).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }) : null;
 
@@ -106,6 +109,8 @@ export default function PalateCard() {
                 <T style={[styles.kicker, { fontSize: u * 3.2, color: th.muted }]}>{tr.palateCard.no(memberNo(profile?.onboardedAt))}</T>
               </View>
               {profile?.nickname ? <T style={[styles.nick, { fontSize: u * 4.4, color: th.fg }]}>{profile.nickname}</T> : null}
+              {/* Damak Uyumu kodu: kartı gören arkadaş kendi uygulamasında yazıp uyumu görebilir */}
+              {damakCode ? <T style={{ color: th.muted, fontSize: u * 3.2, fontWeight: '700', letterSpacing: 1, marginTop: u * 1.5 }}>{upper(tr.match.cardCode(damakCode))}</T> : null}
             </View>
 
             {/* Amblem: kişiye özel damak parmak izi + damga yazısı + tip monogramı */}

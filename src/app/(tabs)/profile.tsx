@@ -98,6 +98,7 @@ export default function Profile() {
         <ListRow icon="ribbon" tint={tint.amber} title={tr.profile.badges} value={`${earned}/${badges.length}`} chevron onPress={() => router.push('/collection/badges')} />
         <ListRow icon="location" tint={tint.cherry} title={tr.profile.placesPlural} value={String(places)} chevron onPress={() => router.push('/collection/places')} />
         <ListRow icon="cafe" tint={tint.espresso} title={tr.profile.methodsPlural} value={`${methods}/5`} chevron onPress={() => router.push('/collection/methods')} />
+        <ListRow icon="people" tint={tint.cherry} title={tr.match.profileRow} chevron onPress={() => router.push('/match')} />
         <ListRow icon="time" tint={tint.slate} title={tr.progress.history} chevron onPress={() => router.push('/history')} />
       </ListSection>
 
