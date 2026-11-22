@@ -7,7 +7,11 @@ import { reduceMotionNow } from './motion';
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 /** Cupped'ın kendi göstergesi: skor arttıkça fincan kahveyle dolar (halka yerine). */
-export function CupGauge({ fraction, size = 96, animate = false }: { fraction: number; size?: number; animate?: boolean }) {
+export function CupGauge({ fraction, size = 96, animate = false, onDark = false }: { fraction: number; size?: number; animate?: boolean; onDark?: boolean }) {
+  // Koyu zeminde (menü tahtası) krem çizgi; açık zeminde metin rengi.
+  const ink = onDark ? '#F6EBDD' : colors.text;
+  const cupFill = onDark ? '#3A281D' : colors.card;
+  const saucer = onDark ? 'rgba(246,235,221,0.15)' : colors.line;
   const f = Math.max(0, Math.min(1, fraction));
   // Fincanın içi y=34 (ağız) ile y=82 (dip) arası
   const TOP = 34;
@@ -35,20 +39,20 @@ export function CupGauge({ fraction, size = 96, animate = false }: { fraction: n
         </Defs>
         {/* Buhar: fincanda kahve varsa */}
         {f > 0 ? (
-          <G stroke={colors.tertiary} strokeWidth={2.5} strokeLinecap="round" fill="none">
+          <G stroke={onDark ? "rgba(246,235,221,0.45)" : colors.tertiary} strokeWidth={2.5} strokeLinecap="round" fill="none">
             <Path d="M40 24 C36 18 44 14 40 6" />
             <Path d="M50 24 C46 18 54 14 50 6" />
             <Path d="M60 24 C56 18 64 14 60 6" />
           </G>
         ) : null}
-        <Ellipse cx={50} cy={88} rx={38} ry={5} fill={colors.line} />
-        <Path d={body} fill={colors.card} />
+        <Ellipse cx={50} cy={88} rx={38} ry={5} fill={saucer} />
+        <Path d={body} fill={cupFill} />
         <G clipPath="url(#cupBody)">
-          <AnimatedRect x={20} y={fillY} width={60} height={fillH} fill={tint.espresso} />
+          <AnimatedRect x={20} y={fillY} width={60} height={fillH} fill={onDark ? "#7A4A2A" : tint.espresso} />
           <AnimatedRect x={20} y={cremaY} width={60} height={4} fill={colors.accent} />
         </G>
-        <Path d="M77 42 Q92 42 90 56 Q88 68 74 66" stroke={colors.text} strokeWidth={4} fill="none" strokeLinecap="round" />
-        <Path d={body} stroke={colors.text} strokeWidth={4} fill="none" strokeLinejoin="round" />
+        <Path d="M77 42 Q92 42 90 56 Q88 68 74 66" stroke={ink} strokeWidth={4} fill="none" strokeLinecap="round" />
+        <Path d={body} stroke={ink} strokeWidth={4} fill="none" strokeLinejoin="round" />
       </Svg>
     </View>
   );

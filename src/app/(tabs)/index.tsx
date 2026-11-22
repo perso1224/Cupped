@@ -1,13 +1,12 @@
 import { router } from 'expo-router';
 import { Fragment } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
 import { Icon } from '../../components/Icon';
 import { WeekChart } from '../../components/WeekChart';
 import { WeekStrip } from '../../components/WeekStrip';
 import { Bean, CupGauge } from '../../components/coffee';
-import { MetricTile, MiniRing, Pager } from '../../components/dashboard';
 import { FadeIn, Pop, PressScale, animateLayout, haptic } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
@@ -27,13 +26,12 @@ import { colors, fonts, tint, type } from '../../theme';
 import { useTabBarSpace } from '../../components/TabBar';
 
 /**
- * Ana sayfa "Özet": Apple Fitness/Sağlık tarzı bölümlü yapı + Cal AI tarzı pano.
+ * Ana sayfa "Özet". Bugün kafe menü tahtası gibi tek kartta (skor + noktalı satırlar).
  * Bugün · Bu Hafta · Öne Çıkanlar · Son Fincanlar
  */
 export default function Home() {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
-  const { width: screenW } = useWindowDimensions();
   const entries = useEntries();
   const list = entries ?? [];
   const profile = useProfile();
@@ -59,7 +57,6 @@ export default function Home() {
   const type_ = list.length ? getPalateType(computePalateTypeId(list)) : profile ? getPalateType(profile.starterTypeId) : null;
   const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
   const dateLabel = upper(now.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }));
-  const pageW = screenW - 40;
 
   async function answerReminder(yes: boolean) {
     animateLayout();
@@ -91,54 +88,31 @@ export default function Home() {
     return null;
   })();
 
-  const scorePage = (
-    <View key="score">
-      <Card style={styles.bigCard}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.bigNumber}>{todays.length ? todayScore : '–'}</Text>
-          <Text style={styles.cardTitle}>{tr.home.todayScore}</Text>
-          <Text style={styles.cardSub}>{todays.length ? levelFor(todayScore) : tr.home.noCupToday}</Text>
+  const over = caffeine.mg > settings.caffeineRef;
+  // Bugünün "menü tahtası": kafe menüsü gibi noktalı satırlar, koyu kahve zemin (açık ve koyu temada aynı).
+  const todayBoard = (
+    <View style={styles.board}>
+      <View style={styles.boardTop}>
+        <CupGauge size={104} fraction={todays.length ? todayScore / 100 : 0} onDark />
+        <View style={{ flex: 1, marginLeft: 16 }}>
+          <Text style={styles.boardKicker}>{upper(tr.home.todayScore)}</Text>
+          <Text style={styles.boardScore}>{todays.length ? todayScore : '–'}</Text>
+          <Text style={styles.boardSub}>{todays.length ? levelFor(todayScore) : tr.home.noCupToday}</Text>
         </View>
-        <CupGauge size={112} fraction={todays.length ? todayScore / 100 : 0} />
-      </Card>
-      <View style={styles.tiles}>
-        <MetricTile value={`+${parts.effort.avg}`} label={tr.home.effortWeek} fraction={parts.effort.fraction} color={tint.amber} icon="hand-left" />
-        <MetricTile value={`+${parts.discovery.avg}`} label={tr.home.discoveryWeek} fraction={parts.discovery.fraction} color={tint.cherry} icon="compass" />
-        <MetricTile value={`+${parts.depth.avg}`} label={tr.home.depthWeek} fraction={parts.depth.fraction} color={tint.espresso} icon="leaf" />
       </View>
-    </View>
-  );
-
-  const caffeinePage = (
-    <View key="caffeine">
-      <Card style={styles.bigCard}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.bigNumber}>
-            {caffeine.mg}
-            <Text style={styles.bigUnit}> mg</Text>
+      <View style={styles.boardRule} />
+      <MenuLine color={tint.amber} label={tr.home.effortWeek} value={`+${parts.effort.avg}`} />
+      <MenuLine color={tint.cherry} label={tr.home.discoveryWeek} value={`+${parts.discovery.avg}`} />
+      <MenuLine color={SAGE_ON_DARK} label={tr.home.depthWeek} value={`+${parts.depth.avg}`} />
+      {settings.showCaffeine ? (
+        <>
+          <MenuLine color={over ? tint.cherry : BOARD.muted} label={tr.home.caffeineShort} value={`${caffeine.mg} mg`} />
+          <Text style={styles.boardFoot}>
+            {caffeine.cups ? `${tr.home.lastCup}: ${agoLabel(caffeine.minutesSinceLast)} · ` : ''}
+            {tr.home.caffeineRef(settings.caffeineRef)}
           </Text>
-          <Text style={styles.cardTitle}>{tr.home.caffeineToday}</Text>
-          <Text style={styles.cardSub}>{tr.home.caffeineRef(settings.caffeineRef)}</Text>
-        </View>
-        <MiniRing
-          size={112}
-          stroke={11}
-          fraction={caffeine.mg / settings.caffeineRef}
-          color={caffeine.mg > settings.caffeineRef ? tint.cherry : tint.amber}
-          center={<Icon name="flash" size={32} color={caffeine.mg > settings.caffeineRef ? tint.cherry : tint.amber} />}
-        />
-      </Card>
-      <View style={styles.tiles}>
-        <MetricTile value={String(caffeine.cups)} label={tr.home.cupsToday} fraction={caffeine.cups / 4} color={tint.amber} icon="cafe" />
-        <MetricTile
-          value={agoLabel(caffeine.minutesSinceLast)}
-          label={tr.home.lastCup}
-          fraction={caffeine.minutesSinceLast === null ? 0 : Math.min(1, caffeine.minutesSinceLast / 360)}
-          color={tint.cherry}
-          icon="time"
-        />
-        <MetricTile value={String(parts.cups)} label={tr.home.cupsWeek} fraction={parts.cups / 14} color={tint.espresso} icon="calendar" />
-      </View>
+        </>
+      ) : null}
     </View>
   );
 
@@ -173,7 +147,7 @@ export default function Home() {
         <>
           {/* BUGÜN */}
           <SectionHeader title={tr.home.today} />
-          <Pager key={settings.showCaffeine ? 2 : 1} width={pageW} pages={settings.showCaffeine ? [scorePage, caffeinePage] : [scorePage]} />
+          <FadeIn index={0}>{todayBoard}</FadeIn>
 
           {askReminder ? (
             <Card style={{ marginTop: 14 }}>
@@ -321,6 +295,24 @@ export default function Home() {
   );
 }
 
+/** Menü tahtası renkleri: koyu kahve zemin, krem yazı. Tema değişse de sabit. */
+const BOARD = { bg: '#2B1A12', text: '#F6EBDD', muted: '#CDBBA6', rule: 'rgba(246,235,221,0.18)' };
+const SAGE_ON_DARK = '#8FB08A';
+
+/** Kafe menüsü satırı: renkli nokta, ad, noktalı çizgi, değer. */
+function MenuLine({ color, label, value }: { color: string; label: string; value: string }) {
+  return (
+    <View style={styles.menuLine} accessible accessibilityLabel={`${label}: ${value}`}>
+      <View style={[styles.menuDot, { backgroundColor: color }]} />
+      <Text style={styles.menuLabel}>{label}</Text>
+      <Text style={styles.menuLeader} numberOfLines={1} ellipsizeMode="clip">
+        {' · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·'}
+      </Text>
+      <Text style={styles.menuValue}>{value}</Text>
+    </View>
+  );
+}
+
 function SectionHeader({ title }: { title: string }) {
   return <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 12 }]}>{title}</Text>;
 }
@@ -357,14 +349,30 @@ const styles = StyleSheet.create({
   sectionTitle: { ...type.title2 },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 28, marginBottom: 12 },
   link: { ...type.body, color: colors.accentText },
-  bigCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 22 },
-  bigNumber: { fontSize: 52, fontFamily: fonts.heavy, color: colors.text, letterSpacing: -1 },
-  bigUnit: { fontSize: 20, fontWeight: '700', color: colors.muted, letterSpacing: 0 },
+  board: {
+    backgroundColor: BOARD.bg,
+    borderRadius: 24,
+    padding: 18,
+    shadowColor: '#2B1A12',
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  boardTop: { flexDirection: 'row', alignItems: 'center' },
+  boardKicker: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: BOARD.muted },
+  boardScore: { fontSize: 56, fontFamily: fonts.heavy, color: BOARD.text, letterSpacing: -1, marginTop: 2 },
+  boardSub: { fontSize: 14, color: BOARD.muted, marginTop: 2 },
+  boardRule: { height: 1, backgroundColor: BOARD.rule, marginTop: 16, marginBottom: 6 },
+  boardFoot: { fontSize: 12, color: BOARD.muted, marginTop: 8, lineHeight: 17 },
+  menuLine: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
+  menuDot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
+  menuLabel: { fontSize: 15, fontWeight: '600', color: BOARD.text },
+  menuLeader: { flex: 1, color: BOARD.muted, opacity: 0.6, marginHorizontal: 6, fontSize: 13, overflow: 'hidden' },
+  menuValue: { fontSize: 17, fontFamily: fonts.display, color: BOARD.text },
   cardTitle: { ...type.footnote, fontWeight: '600' },
   cardTitleDark: { ...type.headline },
   cardSub: { ...type.footnote, marginTop: 4, lineHeight: 18 },
   inlineTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  tiles: { flexDirection: 'row', gap: 10, marginTop: 10 },
   chartHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
   chartValue: { fontSize: 34, fontWeight: '800', color: colors.text, letterSpacing: -1 },
   chartValueSmall: { fontSize: 22, fontWeight: '800', color: colors.text },

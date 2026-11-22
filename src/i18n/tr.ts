@@ -76,6 +76,7 @@ export const tr = {
     discoveryWeek: 'Keşif · hafta',
     depthWeek: 'Derinlik · hafta',
     caffeineToday: 'Bugünkü kafein (yaklaşık)',
+    caffeineShort: 'Kafein · bugün',
     caffeineRef: (n: number) => `Günlük referans ~${n} mg · sağlık tavsiyesi değildir`,
     cupsToday: 'Bugün fincan',
     lastCup: 'Son kahve',
