@@ -1,10 +1,12 @@
-# Her kod gönderiminde uygulamanın yeni halini Expo'ya yükler.
-# Sonra iPhone ve Android'de Expo Go ile açılabilir. Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar.
+# Geliştirme dalına her gönderimde uygulamanın yeni halini Expo'nun "preview" kanalına yükler.
+# Expo Go ve TestFlight sürümleri bu kanalı dinler. App Store sürümü AYRI "production" kanalını dinler;
+# oraya güncelleme yalnızca elle (eas update --branch production) gönderilir, böylece her gönderim mağazaya gitmez.
+# Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar.
 name: Expo'ya yayınla
 
 on:
   push:
-    branches: ['**']
+    branches: ['claude/expo-setup-guide-9xz45k']
     # Sadece belge değişikliklerinde yeniden yayınlama
     paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:

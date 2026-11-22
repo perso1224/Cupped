@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChoice } from '../components/ChoiceSheet';
 import { ListRow, ListSection } from '../components/List';
 import { tr } from '../i18n/tr';
+import { IS_STORE_BUILD } from '../lib/build';
 import type { PalateGoal } from '../lib/onboarding';
 import { cancelReminders, refreshReminder, setReminderEnabled } from '../lib/reminders';
 import { CAFFEINE_REFS, REMINDER_TIMES, timeLabel } from '../lib/settings';
@@ -240,7 +241,8 @@ export default function SettingsScreen() {
           value={Constants.expoConfig?.version ?? '1.0.0'}
           onPress={() => {
             versionTaps.current += 1;
-            if (versionTaps.current >= 5 && !beta) {
+            // Mağaza sürümünde deneme bölümü hiç açılmaz
+            if (versionTaps.current >= 5 && !beta && !IS_STORE_BUILD) {
               betaUnlocked = true;
               setBeta(true);
             }

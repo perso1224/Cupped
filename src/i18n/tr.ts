@@ -511,11 +511,12 @@ export const tr = {
   privacy: {
     title: 'Gizlilik',
     items: [
-      ['Veriler telefonunda.', 'Fincanların, fotoğrafların ve ayarların sadece bu telefonda saklanır. Sunucumuz yok; hesap açman gerekmez.'],
-      ['Kamera ve fotoğraflar.', 'Kamera sadece fincan fotoğrafı çekmek için kullanılır. Fotoğraflar telefonundan çıkmaz; sadece sen paylaşırsan gider.'],
-      ['Bildirimler.', 'Hatırlatma, telefonun kendi bildirimidir; dışarıya veri gönderilmez.'],
-      ['Ölçüm.', 'Test istatistikleri (paylaşım sayısı, kayıt süresi gibi) yalnızca bu telefonda tutulur. Sen göstermedikçe kimse göremez.'],
-      ['Silme ve taşıma.', 'Ayarlar\'dan tüm verilerini silebilir ya da dışa aktarıp yeni telefonuna taşıyabilirsin.'],
+      ['Veriler telefonunda.', 'Fincanların, fotoğrafların ve ayarların sadece bu telefonda saklanır. Sunucumuz yok; hesap açman gerekmez. Telefonunun kendi yedeklemesi (iCloud / Google) açıksa uygulama verisi oraya da yedeklenebilir.'],
+      ['Kamera ve fotoğraflar.', 'Kamera ve fotoğraf arşivi sadece fincan fotoğrafı için kullanılır. Fotoğraflar telefonundan çıkmaz; sadece sen paylaşırsan, senin seçtiğin uygulamaya gider. Paylaşım kartını kaydetmek istersen fotoğraflarına eklenir.'],
+      ['Bildirimler.', 'Hatırlatma, telefonun kendi bildirimidir; telefonda planlanır ve dışarıya veri gönderilmez.'],
+      ['Kullanım istatistikleri.', 'Birkaç kullanım sayısı (paylaşım sayısı, kayıt süresi gibi) yalnızca bu telefonda tutulur. Reklam ya da analitik aracı yok.'],
+      ['Uygulama güncellemeleri.', 'Uygulama, yeni sürümü indirmek için güncelleme sunucusuna bağlanır. Bu bağlantıda yalnızca sürüm bilgisi ve rastgele bir kurulum kimliği gibi teknik bilgiler gider; fincanların ve fotoğrafların gönderilmez.'],
+      ['Silme ve taşıma.', 'Ayarlar\'dan tüm verilerini silebilir ya da dışa aktarıp yeni telefonuna taşıyabilirsin. Uygulamayı silmek de tüm verileri telefondan kaldırır.'],
     ] as [string, string][],
   },
   homePrompt: {

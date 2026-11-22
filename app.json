@@ -12,18 +12,26 @@
       "infoPlist": {
         "RCTAsyncStorageExcludeFromBackup": false,
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleDevelopmentRegion": "tr"
+        "CFBundleDevelopmentRegion": "tr",
+        "NSPhotoLibraryAddUsageDescription": "Paylaşım kartını fotoğraflarına kaydedebilmen için gerekiyor.",
+        "CFBundleLocalizations": [
+          "tr"
+        ]
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#D98B2B",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.perso1224.cupped"
+      "package": "com.perso1224.cupped",
+      "blockedPermissions": [
+        "android.permission.WRITE_SETTINGS",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,7 +54,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Fincanının fotoğrafını çekmek için kameraya erişim gerekiyor. Fotoğraflar sadece telefonunda kalır.",
+          "cameraPermission": "Fincanının fotoğrafını çekmek için kameraya erişim gerekiyor. Fotoğraflar telefonunda kalır; sadece sen paylaşırsan çıkar.",
           "recordAudioAndroid": false,
           "microphonePermission": false
         }
@@ -56,16 +64,24 @@
         {
           "photosPermission": "Fincan fotoğrafını galeriden seçebilmen için fotoğraflarına erişim gerekiyor.",
           "microphonePermission": false,
-          "cameraPermission": "Fincanının fotoğrafını çekmek için kameraya erişim gerekiyor. Fotoğraflar sadece telefonunda kalır."
+          "cameraPermission": "Fincanının fotoğrafını çekmek için kameraya erişim gerekiyor. Fotoğraflar telefonunda kalır; sadece sen paylaşırsan çıkar."
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#FAF8F5",
+          "dark": {
+            "image": "./assets/splash-icon-dark.png",
+            "backgroundColor": "#15110E"
+          }
+        }
+      ]
     ],
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FAF8F5"
-    },
     "experiments": {
       "reactCompiler": true
     }

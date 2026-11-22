@@ -1,4 +1,6 @@
+import { Redirect } from 'expo-router';
 import { BackButton } from '../components/NavButtons';
+import { IS_STORE_BUILD } from '../lib/build';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ListRow, ListSection } from '../components/List';
@@ -14,7 +16,12 @@ const pct = (x: number | null) => (x === null ? tr.stats.none : `%${Math.round(x
 const yn = (b: boolean) => (b ? tr.stats.yes : tr.stats.no);
 
 /** Beta testi için hipotez sayıları (H2, H3, H4, H6). Kullanıcı ekran görüntüsü alıp kurucuya gönderir. */
+/** Mağaza sürümünde bu deneme ekranı yok (bağlantıyla açılsa bile ana sayfaya döner). */
 export default function Stats() {
+  return IS_STORE_BUILD ? <Redirect href="/" /> : <StatsScreen />;
+}
+
+function StatsScreen() {
   const insets = useSafeAreaInsets();
   const entries = useEntries() ?? [];
   const [metrics] = useMetrics();

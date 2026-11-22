@@ -110,3 +110,15 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - `docs/gizlilik.html` is the public privacy policy.
   - Waiting on the owner: a contact e-mail, and where to host the privacy page (GitHub Pages needs a public repo).
 - Audit by 5 agents: the consolidated findings are in `docs/DENETIM_RAPORU.md` (A–E, with ☐/☑/❓ status).
+- Audit fixes, part A (store blockers):
+  - Android adaptive icon (rings from icon.png, solid #D98B2B background, monochrome) and favicon.
+  - `expo-splash-screen` (light and dark rings) and `expo-system-ui` installed.
+  - `NSPhotoLibraryAddUsageDescription` and `CFBundleLocalizations: [tr]` added. `blockedPermissions` covers WRITE_SETTINGS, SYSTEM_ALERT_WINDOW and RECORD_AUDIO.
+  - eas.json:
+    - `testflight` profile uses channel preview; the TestFlight workflow uses it.
+    - `production` profile uses channel production.
+    - The expo-update workflow runs only on the dev branch.
+  - `IS_STORE_BUILD` (src/lib/build.ts) hides the beta stats screen in store builds.
+  - The privacy texts are synced.
+  - APP_STORE.md declares Device ID (expo-updates client id), adds English review notes, and fixes the Instagram wording.
+  - Note: `npx expo install` can't reach api.expo.dev here. Install with npm using the versions in `node_modules/expo/bundledNativeModules.json`.

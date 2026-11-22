@@ -4,8 +4,16 @@
     "appVersionSource": "remote"
   },
   "build": {
-    "production": {
+    "testflight": {
       "channel": "preview",
+      "autoIncrement": true,
+      "distribution": "store",
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "production": {
+      "channel": "production",
       "autoIncrement": true,
       "ios": {
         "resourceClass": "m-medium"
@@ -13,6 +21,9 @@
     }
   },
   "submit": {
+    "testflight": {
+      "ios": {}
+    },
     "production": {
       "ios": {}
     }

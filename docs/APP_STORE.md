@@ -68,6 +68,8 @@ Hata ya da garip bir şey görürsen ekran görüntüsü alıp TestFlight'taki "
 
 ```
 Cupped hesap gerektirmez; açılışta üç kısa soru sorulur, ardından uygulama kullanılabilir. Tüm veriler cihazda saklanır, sunucumuz yoktur. Kamera yalnızca fincan fotoğrafı için kullanılır; kamera izni verilmezse "Fotoğrafsız devam et" ile kayıt yapılabilir.
+
+English: Cupped requires no account or login. On first launch it asks three short questions, then the app is fully usable. All data (cups, photos, settings) is stored only on the device; we run no server. The camera is used only to photograph your coffee; if camera access is denied, tap "Fotoğrafsız devam et" (continue without photo) to log a cup. The UI is in Turkish.
 ```
 
 ---
@@ -107,7 +109,7 @@ SERİ VE ÖZETLER
 Günlük serini koru, haftalık ve aylık Damak Özeti'ni izle. Yıl sonunda tüm fincanların Fincan Duvarı'nda bir arada.
 
 PAYLAŞ
-Fincan kartını, Damak Kartı'nı ya da özetini tek dokunuşla Instagram'da paylaş. Damak kodunla arkadaşlarınla Damak Uyumu'na bak.
+Fincan kartını, Damak Kartı'nı ya da özetini paylaşım menüsünden Instagram, WhatsApp ve diğer uygulamalarda paylaş. Damak kodunla arkadaşlarınla Damak Uyumu'na bak.
 
 GİZLİLİK ÖNCE
 Hesap açman gerekmez. Fincanların, fotoğrafların ve ayarların yalnızca telefonunda saklanır; sunucumuz yok. İstediğin zaman verilerini dışa aktarabilir ya da tamamen silebilirsin.
@@ -132,11 +134,27 @@ espresso,filtre,türk,kafe,barista,tadım,latte,v60,demleme,çekirdek,rozet,seri
 
 ### Uygulama gizliliği (App Privacy anketi)
 
-- **"Bu uygulamadan veri topluyor musunuz?" → Hayır.**
-  - Gerekçe: fincanlar, fotoğraflar, ayarlar ve test istatistikleri yalnızca cihazda kalır. Hesap, reklam ve analitik aracı yok.
-- Bu cevap, App Store sayfasında "Veri Toplanmıyor" etiketi olarak görünür.
-- Kamera, fotoğraflar ve bildirimler cihazda kullanılır. Apple'ın tanımına göre bunlar "toplanan veri" sayılmaz, çünkü geliştiriciye gönderilmez.
-- İleride analitik, hesap ya da sunucu eklenirse bu cevap güncellenmeli.
+Fincanlar, fotoğraflar, ayarlar ve kullanım sayıları cihazda kalır. Hesap, reklam ve analitik aracı yok.
+Tek istisna: uygulama güncellemeleri (expo-updates) her açılışta Expo'nun güncelleme sunucusuna rastgele bir **kurulum kimliği** gönderir.
+Bu kimlik kişiyle ilişkilendirilmez, ama Apple'ın tanımına göre "Cihaz Kimliği" sayılabilir. Bu yüzden ihtiyatlı cevap:
+
+- **"Bu uygulamadan veri topluyor musunuz?" → Evet.**
+- Veri türü: **Tanımlayıcılar → Cihaz Kimliği**
+  - Amaç: **Uygulama İşlevselliği**
+  - Kullanıcının kimliğine bağlı mı? **Hayır**
+  - İzleme (tracking) için mi? **Hayır**
+- Başka hiçbir veri türü işaretlenmez.
+
+App Store sayfasında "Kimliğinize Bağlı Olmayan Veriler: Tanımlayıcılar" olarak görünür. Bu, "Veri Toplanmıyor" demekten daha doğru ve güvenlidir.
+
+**Google Play "Veri güvenliği" formu:**
+- Veri toplanıyor mu? Evet.
+  - Tür: **Cihaz veya diğer kimlikler**.
+  - Amaç: Uygulama işlevselliği.
+  - Paylaşılıyor mu? Hayır.
+- Aktarımda şifreli mi? Evet.
+- Kullanıcı silme isteyebilir mi? Evet, uygulama içinde "Tüm verileri sil" var.
+- İleride analitik, hesap ya da sunucu eklenirse bu cevaplar güncellenmeli.
 
 ### Ekran görüntüleri
 
@@ -156,7 +174,7 @@ espresso,filtre,türk,kafe,barista,tadım,latte,v60,demleme,çekirdek,rozet,seri
 ## 3. Gizlilik politikası sayfası
 
 - Apple, gizlilik politikası için herkese açık bir internet adresi ister.
-- Hazır sayfa: `docs/gizlilik.html`. Uygulamadaki Gizlilik ekranıyla aynı içerik, Türkçe.
+- Hazır sayfa: `docs/gizlilik.html`. Uygulamadaki Gizlilik ekranıyla aynı konuları anlatır (veri telefonda, kamera ve fotoğraflar, bildirimler, kullanım sayıları, güncelleme sunucusu, silme) ve ek olarak çocuklar ile iletişim bölümü içerir.
 - İçindeki `[iletişim e-postası]` doldurulmalı.
 
 Ücretsiz yayınlama seçenekleri:

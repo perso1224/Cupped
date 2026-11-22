@@ -7,12 +7,12 @@ Durum: ☐ yapılacak · ☑ yapıldı · ❓ kurucu kararı gerekiyor
 
 ## A. Mağaza engelleri (göndermeden önce şart)
 
-- ☐ **Android ikonu:** Hâlâ Expo'nun şablon ikonu duruyor. Favicon da öyle. Halkalı ikonla değiştirilmeli.
-- ☐ **iPhone'da paylaşım menüsünden "Görüntüyü Kaydet" uygulamayı çökertir:** Fotoğraf kaydetme izin metni (`NSPhotoLibraryAddUsageDescription`) eksik.
-- ☐ **Gizli "Test istatistikleri" ekranı (Sürüm'e 5 kez dokunma):** Mağaza sürümünde olmamalı (Apple 2.3.1). Yalnızca TestFlight derlemesinde açılan bir bayrağa bağlanmalı.
-- ☐ **Güncelleme kanalı:** Mağaza sürümü, her `git push`'ta güncellenen "preview" kanalını dinliyor. Ayrı bir "production" kanalı açılmalı.
+- ☑ **Android ikonu:** Hâlâ Expo'nun şablon ikonu duruyor. Favicon da öyle. Halkalı ikonla değiştirilmeli.
+- ☑ **iPhone'da paylaşım menüsünden "Görüntüyü Kaydet" uygulamayı çökertir:** Fotoğraf kaydetme izin metni (`NSPhotoLibraryAddUsageDescription`) eksik.
+- ☑ **Gizli "Test istatistikleri" ekranı (Sürüm'e 5 kez dokunma):** Mağaza sürümünde olmamalı (Apple 2.3.1). Yalnızca TestFlight derlemesinde açılan bir bayrağa bağlanmalı.
+- ☑ **Güncelleme kanalı:** Mağaza sürümü, her `git push`'ta güncellenen "preview" kanalını dinliyor. Ayrı bir "production" kanalı açılmalı.
 - ❓ **Gizlilik sayfası:** Yayınlanmalı. İletişim e-postası ve barındırma yeri gerekiyor.
-- ❓ **"Veri Toplanmıyor" etiketi:** expo-updates her açılışta Expo sunucusuna kuruluma özel bir kimlik gönderiyor. Bu kimliğin "Cihaz Kimliği" olarak beyan edilmesi gerekebilir.
+- ☑ **"Veri Toplanmıyor" etiketi:** Çözüm: APP_STORE.md'de ihtiyatlı olarak "Cihaz Kimliği (bağlantısız, izleme yok)" beyan edildi. Ayrıntı: expo-updates her açılışta Expo sunucusuna kuruluma özel bir kimlik gönderiyor. Bu kimliğin "Cihaz Kimliği" olarak beyan edilmesi gerekebilir.
 
 ## B. Veri ve puan hataları
 
@@ -86,9 +86,9 @@ Durum: ☐ yapılacak · ☑ yapıldı · ❓ kurucu kararı gerekiyor
   - Yazı kutularının adı okunmuyor.
 - ☐ **Büyük yazı boyutu:** Sabit yükseklikli düğme ve kutularda yazı taşıyor.
 - ☐ **Küçük dokunma alanları (44 pt altı):** Bölümlü seçici, paylaş düğmeleri, yıldızlar.
-- ☐ **iPhone dil ayarı:** `CFBundleLocalizations: ["tr"]` yok. VoiceOver Türkçe metni İngilizce sesle okuyabilir.
-- ☐ **Android izinleri:** Gereksiz iki izin var, `WRITE_SETTINGS` ve `SYSTEM_ALERT_WINDOW`.
-- ☐ **Açılış ekranı:** Karanlık versiyonu yok. Android 12'de logo kenarlardan kesilebilir.
+- ☑ **iPhone dil ayarı:** `CFBundleLocalizations: ["tr"]` yok. VoiceOver Türkçe metni İngilizce sesle okuyabilir.
+- ☑ **Android izinleri:** Gereksiz iki izin var, `WRITE_SETTINGS` ve `SYSTEM_ALERT_WINDOW`.
+- ☑ **Açılış ekranı:** Karanlık versiyonu yok. Android 12'de logo kenarlardan kesilebilir.
 
 ## Telefonda doğrulanacaklar
 
