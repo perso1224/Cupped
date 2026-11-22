@@ -46,7 +46,7 @@ export function BadgeCard({ progress: { badge: b, current, target, earned } }: {
   return (
     <Card style={styles.badge}>
       <View style={[styles.badgeIcon, { backgroundColor: earned ? colors.accent : colors.line }]}>
-        <Icon name={earned ? 'ribbon' : 'lock-closed'} size={18} color={earned ? colors.white : colors.muted} />
+        <Icon name={earned ? 'ribbon' : 'lock-closed'} size={18} color={earned ? colors.onColor : colors.muted} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[styles.badgeName, !earned && { color: colors.muted }]}>{b.name}</Text>

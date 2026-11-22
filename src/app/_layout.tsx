@@ -2,11 +2,12 @@ import { Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_800ExtraBold, useFonts
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { AppState, View } from 'react-native';
+import * as Updates from 'expo-updates';
+import { Appearance, AppState, View } from 'react-native';
 import { refreshReminder } from '../lib/reminders';
 import { recordActiveDay } from '../lib/storage';
 import { useProfile } from '../lib/useProfile';
-import { colors } from '../theme';
+import { colors, isDark } from '../theme';
 
 /** Doğrudan bağlantıyla açılan ekranların altında her zaman sekmeler olsun (geri tuşu çıkmaza girmesin). */
 export const unstable_settings = { anchor: '(tabs)' };
@@ -30,11 +31,31 @@ export default function RootLayout() {
     return () => sub.remove();
   }, []);
 
+  // Karanlık mod: renkler açılışta seçilir. Telefonun görünümü değişirse, uygulama ÖNDEYKEN yeniden yükle.
+  // (iOS arka plana geçerken iki temada ekran görüntüsü alır ve görünümü kısa süre değiştirir; o an yüklemeyiz.)
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (AppState.currentState !== 'active') return;
+        if ((Appearance.getColorScheme() === 'dark') !== isDark) Updates.reloadAsync().catch(() => {});
+      }, 400);
+    };
+    const a = Appearance.addChangeListener(check);
+    const b = AppState.addEventListener('change', (s) => s === 'active' && check());
+    return () => {
+      clearTimeout(timer);
+      a.remove();
+      b.remove();
+    };
+  }, []);
+
   if (profile === undefined || (!fontsLoaded && !fontError)) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="auto" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         {/* Profil varsa uygulama, yoksa tanıtım. Profil silinince/oluşunca yığın temizce değişir. */}
         <Stack.Protected guard={!!profile}>

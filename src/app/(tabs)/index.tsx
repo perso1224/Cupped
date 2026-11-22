@@ -22,7 +22,7 @@ import { useEntries } from '../../lib/useEntries';
 import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
 import { useSettings } from '../../lib/useSettings';
-import { colors, fonts, tint, type } from '../../theme';
+import { colors, fonts, isDark, tint, type } from '../../theme';
 import { useTabBarSpace } from '../../components/TabBar';
 
 /**
@@ -202,7 +202,7 @@ export default function Home() {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={styles.typeIcon}>
-                    <Icon name="color-palette" size={20} color="#fff" />
+                    <Icon name="color-palette" size={20} color={colors.white} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cardTitle}>{tr.home.palateType}</Text>
@@ -353,6 +353,8 @@ const styles = StyleSheet.create({
     backgroundColor: BOARD.bg,
     borderRadius: 24,
     padding: 18,
+    borderWidth: isDark ? 1 : 0, // koyu temada zeminden ayrılsın
+    borderColor: 'rgba(246,235,221,0.12)',
     shadowColor: '#2B1A12',
     shadowOpacity: 0.18,
     shadowRadius: 16,

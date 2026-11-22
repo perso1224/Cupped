@@ -25,7 +25,7 @@ export function WeekStrip({ days }: { days: StripDay[] }) {
               ]}
               accessibilityLabel={`${tr.weekdaysShort[i]} ${d.date.getDate()}${done ? `, en iyi skor ${d.best}` : ''}`}
             >
-              <Text style={[styles.num, done && { color: colors.white }, d.isFuture && { color: colors.tertiary }]}>{d.date.getDate()}</Text>
+              <Text style={[styles.num, done && { color: colors.onColor }, d.isFuture && { color: colors.tertiary }]}>{d.date.getDate()}</Text>
             </View>
           </View>
         );

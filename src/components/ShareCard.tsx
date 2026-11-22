@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     maxWidth: '88%',
   },
-  badgeText: { color: colors.white, fontWeight: '700', fontSize: 13 },
+  badgeText: { color: colors.onColor, fontWeight: '700', fontSize: 13 },
   ringWrap: { alignSelf: 'center', backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   body: { alignItems: 'center', paddingHorizontal: 24 },
   kicker: { fontSize: 12, fontWeight: '800', color: colors.accentText, letterSpacing: 1.2 },

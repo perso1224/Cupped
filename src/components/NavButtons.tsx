@@ -40,7 +40,7 @@ export function CloseButton({ onPress, dark, tint }: { onPress?: () => void; dar
       accessibilityRole="button"
       accessibilityLabel="Kapat"
     >
-      <Icon name="close" size={20} color={tint ?? (dark ? colors.white : colors.text)} />
+      <Icon name="close" size={20} color={tint ?? (dark ? colors.onColor : colors.text)} />
     </PressScale>
   );
 }

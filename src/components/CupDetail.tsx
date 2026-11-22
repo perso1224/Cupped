@@ -168,7 +168,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
           {newBadges.map((b, i) => (
             <Pop key={b.id} delay={1300 + i * 250} style={styles.newBadge}>
               <View style={styles.newBadgeIcon}>
-                <Icon name="ribbon" size={22} color={colors.white} />
+                <Icon name="ribbon" size={22} color={colors.onColor} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.newBadgeKicker}>{tr.result.newBadge}</Text>
@@ -263,7 +263,7 @@ function RoundButton({ icon, label, onPress, disabled }: { icon: IconName; label
       accessibilityLabel={label}
       style={[styles.round, disabled && { opacity: 0.5 }]}
     >
-      <Icon name={icon} size={22} color={colors.white} />
+      <Icon name={icon} size={22} color={colors.onColor} />
     </PressScale>
   );
 }

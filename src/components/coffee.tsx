@@ -59,7 +59,7 @@ export function CupGauge({ fraction, size = 96, animate = false, onDark = false 
 }
 
 /** Kahve çekirdeği simgesi (seri göstergesi; alev yerine). */
-export function Bean({ size = 18, color = tint.espresso, line = colors.white }: { size?: number; color?: ColorValue; line?: ColorValue }) {
+export function Bean({ size = 18, color = tint.espresso, line = colors.onColor }: { size?: number; color?: ColorValue; line?: ColorValue }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <G transform="rotate(35 12 12)">

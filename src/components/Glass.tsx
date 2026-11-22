@@ -37,7 +37,7 @@ export function GlassSurface({
 }) {
   if (GlassViewImpl) {
     return (
-      <GlassViewImpl style={style} glassEffectStyle="regular" colorScheme="light" tintColor={tint} isInteractive={interactive}>
+      <GlassViewImpl style={style} glassEffectStyle="regular" tintColor={tint} isInteractive={interactive}>
         {children}
       </GlassViewImpl>
     );

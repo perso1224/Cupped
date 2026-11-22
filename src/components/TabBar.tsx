@@ -5,7 +5,7 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
-import { colors, tint } from '../theme';
+import { colors, isDark, tint } from '../theme';
 import { GLASS, GlassSurface } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { haptic, PressScale, reduceMotionNow } from './motion';
@@ -70,7 +70,7 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
         style={styles.plusWrap}
       >
         <GlassSurface style={styles.plus} fallback={styles.plusSolid} tint={tint.espresso} interactive>
-          <Icon name="add" size={32} color={colors.white} />
+          <Icon name="add" size={32} color={colors.onColor} />
         </GlassSurface>
       </PressScale>
     </View>
@@ -111,7 +111,7 @@ function Avatar({ focused }: { focused: boolean }) {
   const initial = (profile?.nickname?.trim()?.[0] ?? 'C').toLocaleUpperCase('tr-TR');
   return (
     <View style={[styles.avatar, focused ? styles.avatarOn : null]}>
-      <Text style={[styles.avatarText, focused && { color: colors.white }]}>{initial}</Text>
+      <Text style={[styles.avatarText, focused && { color: colors.onColor }]}>{initial}</Text>
     </View>
   );
 }
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   pillSolid: { backgroundColor: colors.card, ...shadow },
   pillRow: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 },
   item: { flex: 1, height: BAR_HEIGHT - 12, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  highlight: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: GLASS ? 'rgba(0,0,0,0.07)' : colors.accentSoft },
+  highlight: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: GLASS ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)') : colors.accentSoft },
   label: { fontSize: 10, fontWeight: '600' },
   plusWrap: { width: BAR_HEIGHT, height: BAR_HEIGHT },
   plus: { width: BAR_HEIGHT, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2, alignItems: 'center', justifyContent: 'center' },

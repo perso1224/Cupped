@@ -325,7 +325,7 @@ export default function NewCup() {
 
         <View style={[styles.cameraBar, { paddingBottom: insets.bottom + 20 }]}>
           <PressScale onPress={pickFromGallery} scaleTo={0.93} style={styles.sideBtn}>
-            <Icon name="images-outline" size={24} color={colors.white} />
+            <Icon name="images-outline" size={24} color={colors.onColor} />
             <Text style={styles.sideText}>{tr.capture.fromGallery}</Text>
           </PressScale>
           <PressScale
@@ -345,7 +345,7 @@ export default function NewCup() {
             scaleTo={0.93}
             style={styles.sideBtn}
           >
-            <Icon name="arrow-forward-circle-outline" size={24} color={colors.white} />
+            <Icon name="arrow-forward-circle-outline" size={24} color={colors.onColor} />
             <Text style={styles.sideText}>{tr.capture.skipPhoto}</Text>
           </PressScale>
         </View>
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   flash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#fff' },
   capturing: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)' },
   permission: { flex: 1, paddingHorizontal: 28 },
-  permTitle: { color: colors.white, fontSize: 26, fontWeight: '800' },
+  permTitle: { color: colors.onColor, fontSize: 26, fontWeight: '800' },
   permBody: { color: '#CFCAC3', fontSize: 16, marginTop: 10, lineHeight: 22 },
   close: { position: 'absolute', left: 20 },
   cameraBar: {
@@ -569,9 +569,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   sideBtn: { width: 96, alignItems: 'center' },
-  sideText: { color: colors.white, fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 4 },
-  shutter: { width: 78, height: 78, borderRadius: 39, borderWidth: 4, borderColor: colors.white, alignItems: 'center', justifyContent: 'center' },
-  shutterInner: { width: 62, height: 62, borderRadius: 31, backgroundColor: colors.white },
+  sideText: { color: colors.onColor, fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 4 },
+  shutter: { width: 78, height: 78, borderRadius: 39, borderWidth: 4, borderColor: colors.onColor, alignItems: 'center', justifyContent: 'center' },
+  shutterInner: { width: 62, height: 62, borderRadius: 31, backgroundColor: colors.onColor },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   preview: { width: 88, height: 88, borderRadius: 18 },
   previewEmpty: { backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
@@ -596,6 +596,6 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   saveBar: { paddingHorizontal: 20, paddingTop: 12, backgroundColor: colors.bg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
-  kbBar: { flexDirection: 'row', justifyContent: 'flex-end', backgroundColor: '#F1EEE9', paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
+  kbBar: { flexDirection: 'row', justifyContent: 'flex-end', backgroundColor: colors.surface, paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
   kbDone: { fontSize: 16, fontWeight: '800', color: colors.accentText },
 });
