@@ -104,3 +104,4 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - Palate types are rectangular "VİZE" stamps (`VisaStamp`).
   - Locked items are faint dashed blanks.
   - These stamps are non-interactive (the owner's decision). The method → history filter is still in Profile > Koleksiyon > Yöntemler.
+- Passport stamps: the frames are drawn with SVG (rotated inside the SVG), because rotated RN border views look jagged on iOS. Only the text and icon use an RN rotate.

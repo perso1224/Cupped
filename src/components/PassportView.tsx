@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import Svg, { Circle, G, Rect } from 'react-native-svg';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -99,6 +100,7 @@ const METHOD_ICON: Record<Method, IconName> = {
   milk: 'water',
   turkish: 'flame',
 };
+const RING = 72;
 const VISA_INK = [tint.cherry, tint.espresso, tint.sage, tint.amber, tint.sky, tint.slate];
 
 /** Yöntem damgası: yuvarlak, çift çizgili mürekkep damga; içinde simge ve fincan sayısı. Kazanılmadıysa soluk boş yer. */
@@ -121,8 +123,13 @@ function MethodStamp({ method, cups, index }: { method: Method; cups: number; in
   return (
     <View style={styles.methodCell} accessible accessibilityLabel={`${label}, ${tr.passport.cups(cups)}`}>
       <Pop delay={120 + index * 70}>
-        <View style={[styles.methodRing, { borderColor: ink, transform: [{ rotate: `${TILT[index % TILT.length]}deg` }] }]}>
-          <View style={[styles.methodInner, { borderColor: ink }]}>
+        {/* Çerçeve SVG ile çizilir: iPhone'da eğik/kenarlı kutular tırtıklı görünür, SVG çizgisi pürüzsüz kalır */}
+        <View style={styles.methodRing}>
+          <Svg width={RING} height={RING} style={StyleSheet.absoluteFill}>
+            <Circle cx={RING / 2} cy={RING / 2} r={RING / 2 - 2} stroke={ink} strokeWidth={2.5} fill="none" />
+            <Circle cx={RING / 2} cy={RING / 2} r={RING / 2 - 6.5} stroke={ink} strokeWidth={1} fill="none" />
+          </Svg>
+          <View style={{ alignItems: 'center', transform: [{ rotate: `${TILT[index % TILT.length]}deg` }] }}>
             <Icon name={METHOD_ICON[method]} size={22} color={ink} />
             <Text style={[styles.methodCount, { color: ink }]}>{cups}</Text>
           </View>
@@ -146,15 +153,30 @@ function VisaStamp({ label, earned, index }: { label: string; earned: boolean; i
       </View>
     );
   }
-  const ink = VISA_INK[index % VISA_INK.length];
+  return <EarnedVisa label={label} ink={VISA_INK[index % VISA_INK.length]} tilt={TILT[(index + 3) % TILT.length] / 2} index={index} />;
+}
+
+/** Kazanılmış vize: çift çerçeve SVG'de döndürülür (pürüzsüz), yazı da aynı açıyla. */
+function EarnedVisa({ label, ink, tilt, index }: { label: string; ink: string; tilt: number; index: number }) {
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const { w, h } = box;
   return (
     <Pop delay={200 + index * 60} style={styles.visaWrap}>
       <View
-        style={[styles.visa, { borderColor: ink, transform: [{ rotate: `${TILT[(index + 3) % TILT.length] / 2}deg` }] }]}
+        style={styles.visa}
+        onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
         accessible
         accessibilityLabel={label}
       >
-        <View style={[styles.visaInner, { borderColor: ink }]}>
+        {w ? (
+          <Svg width={w} height={h} style={StyleSheet.absoluteFill}>
+            <G rotation={tilt} origin={`${w / 2}, ${h / 2}`}>
+              <Rect x={4} y={4} width={w - 8} height={h - 8} rx={8} stroke={ink} strokeWidth={2} fill="none" />
+              <Rect x={8.5} y={8.5} width={w - 17} height={h - 17} rx={5} stroke={ink} strokeWidth={1} fill="none" />
+            </G>
+          </Svg>
+        ) : null}
+        <View style={{ alignItems: 'center', transform: [{ rotate: `${tilt}deg` }] }}>
           <Text style={[styles.visaKicker, { color: ink }]}>{tr.passport.visa}</Text>
           <Text style={[styles.visaName, { color: ink }]} numberOfLines={2}>
             {label}
@@ -173,16 +195,14 @@ const styles = StyleSheet.create({
   page: { backgroundColor: colors.card, borderRadius: 20, paddingVertical: 18, paddingHorizontal: 10 },
   stampRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', rowGap: 14 },
   methodCell: { width: '33.33%', alignItems: 'center' },
-  methodRing: { width: 72, height: 72, borderRadius: 36, borderWidth: 2.5, padding: 3, alignItems: 'center', justifyContent: 'center' },
-  methodInner: { flex: 1, alignSelf: 'stretch', borderRadius: 33, borderWidth: 1, alignItems: 'center', justifyContent: 'center', opacity: 0.92 },
+  methodRing: { width: RING, height: RING, borderRadius: RING / 2, alignItems: 'center', justifyContent: 'center' },
   emptyRing: { borderColor: colors.line, borderStyle: 'dashed', borderWidth: 1.5 },
   methodCount: { fontFamily: fonts.heavy, fontSize: 15, marginTop: 1 },
   methodLabel: { ...type.caption, fontWeight: '700', color: colors.text, marginTop: 8, textAlign: 'center', paddingHorizontal: 4 },
   visaRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, paddingHorizontal: 4 },
   visaWrap: { width: '47%' },
-  visa: { width: '100%', minHeight: 62, borderRadius: 8, borderWidth: 2, padding: 3 },
-  visaEmpty: { width: '47%', borderColor: colors.line, borderStyle: 'dashed', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', padding: 8 },
-  visaInner: { flex: 1, borderRadius: 5, borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6, paddingVertical: 6 },
+  visa: { width: '100%', minHeight: 66, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 12 },
+  visaEmpty: { width: '47%', minHeight: 62, borderRadius: 8, borderColor: colors.line, borderStyle: 'dashed', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', padding: 8 },
   visaKicker: { fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
   visaName: { fontFamily: fonts.display, fontSize: 14, textAlign: 'center', marginTop: 2 },
   empty: { ...type.subhead },
