@@ -133,6 +133,19 @@ export default function NewCup() {
 
   const places = knownPlaces(history).slice(0, 6);
 
+  // Android: klavye açıkken Kaydet çubuğu klavyenin üstüne binmesin, yazı alanına yer kalsın
+  // (iPhone'daki gibi klavye kapanınca geri gelir).
+  const [kbOpen, setKbOpen] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const show = Keyboard.addListener('keyboardDidShow', () => setKbOpen(true));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKbOpen(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
   // Android geri tuşu: doğrudan çıkmasın, Kapat ile aynı davransın (girilen bilgi varsa önce sorar).
   const closeRef = useRef<() => void>(() => {});
   useEffect(() => {
@@ -544,13 +557,15 @@ export default function NewCup() {
         ) : null}
       </ScrollView>
 
-      <View style={[styles.saveBar, { paddingBottom: insets.bottom + 12 }]}>
-        <PillButton
-          label={!method ? tr.capture.chooseMethod : !where ? tr.capture.choosePlace : original ? tr.capture.saveChanges : tr.capture.save}
-          onPress={original ? () => saveEdit(original) : save}
-          disabled={!method || !where || saving}
-        />
-      </View>
+      {kbOpen ? null : (
+        <View style={[styles.saveBar, { paddingBottom: insets.bottom + 12 }]}>
+          <PillButton
+            label={!method ? tr.capture.chooseMethod : !where ? tr.capture.choosePlace : original ? tr.capture.saveChanges : tr.capture.save}
+            onPress={original ? () => saveEdit(original) : save}
+            disabled={!method || !where || saving}
+          />
+        </View>
+      )}
 
       {Platform.OS === 'ios' ? (
         <InputAccessoryView nativeID={KB_DONE}>
