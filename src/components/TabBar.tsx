@@ -1,7 +1,7 @@
-import { router } from 'expo-router';
+import { router, useScrollToTop } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
-import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
@@ -12,11 +12,19 @@ import { haptic, PressScale, reduceMotionNow } from './motion';
 
 const BAR_HEIGHT = 64;
 const GAP_BELOW = 8;
+const ROW_PAD = 6;
 
 /** Sekme ekranlarının içeriği yüzen menünün altında kalmasın diye en alta bırakılacak boşluk. */
 export function useTabBarSpace() {
   const insets = useSafeAreaInsets();
   return barBottom(insets.bottom) + BAR_HEIGHT + 24;
+}
+
+/** Sekme ekranının kaydırma alanı için: etkin sekmeye tekrar dokununca en üste kayar (iOS/Android alışkanlığı). */
+export function useTabScrollRef() {
+  const ref = useRef<ScrollViewInstance>(null);
+  useScrollToTop(ref);
+  return ref;
 }
 
 const barBottom = (safeBottom: number) => Math.max(safeBottom - 10, GAP_BELOW + 4);
@@ -34,11 +42,34 @@ const TABS: Record<string, { icon: string; label: string }> = {
  */
 export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  // Kayan vurgu: seçili sekmenin arkasındaki kapsül, sekmeler arasında kayarak gider (iOS gibi).
+  const visible = state.routes.filter((r) => TABS[r.name]);
+  const active = visible.findIndex((r) => r.key === state.routes[state.index]?.key);
+  const [rowW, setRowW] = useState(0);
+  const itemW = visible.length ? (rowW - ROW_PAD * 2) / visible.length : 0;
+  const [x] = useState(() => new Animated.Value(0));
+  const [shown] = useState(() => new Animated.Value(0));
+  const placed = useRef(false);
+  useEffect(() => {
+    if (!itemW) return;
+    const to = ROW_PAD + Math.max(active, 0) * itemW;
+    // İlk yerleşimde ve "hareketi azalt"ta zıplamadan yerine koy
+    if (!placed.current || reduceMotionNow()) x.setValue(to);
+    else Animated.spring(x, { toValue: to, useNativeDriver: true, speed: 18, bounciness: 7 }).start();
+    placed.current = true;
+    Animated.timing(shown, { toValue: active >= 0 ? 1 : 0, duration: 150, useNativeDriver: true }).start();
+  }, [active, itemW, x, shown]);
   return (
     <View style={[styles.wrap, { bottom: barBottom(insets.bottom) }]} pointerEvents="box-none">
       {/* iOS 26+: gerçek Liquid Glass; daha eskide beyaz kapsül + gölge */}
       <GlassSurface style={styles.pill} fallback={styles.pillSolid} interactive>
-        <View style={styles.pillRow} accessibilityRole="tablist">
+        <View style={styles.pillRow} accessibilityRole="tablist" onLayout={(e) => setRowW(e.nativeEvent.layout.width)}>
+        {itemW ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.highlight, { width: itemW, opacity: shown, transform: [{ translateX: x }] }]}
+          />
+        ) : null}
         {state.routes.map((route, index) => {
           const meta = TABS[route.name];
           if (!meta) return null; // "add" yer tutucusu: menüde gösterilmez
@@ -78,11 +109,18 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
 }
 
 function TabItem({ name, icon, label, focused, onPress }: { name: string; icon: string; label: string; focused: boolean; onPress: () => void }) {
-  const [on] = useState(() => new Animated.Value(focused ? 1 : 0));
+  // Seçilince simge hafifçe zıplar (ilk açılışta değil, yalnızca sekme değişince)
+  const [bump] = useState(() => new Animated.Value(1));
+  const first = useRef(true);
   useEffect(() => {
-    if (reduceMotionNow()) on.setValue(focused ? 1 : 0);
-    else Animated.spring(on, { toValue: focused ? 1 : 0, useNativeDriver: true, speed: 22, bounciness: 6 }).start();
-  }, [focused, on]);
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (!focused || reduceMotionNow()) return;
+    bump.setValue(0.78);
+    Animated.spring(bump, { toValue: 1, useNativeDriver: true, speed: 14, bounciness: 14 }).start();
+  }, [focused, bump]);
   // Camda Apple gibi: seçili sekme renkli (kahve tonu), arkasında hafif gri mercek. Düz menüde siyah + krem vurgu.
   const color = focused ? (GLASS ? colors.accentText : colors.text) : GLASS ? colors.text : colors.muted;
 
@@ -95,9 +133,9 @@ function TabItem({ name, icon, label, focused, onPress }: { name: string; icon: 
       accessibilityLabel={label}
       accessibilityState={{ selected: focused }}
     >
-      {/* Seçili sekmenin arkasındaki krem vurgu: büyüyüp belirir */}
-      <Animated.View style={[styles.highlight, { opacity: on, transform: [{ scale: on.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }] }]} />
-      {name === 'profile' ? <Avatar focused={focused} /> : <Icon name={(focused ? icon : `${icon}-outline`) as IconName} size={22} color={color} />}
+      <Animated.View style={{ transform: [{ scale: bump }] }}>
+        {name === 'profile' ? <Avatar focused={focused} /> : <Icon name={(focused ? icon : `${icon}-outline`) as IconName} size={22} color={color} />}
+      </Animated.View>
       <Text style={[styles.label, { color }]} numberOfLines={1}>
         {label}
       </Text>
@@ -128,9 +166,9 @@ const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   pill: { flex: 1, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2 },
   pillSolid: { backgroundColor: colors.card, ...shadow },
-  pillRow: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 },
+  pillRow: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: ROW_PAD },
   item: { flex: 1, height: BAR_HEIGHT - 12, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  highlight: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: GLASS ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)') : colors.accentSoft },
+  highlight: { position: 'absolute', top: 6, left: 0, height: BAR_HEIGHT - 12, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: GLASS ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)') : colors.accentSoft },
   label: { fontSize: 10, fontWeight: '600' },
   plusWrap: { width: BAR_HEIGHT, height: BAR_HEIGHT },
   plus: { width: BAR_HEIGHT, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2, alignItems: 'center', justifyContent: 'center' },

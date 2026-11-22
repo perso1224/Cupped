@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Icon, type IconName } from './Icon';
-import { haptic, PressScale } from './motion';
+import { haptic, PressScale, reduceMotionNow } from './motion';
 import { colors, radius } from '../theme';
 
 export function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
@@ -67,8 +68,21 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
   options: { value: T; label: string }[];
 }) {
+  // Seçili kutu, seçenekler arasında kayarak gider (iOS bölümlü seçicisi gibi).
+  const [w, setW] = useState(0);
+  const itemW = options.length ? (w - 4) / options.length : 0;
+  const idx = Math.max(0, options.findIndex((o) => o.value === value));
+  const [x] = useState(() => new Animated.Value(0));
+  const placed = useRef(false);
+  useEffect(() => {
+    if (!itemW) return;
+    if (!placed.current || reduceMotionNow()) x.setValue(idx * itemW);
+    else Animated.spring(x, { toValue: idx * itemW, useNativeDriver: true, speed: 20, bounciness: 4 }).start();
+    placed.current = true;
+  }, [idx, itemW, x]);
   return (
-    <View style={styles.segment}>
+    <View style={styles.segment} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+      {itemW ? <Animated.View pointerEvents="none" style={[styles.segmentOn, { width: itemW, transform: [{ translateX: x }] }]} /> : null}
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -81,7 +95,7 @@ export function Segmented<T extends string>({
               }
             }}
             scaleTo={0.97}
-            style={[styles.segmentItem, on && styles.segmentOn]}
+            style={styles.segmentItem}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
           >
@@ -100,7 +114,7 @@ export function Card({ children, style }: { children: React.ReactNode; style?: S
 const styles = StyleSheet.create({
   segment: { flexDirection: 'row', backgroundColor: colors.line, borderRadius: 10, padding: 2 },
   segmentItem: { flex: 1, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  segmentOn: { backgroundColor: colors.card, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  segmentOn: { position: 'absolute', top: 2, left: 2, height: 32, borderRadius: 8, backgroundColor: colors.card, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   segmentText: { fontSize: 14, fontWeight: '600', color: colors.muted },
   chip: {
     maxWidth: '100%',

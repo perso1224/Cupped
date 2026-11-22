@@ -1,15 +1,17 @@
 import { Tabs } from 'expo-router/tabs';
 import { TabBar } from '../../components/TabBar';
-import { haptic } from '../../components/motion';
+import { haptic, useReducedMotion } from '../../components/motion';
 import { tr } from '../../i18n/tr';
 import { colors } from '../../theme';
 
 /** Alt menü components/TabBar.tsx'te çizilir (yüzen kapsül + ayrı "+" düğmesi). */
 export default function TabsLayout() {
+  // Sekme değişince ekran yana hafifçe kayarak gelir; "hareketi azalt" açıksa anında değişir.
+  const reduce = useReducedMotion();
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} />}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg }, animation: reduce ? 'none' : 'shift' }}
       screenListeners={{ tabPress: () => haptic.select() }}
     >
       <Tabs.Screen name="index" options={{ title: tr.tabs.home }} />

@@ -64,3 +64,11 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - TestFlight prep: `eas.json` (production → channel preview), `.github/workflows/testflight.yml` (manual, needs secrets ASC_API_KEY_P8/ASC_API_KEY_ID/ASC_API_ISSUER_ID/APPLE_TEAM_ID). Never run yet; env var names not verified against docs (docs.expo.dev blocked here).
 - Waiting on: owner's Apple Developer membership activation; then App Store Connect app + API key + GitHub secrets, run the workflow.
 - Deferred: app address/QR on cards; Kulüp contact.
+
+## Update (third session) — micro-animations
+- Tab switch uses `animation: 'shift'` ('none' when reduce motion is on).
+- Tab bar: one sliding highlight capsule (instead of per-tab fade) and an icon bounce when a tab is selected.
+- Tapping the active tab scrolls to the top: `useTabScrollRef()` in `TabBar.tsx` (wraps `useScrollToTop`).
+- `Segmented`: sliding selected box.
+- `GrowBar` in `motion.tsx`: XP and weekly-discovery bars fill up.
+- Not yet verified on device.

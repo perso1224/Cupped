@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
 import { Icon } from '../../components/Icon';
-import { CountUp, FadeIn } from '../../components/motion';
+import { CountUp, FadeIn, GrowBar } from '../../components/motion';
 import { TrendChart } from '../../components/TrendChart';
 import { Bean } from '../../components/coffee';
 import { Card, PillButton, Segmented } from '../../components/ui';
@@ -14,11 +14,12 @@ import { levelProgress } from '../../lib/home';
 import { addDays, currentStreak, inRange, periodRange, periodReport, scoreTrend, startOfMonth, startOfWeek, weekDots, type TrendRange } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
 import { colors, fonts, layout, tint, type } from '../../theme';
-import { useTabBarSpace } from '../../components/TabBar';
+import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
 
 export default function Progress() {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
+  const scrollRef = useTabScrollRef();
   const entries = useEntries() ?? [];
   const [kind, setKind] = useState<'week' | 'month'>('week');
   const [range, setRange] = useState<TrendRange>('3m');
@@ -46,6 +47,7 @@ export default function Progress() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: tabSpace }}
     >
@@ -62,7 +64,7 @@ export default function Progress() {
               </Text>
             </View>
             <View style={styles.barTrack}>
-              <View style={[styles.barFill, { width: `${Math.max(4, (level?.fraction ?? 0) * 100)}%` }]} />
+              <GrowBar style={styles.barFill} fraction={Math.max(0.04, level?.fraction ?? 0)} />
             </View>
             {level ? <Text style={styles.xp}>{tr.progress.xp(level.xp)}</Text> : null}
             <Text style={styles.small} numberOfLines={2}>

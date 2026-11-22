@@ -8,7 +8,7 @@ import { WeekChart } from '../../components/WeekChart';
 import { WeekStrip } from '../../components/WeekStrip';
 import { Bean, CupGauge } from '../../components/coffee';
 import { Pager } from '../../components/dashboard';
-import { FadeIn, Pop, PressScale, animateLayout, haptic } from '../../components/motion';
+import { FadeIn, GrowBar, Pop, PressScale, animateLayout, haptic } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { WEEKLY, WRAPPED_RULES } from '../../config/scoring.config';
 import { tr, upper } from '../../i18n/tr';
@@ -26,7 +26,7 @@ import { useMetrics } from '../../lib/useMetrics';
 import { useProfile } from '../../lib/useProfile';
 import { useSettings } from '../../lib/useSettings';
 import { colors, fonts, isDark, tint, type } from '../../theme';
-import { useTabBarSpace } from '../../components/TabBar';
+import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
 
 /**
  * Ana sayfa "Özet". Bugün kafe menü tahtası gibi tek kartta (skor + noktalı satırlar).
@@ -36,6 +36,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const { width: screenW } = useWindowDimensions();
   const tabSpace = useTabBarSpace();
+  const scrollRef = useTabScrollRef();
   const entries = useEntries();
   const list = entries ?? [];
   const profile = useProfile();
@@ -243,6 +244,7 @@ export default function Home() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: tabSpace }}
     >
@@ -328,7 +330,7 @@ export default function Home() {
                 </Text>
               </View>
               <View style={styles.bar}>
-                <View style={[styles.barFill, { width: `${Math.min(1, discoveries / WEEKLY.discoveryGoal) * 100}%` }]} />
+                <GrowBar style={styles.barFill} fraction={discoveries / WEEKLY.discoveryGoal} />
               </View>
             </Card>
           </FadeIn>
@@ -356,7 +358,7 @@ export default function Home() {
                 {level ? (
                   <>
                     <View style={[styles.bar, { marginTop: 14 }]}>
-                      <View style={[styles.barFill, { backgroundColor: colors.black, width: `${Math.max(4, level.fraction * 100)}%` }]} />
+                      <GrowBar style={[styles.barFill, { backgroundColor: colors.black }]} fraction={Math.max(0.04, level.fraction)} />
                     </View>
                     <Text style={styles.cardSub}>
                       {level.next ? tr.home.levelLine(level.level, level.xp, level.next, level.toNext) : tr.home.levelTopXp(level.level, level.xp)}

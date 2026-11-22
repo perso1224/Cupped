@@ -190,3 +190,17 @@ export function Pop({ children, style, delay = 0, trigger }: { children: ReactNo
   }, [s, delay, trigger]);
   return <Animated.View style={[style, { transform: [{ scale: s }] }]}>{children}</Animated.View>;
 }
+
+/** İlerleme çubuğunun dolu kısmı: açılışta 0'dan, sonra değer değişince yumuşakça dolar. fraction 0–1. */
+export function GrowBar({ fraction, style }: { fraction: number; style?: StyleProp<ViewStyle> }) {
+  const target = Math.max(0, Math.min(1, fraction));
+  const [v] = useState(() => new Animated.Value(reduceMotion ? target : 0));
+  useEffect(() => {
+    if (reduceMotion) {
+      v.setValue(target);
+      return;
+    }
+    Animated.timing(v, { toValue: target, duration: 700, delay: 120, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+  }, [v, target]);
+  return <Animated.View style={[style, { width: v.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} />;
+}
