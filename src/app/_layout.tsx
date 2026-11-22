@@ -39,7 +39,9 @@ export default function RootLayout() {
           {/* Yığın ekranları: sağdan kayar, Geri ile döner */}
           <Stack.Screen name="cup/[id]" dangerouslySingular={(_, params) => String((params as { id?: string })?.id ?? '')} />
           <Stack.Screen name="history" {...single} />
-          <Stack.Screen name="collection" {...single} />
+          <Stack.Screen name="collection/badges" {...single} />
+          <Stack.Screen name="collection/places" {...single} />
+          <Stack.Screen name="collection/methods" {...single} />
           <Stack.Screen name="settings" {...single} />
           <Stack.Screen name="privacy" {...single} />
           <Stack.Screen name="stats" {...single} />

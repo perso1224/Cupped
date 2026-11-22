@@ -322,3 +322,15 @@ export function profileSummary(entries: CupEntry[], today: Date = new Date()): P
 export function filterEntries(entries: CupEntry[], f: { place?: string; method?: Method }): CupEntry[] {
   return entries.filter((e) => (!f.place || placeKeyOf(e) === f.place) && (!f.method || e.method === f.method));
 }
+
+export type MethodStat = { method: Method; cups: number; avg: number; lastAt: string | null };
+
+/** Her demleme yöntemi için fincan sayısı, ortalama skor ve son fincan tarihi (Koleksiyon > Yöntemler). */
+export function methodStats(entries: CupEntry[], methods: readonly Method[]): MethodStat[] {
+  return methods.map((method) => {
+    const list = entries.filter((e) => e.method === method);
+    const avg = list.length ? Math.round(list.reduce((s, e) => s + e.score, 0) / list.length) : 0;
+    const lastAt = list.reduce<string | null>((m, e) => (m === null || e.createdAt > m ? e.createdAt : m), null);
+    return { method, cups: list.length, avg, lastAt };
+  });
+}

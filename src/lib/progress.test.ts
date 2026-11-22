@@ -7,6 +7,7 @@ import {
   filterEntries,
   earnedBadges,
   isDetailed,
+  methodStats,
   passport,
   periodReport,
   periodRange,
@@ -256,5 +257,19 @@ describe('filterEntries', () => {
     expect(filterEntries(list, { place: key })).toHaveLength(2);
     expect(filterEntries(list, { method: 'espresso' })).toHaveLength(2);
     expect(filterEntries(list, { place: key, method: 'espresso' })).toHaveLength(1);
+  });
+});
+
+describe('methodStats', () => {
+  it('yöntem başına sayı, ortalama ve son tarihi verir; hiç olmayan yöntem 0', () => {
+    const list = [
+      cup(at(2026, 0, 1), { method: 'espresso', score: 50 }),
+      cup(at(2026, 0, 3), { method: 'espresso', score: 61 }),
+      cup(at(2026, 0, 2), { method: 'filter', score: 70 }),
+    ];
+    const s = methodStats(list, ['espresso', 'filter', 'turkish']);
+    expect(s[0]).toEqual({ method: 'espresso', cups: 2, avg: 56, lastAt: at(2026, 0, 3) });
+    expect(s[1]).toMatchObject({ method: 'filter', cups: 1, avg: 70 });
+    expect(s[2]).toEqual({ method: 'turkish', cups: 0, avg: 0, lastAt: null });
   });
 });
