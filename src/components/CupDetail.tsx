@@ -16,7 +16,7 @@ import { BADGES, PART_MAX } from '../config/scoring.config';
 import { tr } from '../i18n/tr';
 import { brewRatio, isDetailed } from '../lib/progress';
 import { refreshReminder } from '../lib/reminders';
-import { shareViewAsImage } from '../lib/share';
+import { shareViewSafely } from '../lib/share';
 import { getPalateType } from '../lib/palate';
 import { partsSummary } from '../lib/scoring';
 import { bumpCounter, deleteEntry, getEntry, photoUrl } from '../lib/storage';
@@ -127,14 +127,13 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
     if (!cardRef.current || busy.current) return;
     busy.current = true;
     setSharing(true);
-    try {
-      await shareViewAsImage(cardRef, 'cup', String(id));
-    } catch {
-      Alert.alert(tr.result.shareError);
-    } finally {
-      busy.current = false;
-      setSharing(false);
-    }
+    if ((await shareViewSafely(cardRef, 'cup', String(id))) === 'error') Alert.alert(tr.result.shareError);
+    busy.current = false;
+    setSharing(false);
+  }
+
+  function edit() {
+    router.push({ pathname: '/new', params: { edit: String(id) } });
   }
 
   if (entry === undefined) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
@@ -293,9 +292,6 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
     </View>
   );
 
-  function edit() {
-    router.push({ pathname: '/new', params: { edit: String(id) } });
-  }
 }
 
 const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`;

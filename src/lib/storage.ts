@@ -151,8 +151,11 @@ export function updateEntry(entry: CupEntry): Promise<void> {
       old.method !== entry.method ||
       old.placeName !== entry.placeName ||
       old.venueKind !== entry.venueKind ||
-      old.notes.join(',') !== entry.notes.join(',');
-    if (scoringChanged) next = rescoreAfter(next, entry.createdAt);
+      old.notes.join(',') !== entry.notes.join(',') ||
+      old.createdAt !== entry.createdAt;
+    // Tarih değiştiyse eski ve yeni tarihin erkeninden sonrası yenilenir
+    const from = old.createdAt < entry.createdAt ? old.createdAt : entry.createdAt;
+    if (scoringChanged) next = rescoreAfter(next, new Date(Date.parse(from) - 1).toISOString());
     await writeEntries(next);
     if (old.photoUri && old.photoUri !== entry.photoUri) deletePhoto(old.photoUri);
   });

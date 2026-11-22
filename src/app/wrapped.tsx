@@ -26,7 +26,7 @@ import { useDamakCode } from '../lib/useDamakCode';
 import { periodWord, tr, upper, type PeriodWord } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
 import { addDays, dayKey, periodRange } from '../lib/progress';
-import { shareViewAsImage } from '../lib/share';
+import { shareViewSafely } from '../lib/share';
 import { photoUrl } from '../lib/storage';
 import { useEntries } from '../lib/useEntries';
 import { buildWrapped, type WrappedSlide } from '../lib/wrapped';
@@ -57,6 +57,11 @@ function capitalize(s: string) {
   return s.charAt(0).toLocaleUpperCase('tr-TR') + s.slice(1);
 }
 
+function close() {
+  if (router.canGoBack()) router.back();
+  else router.replace('/');
+}
+
 export default function Wrapped() {
   const damakCode = useDamakCode();
   const { period, offset: offsetParam } = useLocalSearchParams<{ period?: string; offset?: string }>();
@@ -83,20 +88,15 @@ export default function Wrapped() {
   }, [entries, startKey, kind]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const progress = useRef(new Animated.Value(0)).current;
+  const [progress] = useState(() => new Animated.Value(0));
   const progressValue = useRef(0);
-  const enter = useRef(new Animated.Value(0)).current;
+  const [enter] = useState(() => new Animated.Value(0));
   const slideRef = useRef<CardHandle>(null);
   const [finished, setFinished] = useState(false);
-  const dragY = useRef(new Animated.Value(0)).current;
-
-  function close() {
-    if (router.canGoBack()) router.back();
-    else router.replace('/');
-  }
+  const [dragY] = useState(() => new Animated.Value(0));
 
   // Aşağı kaydırınca kapat (Instagram hikayeleri gibi).
-  const pan = useRef(
+  const [pan] = useState(() =>
     PanResponder.create({
       onMoveShouldSetPanResponderCapture: (_, g) => g.dy > 12 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5,
       onPanResponderMove: (_, g) => dragY.setValue(Math.max(0, g.dy)),
@@ -106,7 +106,7 @@ export default function Wrapped() {
       },
       onPanResponderTerminate: () => Animated.spring(dragY, { toValue: 0, useNativeDriver: true }).start(),
     }),
-  ).current;
+  );
 
   // Slayt alanı: tam 9:16, ekrana sığan en büyük boyut.
   const availH = height - insets.top - insets.bottom - 96;
@@ -123,7 +123,8 @@ export default function Wrapped() {
     Animated.timing(enter, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [index, slides.length, enter]);
 
-  // Otomatik ilerleme
+  // Otomatik ilerleme (goRef: aşağıdaki `go`nun güncel hali)
+  const goRef = useRef<(i: number) => void>(() => {});
   useEffect(() => {
     if (!slides.length || paused) return;
     const anim = Animated.timing(progress, {
@@ -135,16 +136,15 @@ export default function Wrapped() {
     });
     anim.start(({ finished: done }) => {
       if (!done) return;
-      if (index < slides.length - 1) go(index + 1);
+      if (index < slides.length - 1) goRef.current(index + 1);
       else setFinished(true); // son slayt: otomatik kapanmaz ki paylaşılabilsin
     });
     return () => {
       anim.stop();
       progress.stopAnimation((v) => (progressValue.current = v));
     };
-    // `go` her render'da yeniden oluşur; eklenirse zamanlayıcı her render'da sıfırlanır. Sadece slayt/duraklatma değişince yeniden başlamalı.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, paused, slides.length]);
+    // `go` her render'da yeniden oluşur; zamanlayıcı yalnızca slayt/duraklatma değişince yeniden başlasın diye ref ile çağrılır.
+  }, [index, paused, slides.length, progress]);
 
   function go(i: number) {
     if (i !== index && i >= 0 && i < slides.length) haptic.select();
@@ -152,6 +152,11 @@ export default function Wrapped() {
     progress.setValue(0);
     setIndex(Math.max(0, Math.min(slides.length - 1, i)));
   }
+
+  // Otomatik ilerleme her zaman güncel `go`yu çağırsın
+  useEffect(() => {
+    goRef.current = go;
+  });
 
   function onTap(e: GestureResponderEvent) {
     if (e.nativeEvent.locationX < W * 0.3) go(index - 1);
@@ -164,18 +169,13 @@ export default function Wrapped() {
     if (sharingRef.current) return;
     sharingRef.current = true;
     setPaused(true);
-    try {
-      // Giriş animasyonu yarıdaysa bitir; bir kare bekle ki görsel tam yakalansın.
-      enter.stopAnimation();
-      enter.setValue(1);
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
-      await shareViewAsImage(slideRef, 'wrapped');
-    } catch {
-      Alert.alert(tr.result.shareError);
-    } finally {
-      sharingRef.current = false;
-      setPaused(false);
-    }
+    // Giriş animasyonu yarıdaysa bitir; bir kare bekle ki görsel tam yakalansın.
+    enter.stopAnimation();
+    enter.setValue(1);
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+    if ((await shareViewSafely(slideRef, 'wrapped')) === 'error') Alert.alert(tr.result.shareError);
+    sharingRef.current = false;
+    setPaused(false);
   }
 
   if (entries && slides.length === 0) {

@@ -17,9 +17,10 @@ function asFileUrl(uri: string) {
  * Paylaşımın gerçekten tamamlanıp tamamlanmadığı ve hangi uygulamaya gittiği kaydedilir (H2).
  * @returns paylaşım tamamlandıysa true
  */
-export async function shareViewAsImage(ref: RefObject<any>, source: ShareSource, cupId?: string): Promise<boolean> {
+export async function shareViewAsImage(ref: RefObject<unknown>, source: ShareSource, cupId?: string): Promise<boolean> {
   const scale = PixelRatio.get();
-  const uri = await captureRef(ref, {
+  // Kart bileşenleri farklı ref türleri taşır (View ya da CardHandle); view-shot hepsini kabul eder
+  const uri = await captureRef(ref as Parameters<typeof captureRef>[0], {
     format: 'jpg',
     quality: 0.92,
     result: 'tmpfile',
@@ -41,6 +42,18 @@ export async function shareViewAsImage(ref: RefObject<any>, source: ShareSource,
     } catch {
       // geçici dosya temizlenemese de sorun değil
     }
+  }
+}
+
+/**
+ * shareViewAsImage, hata fırlatmadan: başarısızsa 'error' döner. Ekranlarda try/finally gerekmesin diye
+ * (React Compiler try/finally içeren bileşenleri optimize edemiyor).
+ */
+export async function shareViewSafely(ref: RefObject<unknown>, source: ShareSource, cupId?: string): Promise<'shared' | 'cancelled' | 'error'> {
+  try {
+    return (await shareViewAsImage(ref, source, cupId)) ? 'shared' : 'cancelled';
+  } catch {
+    return 'error';
   }
 }
 

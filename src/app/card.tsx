@@ -10,7 +10,7 @@ import { getPalateType } from '../lib/palate';
 import { fingerprintRings, memberNo } from '../lib/fingerprint';
 import { encodeProfile, tasteProfile } from '../lib/match';
 import { noteShares, profileSummary, type NoteShare } from '../lib/progress';
-import { shareViewAsImage } from '../lib/share';
+import { shareViewSafely } from '../lib/share';
 import { useEntries } from '../lib/useEntries';
 import { useProfile } from '../lib/useProfile';
 import { Bean } from '../components/coffee';
@@ -78,14 +78,9 @@ export default function PalateCard() {
     if (busy.current) return;
     busy.current = true;
     setSharing(true);
-    try {
-      await shareViewAsImage(cardRef, 'palateCard');
-    } catch {
-      Alert.alert(tr.result.shareError);
-    } finally {
-      busy.current = false;
-      setSharing(false);
-    }
+    if ((await shareViewSafely(cardRef, 'palateCard')) === 'error') Alert.alert(tr.result.shareError);
+    busy.current = false;
+    setSharing(false);
   }
 
   return (

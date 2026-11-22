@@ -11,7 +11,7 @@ import { BRAND } from '../config/brand';
 import { cardTheme } from '../config/palateThemes';
 import { tr, upper } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
-import { shareViewAsImage } from '../lib/share';
+import { shareViewSafely } from '../lib/share';
 import { useProfile } from '../lib/useProfile';
 import { colors, fonts, type } from '../theme';
 
@@ -34,13 +34,8 @@ export default function Evolution() {
   async function share() {
     if (sharing) return;
     setSharing(true);
-    try {
-      await shareViewAsImage(cardRef, 'palateCard');
-    } catch {
-      Alert.alert(tr.result.shareError);
-    } finally {
-      setSharing(false);
-    }
+    if ((await shareViewSafely(cardRef, 'palateCard')) === 'error') Alert.alert(tr.result.shareError);
+    setSharing(false);
   }
 
   return (

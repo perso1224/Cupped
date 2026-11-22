@@ -20,6 +20,8 @@ export type Metrics = {
   reminderEnabled: boolean | null; // null = henüz sorulmadı
   lastBackupAt: string | null; // son yedeğin (dışa aktarma) tarihi
   backupNudgeAt: string | null; // ana sayfadaki yedek hatırlatması en son ne zaman ertelendi
+  celebratedBadges: string[]; // kutlaması gösterilmiş rozetler (silip yeniden kazanınca tekrar kutlanmasın)
+  lastEvolutionAt: string | null; // Damak Evrimi kutlamasının son gösterildiği zaman (sık çıkmasın)
 };
 
 export const EMPTY_METRICS: Metrics = {
@@ -36,6 +38,8 @@ export const EMPTY_METRICS: Metrics = {
   reminderEnabled: null,
   lastBackupAt: null,
   backupNudgeAt: null,
+  celebratedBadges: [],
+  lastEvolutionAt: null,
 };
 
 /** Bozuk/eksik veriyi güvenli varsayılanlarla birleştirir. */
@@ -63,6 +67,8 @@ export function normalizeMetrics(raw: unknown): Metrics {
     reminderEnabled: typeof r.reminderEnabled === 'boolean' ? r.reminderEnabled : null,
     lastBackupAt: typeof r.lastBackupAt === 'string' ? r.lastBackupAt : null,
     backupNudgeAt: typeof r.backupNudgeAt === 'string' ? r.backupNudgeAt : null,
+    celebratedBadges: [...new Set(strArr(r.celebratedBadges))],
+    lastEvolutionAt: typeof r.lastEvolutionAt === 'string' ? r.lastEvolutionAt : null,
   };
 }
 

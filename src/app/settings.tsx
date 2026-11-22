@@ -10,6 +10,7 @@ import { useChoice } from '../components/ChoiceSheet';
 import { ListRow, ListSection } from '../components/List';
 import { tr } from '../i18n/tr';
 import { IS_STORE_BUILD } from '../lib/build';
+import { safely } from '../lib/safe';
 import type { PalateGoal } from '../lib/onboarding';
 import { cancelReminders, refreshReminder, setReminderEnabled } from '../lib/reminders';
 import { CAFFEINE_REFS, REMINDER_TIMES, timeLabel } from '../lib/settings';
@@ -69,39 +70,39 @@ export default function SettingsScreen() {
   }
 
   async function doExport() {
-    try {
-      if (await shareFile(await exportAllData())) {
-        await updateMetrics((m) => {
-          m.lastBackupAt = new Date().toISOString();
-        });
-        reloadMetrics();
-      }
-    } catch {
-      Alert.alert(tr.profile.exportError);
-    }
+    const r = await safely(async () => {
+      if (!(await shareFile(await exportAllData()))) return;
+      await updateMetrics((m) => {
+        m.lastBackupAt = new Date().toISOString();
+      });
+      reloadMetrics();
+    });
+    if (!r.ok) Alert.alert(tr.profile.exportError);
   }
 
   async function doImport() {
-    try {
+    const r = await safely(async () => {
       const picked = await File.pickFileAsync({ mimeTypes: ['application/json'] });
-      if (picked.canceled || !picked.result) return;
-      const added = await importBackup(await picked.result.text());
-      refreshReminder();
-      Alert.alert(tr.settings.importDone(added));
-    } catch {
+      if (picked.canceled || !picked.result) return null;
+      return importBackup(await picked.result.text());
+    });
+    if (!r.ok) {
       Alert.alert(tr.settings.importError);
+      return;
     }
+    if (r.value === null) return; // vazgeçildi
+    refreshReminder();
+    Alert.alert(tr.settings.importDone(r.value));
   }
 
   function doDeleteAll() {
     confirm(tr.settings.deleteAllTitle, tr.settings.deleteAllBody, tr.settings.deleteAllOk, () =>
       confirm(tr.settings.deleteAllTitle2, tr.settings.deleteAllBody2, tr.settings.deleteAllOk, async () => {
-        try {
+        const r = await safely(async () => {
           await deleteAllData();
           await cancelReminders(); // gezinme kendiliğinden tanıtıma geçer
-        } catch {
-          Alert.alert(tr.settings.deleteAllError);
-        }
+        });
+        if (!r.ok) Alert.alert(tr.settings.deleteAllError);
       }),
     );
   }

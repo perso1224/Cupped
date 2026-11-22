@@ -20,8 +20,10 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
   const selected = sel !== null && sel < points.length ? sel : points.length - 1;
 
   const vals = points.map((p) => p.avg);
-  const lo = Math.max(0, Math.floor((Math.min(...vals) - 5) / 10) * 10);
-  const hi = Math.min(100, Math.ceil((Math.max(...vals) + 5) / 10) * 10);
+  const minV = vals.reduce((m, v) => (v < m ? v : m), Infinity);
+  const maxV = vals.reduce((m, v) => (v > m ? v : m), -Infinity);
+  const lo = Math.max(0, Math.floor((minV - 5) / 10) * 10);
+  const hi = Math.min(100, Math.ceil((maxV + 5) / 10) * 10);
   const span = Math.max(10, hi - lo);
   const t0 = points[0].t;
   const t1 = points[points.length - 1].t;

@@ -28,13 +28,13 @@ import { StarInput } from '../components/Stars';
 import { FadeIn, Pop, PressScale, animateLayout, haptic, reduceMotionNow } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
-import { computePalateTypeId } from '../lib/palate';
-import { classifyPlace, placeNameKey, scoreCup } from '../lib/scoring';
-import { refreshReminder } from '../lib/reminders';
-import { discardPhoto, getEntry, knownPlaces, loadEntries, newId, persistPhoto, photoUrl, saveEntry, updateEntry, updateMetrics } from '../lib/storage';
-import { brewRatio, earnedBadges } from '../lib/progress';
+import { placeNameKey } from '../lib/scoring';
+import { getEntry, knownPlaces, loadEntries, photoUrl, updateMetrics } from '../lib/storage';
+import { brewRatio, dayKey } from '../lib/progress';
 import { whenToDate, type When } from '../lib/when';
-import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from '../lib/types';
+import { createCup, editCup, parseNum, type Where } from '../lib/cupSave';
+import { safely } from '../lib/safe';
+import type { CupEntry, Grind, Method, TasteNote } from '../lib/types';
 import { colors, type } from '../theme';
 
 /** Klavyenin üstündeki "Bitti" çubuğu (sayı klavyesinde ve notta Return tuşu yok). */
@@ -43,16 +43,6 @@ const KB_DONE = 'cupped-kb-done';
 const METHODS: Method[] = ['espresso', 'filter', 'coldbrew', 'milk', 'turkish'];
 const NOTES: TasteNote[] = ['fruity', 'floral', 'chocolate', 'nutty', 'caramel', 'bright', 'bold'];
 const GRINDS: Grind[] = ['fine', 'medium', 'coarse'];
-
-/** "15,5" ya da "15.5" → 15.5; "1.000" / "1,000" → 1000 (binlik ayırıcı); boş/geçersiz → null */
-function parseNum(t: string): number | null {
-  const s = t.trim();
-  const thousands = /^\d{1,3}([.,]\d{3})+$/.test(s);
-  const n = parseFloat(thousands ? s.replace(/[.,]/g, '') : s.replace(',', '.'));
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-type Where = { kind: 'home' } | { kind: 'office' } | { kind: 'place'; name: string };
 
 export default function NewCup() {
   const insets = useSafeAreaInsets();
@@ -69,7 +59,8 @@ export default function NewCup() {
   const photoWidth = useRef<number | undefined>(undefined);
   const [step, setStep] = useState<'photo' | 'details'>(editId ? 'details' : 'photo');
   const [method, setMethod] = useState<Method | null>(null);
-  const [when, setWhen] = useState<When>('now');
+  // Düzenlemede 'keep' = fincanın kendi tarihi (değiştirilmedi)
+  const [when, setWhen] = useState<When | 'keep'>(editId ? 'keep' : 'now');
   const [where, setWhere] = useState<Where | null>(null);
   const [typed, setTyped] = useState('');
   const [history, setHistory] = useState<CupEntry[]>([]);
@@ -175,9 +166,6 @@ export default function NewCup() {
   // Android geri tuşu: doğrudan çıkmasın, Kapat ile aynı davransın (girilen bilgi varsa önce sorar).
   const closeRef = useRef<() => void>(() => {});
   useEffect(() => {
-    closeRef.current = closeNew;
-  });
-  useEffect(() => {
     if (Platform.OS !== 'android') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       closeRef.current();
@@ -201,7 +189,8 @@ export default function NewCup() {
         dose !== (original.brew?.doseG ? String(original.brew.doseG) : '') ||
         water !== (original.brew?.waterMl ? String(original.brew.waterMl) : '') ||
         grind !== (original.brew?.grind ?? null) ||
-        rating !== (original.rating ?? null)
+        rating !== (original.rating ?? null) ||
+        when !== 'keep'
       : !!(photo ||
           (method && method !== prefill.current.method) ||
           (where && JSON.stringify(where) !== prefill.current.where) ||
@@ -218,6 +207,11 @@ export default function NewCup() {
     ]);
   }
 
+  // Geri tuşu her zaman güncel Kapat'ı çağırsın
+  useEffect(() => {
+    closeRef.current = closeNew;
+  });
+
   async function takePhoto() {
     if (!cameraReady || capturing) return;
     setCapturing(true);
@@ -227,29 +221,28 @@ export default function NewCup() {
       Animated.timing(flash, { toValue: 0, duration: 260, useNativeDriver: true }).start();
     }
     haptic.light();
-    try {
-      const pic = await cameraRef.current?.takePictureAsync({ quality: 0.6 });
-      if (pic?.uri) {
-        photoWidth.current = pic.width;
-        setPhoto(pic.uri);
-        setPhotoChanged(true);
-        setStep('details');
-      }
-    } catch {
+    const r = await safely(async () => cameraRef.current?.takePictureAsync({ quality: 0.6 }));
+    setCapturing(false);
+    if (!r.ok) {
       Alert.alert(tr.capture.cameraError);
-    } finally {
-      setCapturing(false);
+      return;
+    }
+    const pic = r.value;
+    if (pic?.uri) {
+      photoWidth.current = pic.width;
+      setPhoto(pic.uri);
+      setPhotoChanged(true);
+      setStep('details');
     }
   }
 
   async function pickFromGallery() {
-    let res: ImagePicker.ImagePickerResult;
-    try {
-      res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
-    } catch {
+    const r = await safely(() => ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 }));
+    if (!r.ok) {
       Alert.alert(tr.capture.galleryError);
       return;
     }
+    const res = r.value;
     if (!res.canceled && res.assets[0]?.uri) {
       photoWidth.current = res.assets[0].width;
       setPhoto(res.assets[0].uri);
@@ -263,110 +256,58 @@ export default function NewCup() {
     if (name) setWhere({ kind: 'place', name });
   }
 
+  /** Formun şu anki hali (kaydetme fonksiyonlarına verilir). */
+  function form(m: Method, w: Where) {
+    return {
+      method: m,
+      where: w,
+      notes,
+      origin,
+      dose,
+      water,
+      grind,
+      note,
+      rating,
+      when: when === 'keep' ? ('now' as const) : when,
+      photo,
+      photoWidth: photoWidth.current,
+      openedAt: openedAt.current,
+    };
+  }
+
   async function save() {
     if (!method || !where || savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
-    let photoUri: string | null = null;
-    let saved = false;
-    try {
-      // Geçmişi kaydetme anında taze oku: ekran açılır açılmaz kaydedilirse yanlış "keşif" puanı verilmesin.
-      const history = await loadEntries();
-      const id = newId();
-      const venueKind: VenueKind = where.kind === 'place' ? classifyPlace(where.name) : where.kind;
-      const placeName = where.kind === 'place' ? where.name : null;
-      const input: CupInput = { method, placeName, venueKind, notes, origin: origin.trim() || null };
-      const doseG = parseNum(dose);
-      const waterMl = parseNum(water);
-      const brew = doseG || waterMl || grind ? { doseG, waterMl, grind } : null;
-      const noteText = note.trim() || null;
-      const createdAt = whenToDate(when).toISOString();
-      // Dün olarak eklenen fincan yalnızca kendinden önceki fincanlara göre puanlanır (sonrakiler değişmez).
-      const earlier = history.filter((e) => e.createdAt < createdAt);
-      const { total, parts } = scoreCup(input, earlier, createdAt);
-      const palateTypeId = computePalateTypeId([...earlier, { ...input, createdAt }]);
-      if (photo) {
-        try {
-          photoUri = await persistPhoto(photo, id, { width: photoWidth.current });
-        } catch {
-          photoUri = null; // geçici dosya iOS tarafından silinir; adresini saklamak boş fotoğraf demek
-        }
-      }
-      const captureMs = Date.now() - openedAt.current;
-      const newEntry: CupEntry = { id, createdAt, photoUri, ...input, brew, note: noteText, rating, captureMs, score: total, parts, palateTypeId };
-      await saveEntry(newEntry);
-      saved = true;
-      // Bu fincanla yeni kazanılan rozetler (sonuç ekranında kutlanır)
-      const before = new Set(earnedBadges(history).map((b) => b.id));
-      const newBadges = earnedBadges([...history, newEntry])
-        .filter((b) => !before.has(b.id))
-        .map((b) => b.id)
-        .join(',');
-      updateMetrics((m) => {
-        m.newSaved += 1;
-      }).catch(() => {});
-      refreshReminder();
-      haptic.success();
-      // Damak Evrimi: bu fincanla damak tipi değiştiyse (en az 3 fincanlık geçmişte) sonuç ekranında kutlanır
-      const typeBefore = history.length >= 3 ? computePalateTypeId(history) : null;
-      const typeAfter = computePalateTypeId([...history, newEntry]);
-      const evolved = typeBefore && typeBefore !== typeAfter ? { evolvedFrom: typeBefore, evolvedTo: typeAfter } : {};
-      router.replace({ pathname: '/result/[id]', params: { id, fresh: '1', ...(newBadges ? { badges: newBadges } : {}), ...evolved } });
-    } catch {
-      // Kayıt yazılamadıysa kopyalanan fotoğraf dosyası sahipsiz kalmasın
-      if (photoUri && !saved) discardPhoto(photoUri);
+    const r = await createCup(form(method, where));
+    savingRef.current = false;
+    setSaving(false);
+    if (!r.ok) {
       Alert.alert(tr.capture.saveError);
-    } finally {
-      savingRef.current = false;
-      setSaving(false);
+      return;
     }
+    haptic.success();
+    const extra = {
+      ...(r.badges ? { badges: r.badges } : {}),
+      ...(r.evolvedFrom && r.evolvedTo ? { evolvedFrom: r.evolvedFrom, evolvedTo: r.evolvedTo } : {}),
+    };
+    router.replace({ pathname: '/result/[id]', params: { id: r.id, fresh: '1', ...extra } });
   }
 
-  /** Düzenleme: skor, fincanın kendi tarihindeki geçmişe göre yeniden hesaplanır; kimlik ve tarih korunur. */
+  /** Düzenleme: skor, fincanın kendi tarihindeki geçmişe göre yeniden hesaplanır; kimlik korunur. */
   async function saveEdit(orig: CupEntry) {
     if (!method || !where || savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
-    try {
-      const all = await loadEntries();
-      const before = all.filter((e) => e.id !== orig.id && e.createdAt < orig.createdAt);
-      const venueKind: VenueKind = where.kind === 'place' ? classifyPlace(where.name) : where.kind;
-      const placeName = where.kind === 'place' ? where.name : null;
-      const input: CupInput = { method, placeName, venueKind, notes, origin: origin.trim() || null };
-      const doseG = parseNum(dose);
-      const waterMl = parseNum(water);
-      const brew = doseG || waterMl || grind ? { doseG, waterMl, grind } : null;
-      // Skoru etkileyen bilgiler değişmediyse (ör. sadece yıldız, not ya da fotoğraf) skor olduğu gibi kalır.
-      const scoringSame =
-        input.method === orig.method &&
-        input.placeName === orig.placeName &&
-        input.venueKind === orig.venueKind &&
-        input.notes.join() === (orig.notes ?? []).join() &&
-        input.origin === orig.origin;
-      const { total, parts } = scoringSame ? { total: orig.score, parts: orig.parts } : scoreCup(input, before, orig.createdAt);
-      const palateTypeId = scoringSame ? orig.palateTypeId : computePalateTypeId([...before, { ...input, createdAt: orig.createdAt }]);
-      let photoUri = orig.photoUri;
-      if (photoChanged && photo) {
-        try {
-          photoUri = await persistPhoto(photo, orig.id, { version: Date.now().toString(36), width: photoWidth.current });
-        } catch {
-          photoUri = orig.photoUri;
-        }
-      }
-      try {
-        await updateEntry({ ...orig, ...input, photoUri, brew, note: note.trim() || null, rating, score: total, parts, palateTypeId });
-      } catch (err) {
-        if (photoUri && photoUri !== orig.photoUri) discardPhoto(photoUri); // yarım kalan yeni fotoğraf dosyası kalmasın
-        throw err;
-      }
-      haptic.success();
-      goBack();
-    } catch {
+    const ok = await editCup(orig, { ...form(method, where), photoChanged, dateChanged: when !== 'keep' });
+    savingRef.current = false;
+    setSaving(false);
+    if (!ok) {
       Alert.alert(tr.capture.saveError);
-    } finally {
-      savingRef.current = false;
-      setSaving(false);
+      return;
     }
+    haptic.success();
+    goBack();
   }
 
   // --- 1. adım: fotoğraf ---
@@ -429,6 +370,15 @@ export default function NewCup() {
       </View>
     );
   }
+
+  // Düzenlenen fincanın günü (bugün / dün / daha eski)
+  const origDay = original
+    ? dayKey(new Date(original.createdAt)) === dayKey(new Date())
+      ? 'today'
+      : dayKey(new Date(original.createdAt)) === dayKey(whenToDate('yesterday'))
+        ? 'yesterday'
+        : 'older'
+    : null;
 
   // --- 2. adım: Nasıl? + Nerede? ---
   const typedKey = placeNameKey(typed);
@@ -506,16 +456,24 @@ export default function NewCup() {
         </View>
 
         {/* Kişisel beğeni: isteğe bağlı, skoru etkilemez */}
-        {/* Unutulan fincan: dün olarak eklenebilir (yalnızca yeni kayıtta; düzenlemede tarih değişmez) */}
-        {original ? null : (
-          <>
-            <Text style={styles.label}>{tr.capture.whenLabel}</Text>
-            <View style={styles.chips}>
-              <Chip label={tr.capture.whenNow} selected={when === 'now'} onPress={() => setWhen('now')} />
-              <Chip label={tr.capture.whenYesterday} selected={when === 'yesterday'} onPress={() => setWhen('yesterday')} />
-            </View>
-          </>
-        )}
+        {/* Unutulan fincan dün olarak eklenebilir; düzenlemede yanlış güne eklenen fincan düzeltilebilir */}
+        <Text style={styles.label}>{tr.capture.whenLabel}</Text>
+        <View style={styles.chips}>
+          {original ? (
+            <Chip
+              label={origDay === 'today' ? tr.capture.whenToday : origDay === 'yesterday' ? tr.capture.whenYesterdayShort : new Date(original.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+              selected={when === 'keep'}
+              onPress={() => setWhen('keep')}
+            />
+          ) : null}
+          {/* Düzenlemede fincanın zaten olduğu gün tekrar gösterilmez */}
+          {origDay !== 'today' ? (
+            <Chip label={original ? tr.capture.whenToday : tr.capture.whenNow} selected={when === 'now'} onPress={() => setWhen('now')} />
+          ) : null}
+          {origDay !== 'yesterday' ? (
+            <Chip label={original ? tr.capture.whenYesterdayShort : tr.capture.whenYesterday} selected={when === 'yesterday'} onPress={() => setWhen('yesterday')} />
+          ) : null}
+        </View>
 
         <Text style={styles.label}>{tr.rating.question}</Text>
         <StarInput value={rating} onChange={setRating} />

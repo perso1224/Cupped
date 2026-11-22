@@ -12,6 +12,7 @@ const H = 120;
 export function WeekChart({ days }: { days: StripDay[] }) {
   const scores = days.map((d) => d.best).filter((x): x is number => x !== null);
   const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+  const scoresKey = scores.join(',');
   const [grow] = useState(() => new Animated.Value(0));
   useEffect(() => {
     if (reduceMotionNow()) {
@@ -20,7 +21,7 @@ export function WeekChart({ days }: { days: StripDay[] }) {
     }
     grow.setValue(0);
     Animated.timing(grow, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
-  }, [grow, scores.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [grow, scoresKey]); // yalnızca değerler değişince yeniden büyüsün (her çizimde değil)
 
   return (
     <View>

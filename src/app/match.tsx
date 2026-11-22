@@ -10,7 +10,7 @@ import { cardTheme, type CardTheme } from '../config/palateThemes';
 import { tr, upper } from '../i18n/tr';
 import { canonicalCode, compatibility, decodeCode, extractCode, encodeProfile, tasteProfile, type Match, type TasteProfile } from '../lib/match';
 import { computePalateTypeId, getPalateType } from '../lib/palate';
-import { shareViewAsImage } from '../lib/share';
+import { shareViewSafely } from '../lib/share';
 import { useEntries } from '../lib/useEntries';
 import { useProfile } from '../lib/useProfile';
 import { colors, fonts, layout, type } from '../theme';
@@ -48,13 +48,8 @@ export default function MatchScreen() {
   async function shareResult() {
     if (sharing) return;
     setSharing(true);
-    try {
-      await shareViewAsImage(cardRef, 'palateCard');
-    } catch {
-      Alert.alert(tr.result.shareError);
-    } finally {
-      setSharing(false);
-    }
+    if ((await shareViewSafely(cardRef, 'palateCard')) === 'error') Alert.alert(tr.result.shareError);
+    setSharing(false);
   }
 
   const cardW = Math.min(width - layout.screenPad * 2, 420);

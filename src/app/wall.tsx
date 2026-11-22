@@ -11,7 +11,7 @@ import { cardTheme } from '../config/palateThemes';
 import { tr, upper } from '../i18n/tr';
 import { computePalateTypeId, getPalateType } from '../lib/palate';
 import { longestStreak, yearWall } from '../lib/progress';
-import { shareViewAsImage } from '../lib/share';
+import { shareViewSafely } from '../lib/share';
 import { photoUrl } from '../lib/storage';
 import { useDamakCode } from '../lib/useDamakCode';
 import { useEntries } from '../lib/useEntries';
@@ -26,14 +26,16 @@ const MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl',
 export default function Wall() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const entries = useEntries() ?? [];
+  const loaded = useEntries();
+  const entries = useMemo(() => loaded ?? [], [loaded]);
   const code = useDamakCode();
   const now = new Date();
+  const thisYear = now.getFullYear();
   const years = useMemo(() => {
     const ys = new Set(entries.map((e) => new Date(e.createdAt).getFullYear()));
-    ys.add(now.getFullYear());
+    ys.add(thisYear);
     return [...ys].sort((a, b) => b - a).slice(0, 3);
-  }, [entries]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [entries, thisYear]);
   // Afişten gelince afişteki yıl (Ocak'ta geçen yıl); yoksa bu yıl
   const { year: yearParam } = useLocalSearchParams<{ year?: string }>();
   const [year, setYear] = useState(() => {
@@ -62,13 +64,8 @@ export default function Wall() {
   async function share() {
     if (sharing) return;
     setSharing(true);
-    try {
-      await shareViewAsImage(cardRef, 'palateCard');
-    } catch {
-      Alert.alert(tr.result.shareError);
-    } finally {
-      setSharing(false);
-    }
+    if ((await shareViewSafely(cardRef, 'palateCard')) === 'error') Alert.alert(tr.result.shareError);
+    setSharing(false);
   }
 
   return (

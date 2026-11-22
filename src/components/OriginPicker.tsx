@@ -28,17 +28,17 @@ export function OriginPicker({
   const sections = useMemo(() => filterOrigins(SECTIONS, q), [q]);
   const parts = value.split(' · ').map((s) => s.trim());
 
+  function close() {
+    setQ('');
+    onClose();
+  }
+
   function pick(o: OriginOption) {
     haptic.select();
     const next = applyOrigin(value, o);
     onChange(next);
     // Menşei seçince çeşit de seçebilsin diye açık kalır; çeşit seçince kapanır.
     if (o.kind === 'variety') close();
-  }
-
-  function close() {
-    setQ('');
-    onClose();
   }
 
   return (
