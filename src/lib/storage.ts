@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { parseEntries, parseEntriesDetailed } from './entries';
+import { rescoreAfter } from './rescore';
 import { appLabel, normalizeMetrics, type Metrics, type ShareSource } from './metrics';
 import { normalizeSettings, type Settings } from './settings';
 import { normalizePlace } from './scoring';
@@ -89,7 +90,11 @@ export function updateEntry(entry: CupEntry): Promise<void> {
     const list = await readEntriesStrict();
     const old = list.find((e) => e.id === entry.id);
     if (!old) throw new Error('entry not found');
-    await writeEntries(list.map((e) => (e.id === entry.id ? entry : e)));
+    let next = list.map((e) => (e.id === entry.id ? entry : e));
+    // Yöntem/mekan değiştiyse sonraki fincanların keşif puanı ve damak tipi güncellenir
+    const scoringChanged = old.method !== entry.method || old.placeName !== entry.placeName || old.venueKind !== entry.venueKind;
+    if (scoringChanged) next = rescoreAfter(next, entry.createdAt);
+    await writeEntries(next);
     if (old.photoUri && old.photoUri !== entry.photoUri) deletePhoto(old.photoUri);
   });
 }
@@ -98,7 +103,9 @@ export function deleteEntry(id: string): Promise<void> {
   return enqueue(async () => {
     const list = await readEntriesStrict();
     const target = list.find((e) => e.id === id);
-    await writeEntries(list.filter((e) => e.id !== id));
+    const rest = list.filter((e) => e.id !== id);
+    // Silinen fincan bir mekanın/yöntemin ilk kaydıysa, sonraki fincan o keşif puanını alır
+    await writeEntries(target ? rescoreAfter(rest, target.createdAt) : rest);
     if (target?.photoUri) deletePhoto(target.photoUri);
   });
 }
