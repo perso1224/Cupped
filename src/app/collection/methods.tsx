@@ -5,7 +5,8 @@ import { ListRow, ListSection } from '../../components/List';
 import { tr } from '../../i18n/tr';
 import { methodStats } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
-import { colors, tint } from '../../theme';
+import { METHOD_ICON, METHOD_INK } from '../../config/methodStyle';
+import { colors } from '../../theme';
 
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
 
@@ -23,8 +24,8 @@ export default function Methods() {
           {tried.map((s) => (
             <ListRow
               key={s.method}
-              icon="cafe"
-              tint={tint.espresso}
+              icon={METHOD_ICON[s.method]}
+              tint={METHOD_INK[s.method]}
               title={tr.methods[s.method]}
               subtitle={`${tr.collection.methodSub(s.cups, s.avg)}${s.lastAt ? `\n${tr.collection.lastCup(shortDate(s.lastAt))}` : ''}`}
               chevron

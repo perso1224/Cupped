@@ -37,7 +37,7 @@ import { createCup, editCup, parseNum, type Where } from '../lib/cupSave';
 import { safely } from '../lib/safe';
 import { useProfile } from '../lib/useProfile';
 import { GRINDS, METHODS, NOTES, type CupEntry, type Grind, type Method, type TasteNote } from '../lib/types';
-import { colors, type } from '../theme';
+import { colors, fonts, type } from '../theme';
 
 /** Klavyenin üstündeki "Bitti" çubuğu (sayı klavyesinde ve notta Return tuşu yok). */
 const KB_DONE = 'cupped-kb-done';
@@ -422,7 +422,8 @@ export default function NewCup() {
               <Image source={{ uri: photo }} style={styles.preview} />
             ) : (
               <View style={[styles.preview, styles.previewEmpty]}>
-                <Icon name="camera" size={28} color={colors.accent} />
+                <Icon name="camera" size={22} color={colors.accentText} />
+                <Text style={styles.previewText}>{tr.capture.addPhoto}</Text>
               </View>
             )}
           </PressScale>
@@ -659,8 +660,9 @@ const styles = StyleSheet.create({
   shutter: { width: 78, height: 78, borderRadius: 39, borderWidth: 4, borderColor: colors.onColor, alignItems: 'center', justifyContent: 'center' },
   shutterInner: { width: 62, height: 62, borderRadius: 31, backgroundColor: colors.onColor },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  preview: { width: 88, height: 88, borderRadius: 18 },
-  previewEmpty: { backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  previewText: { fontSize: 11, fontWeight: '700', color: colors.accentText },
+  preview: { width: 72, height: 72, borderRadius: 16 },
+  previewEmpty: { backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.accent, gap: 2 },
   q: { ...type.title2, marginTop: 24, marginBottom: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap' },
   inputRow: { marginTop: 4 },
@@ -668,7 +670,8 @@ const styles = StyleSheet.create({
   detailToggleText: { fontSize: 16, fontWeight: '800', color: colors.accentText },
   limitHint: { ...type.footnote, color: colors.accentText, marginTop: 2 },
   detailHint: { fontSize: 14, color: colors.muted, lineHeight: 20, marginTop: 8 },
-  label: { ...type.headline, marginTop: 20, marginBottom: 10 },
+  // Tüm soru başlıkları aynı ailede (Fraunces); ana sorular (Nasıl?, Nerede?) biraz daha büyük
+  label: { fontFamily: fonts.display, fontSize: 18, color: colors.text, marginTop: 22, marginBottom: 10 },
   unit: { fontSize: 12, fontWeight: '700', color: colors.muted, marginBottom: 6 },
   originBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.black, borderRadius: 14, paddingHorizontal: 12, height: 50 },
   originBtnText: { color: colors.white, fontSize: 14, fontWeight: '700' },

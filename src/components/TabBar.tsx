@@ -1,7 +1,7 @@
 import { router, useScrollToTop } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Platform, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
@@ -116,6 +116,8 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
 }
 
 function TabItem({ name, icon, label, focused, onPress }: { name: string; icon: string; label: string; focused: boolean; onPress: () => void }) {
+  // Dar ekranda (ör. iPhone SE, küçük Android) etiketler birbirine değmesin
+  const compact = useWindowDimensions().width < 360;
   // Seçilince simge hafifçe zıplar (ilk açılışta değil, yalnızca sekme değişince)
   const [bump] = useState(() => new Animated.Value(1));
   const first = useRef(true);
@@ -143,7 +145,7 @@ function TabItem({ name, icon, label, focused, onPress }: { name: string; icon: 
       <Animated.View style={{ transform: [{ scale: bump }] }}>
         {name === 'profile' ? <Avatar focused={focused} /> : <Icon name={(focused ? icon : `${icon}-outline`) as IconName} size={22} color={color} />}
       </Animated.View>
-      <Text style={[styles.label, { color }]} numberOfLines={1}>
+      <Text style={[styles.label, { color }, compact && { fontSize: 9 }]} numberOfLines={1}>
         {label}
       </Text>
     </PressScale>
@@ -172,7 +174,8 @@ const shadow = {
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   pill: { flex: 1, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2 },
-  pillSolid: { backgroundColor: colors.card, ...shadow },
+  // Koyu temada kartlarla aynı renk olmasın: biraz daha açık zemin + ince çerçeve
+  pillSolid: { backgroundColor: isDark ? '#2E241E' : colors.card, borderWidth: StyleSheet.hairlineWidth, borderColor: isDark ? 'rgba(255,255,255,0.12)' : colors.line, ...shadow },
   pillRow: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: ROW_PAD },
   item: { flex: 1, height: BAR_HEIGHT - 12, alignItems: 'center', justifyContent: 'center', gap: 2 },
   highlight: { position: 'absolute', top: 6, left: 0, height: BAR_HEIGHT - 12, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: GLASS ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)') : colors.accentSoft },

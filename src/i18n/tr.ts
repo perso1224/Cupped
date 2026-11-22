@@ -130,6 +130,7 @@ export const tr = {
     fromGallery: 'Galeriden seç',
     skipPhoto: 'Fotoğrafsız devam et',
     retake: 'Yeniden çek',
+    addPhoto: 'Fotoğraf',
     how: 'Nasıl?',
     where: 'Nerede?',
     home: 'Evde',
@@ -417,6 +418,9 @@ export const tr = {
     locked: 'Henüz kazanılmadı',
     cups: (n: number) => `${n} fincan`,
     visa: 'VİZE',
+    emptyTitle: 'Pasaportun boş',
+    emptyBody: 'Her yeni yöntem bir damga, her yeni damak tipi bir vize olarak buraya işlenir.',
+    emptyCta: 'İlk damganı al',
   },
   wrapped: {
     monthTitle: 'Damak Özeti',

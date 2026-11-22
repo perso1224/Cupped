@@ -5,7 +5,9 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ALL_METHODS, BadgeCard } from './collection';
 import { FadeIn, Pop, PressScale } from './motion';
-import { Icon, type IconName } from './Icon';
+import { PillButton } from './ui';
+import { Icon } from './Icon';
+import { METHOD_ICON, METHOD_INK } from '../config/methodStyle';
 import { PALATE_TYPES } from '../config/scoring.config';
 import { tr } from '../i18n/tr';
 import { badgeProgress, passport } from '../lib/progress';
@@ -19,7 +21,9 @@ export function PassportView({ header }: { header: ReactNode }) {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
   const scrollRef = useTabScrollRef();
-  const entries = useEntries() ?? [];
+  const loadedEntries = useEntries();
+  const loaded = loadedEntries !== null;
+  const entries = loadedEntries ?? [];
   const p = passport(entries);
   const cupsBy: Partial<Record<Method, number>> = {};
   for (const e of entries) cupsBy[e.method] = (cupsBy[e.method] ?? 0) + 1;
@@ -32,6 +36,14 @@ export function PassportView({ header }: { header: ReactNode }) {
     >
       {header}
       <Text style={styles.summary}>{tr.passport.summary(p.places.length, p.methods.length)}</Text>
+      {/* Boş pasaport: ne yapılacağı belli olsun */}
+      {loaded && entries.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>{tr.passport.emptyTitle}</Text>
+          <Text style={styles.emptyBody}>{tr.passport.emptyBody}</Text>
+          <PillButton label={tr.passport.emptyCta} onPress={() => router.push('/new')} style={{ marginTop: 14, height: 48 }} />
+        </View>
+      ) : null}
 
       {/* Pasaport sayfası: mürekkep damgaları (bakmak için; dokunulmaz) */}
       <Text style={styles.section}>{tr.passport.methods}</Text>
@@ -87,20 +99,6 @@ export function PassportView({ header }: { header: ReactNode }) {
 
 /** Her damganın hafif farklı eğikliği (elle basılmış gibi; her açılışta aynı). */
 const TILT = [-8, 5, -3, 7, -5, 4, -7, 3, -4, 6, -2, 8, -6];
-const METHOD_INK: Record<Method, string> = {
-  espresso: tint.espresso,
-  filter: tint.amber,
-  coldbrew: tint.sky,
-  milk: tint.slate,
-  turkish: tint.cherry,
-};
-const METHOD_ICON: Record<Method, IconName> = {
-  espresso: 'cafe',
-  filter: 'funnel',
-  coldbrew: 'snow',
-  milk: 'water',
-  turkish: 'flame',
-};
 const RING = 72;
 const VISA_INK = [tint.cherry, tint.espresso, tint.sage, tint.amber, tint.sky, tint.slate];
 
@@ -113,9 +111,9 @@ function MethodStamp({ method, cups, index }: { method: Method; cups: number; in
     return (
       <View style={styles.methodCell} accessible accessibilityLabel={`${label}, ${tr.passport.locked}`}>
         <View style={[styles.methodRing, styles.emptyRing]}>
-          <Icon name={METHOD_ICON[method]} size={22} color={colors.line} />
+          <Icon name={METHOD_ICON[method]} size={22} color={colors.tertiary} />
         </View>
-        <Text style={[styles.methodLabel, { color: colors.tertiary }]} numberOfLines={2}>
+        <Text style={[styles.methodLabel, { color: colors.muted }]} numberOfLines={2}>
           {label}
         </Text>
       </View>
@@ -148,7 +146,7 @@ function VisaStamp({ label, earned, index }: { label: string; earned: boolean; i
   if (!earned) {
     return (
       <View style={[styles.visa, styles.visaEmpty]} accessible accessibilityLabel={`${label}, ${tr.passport.locked}`}>
-        <Text style={[styles.visaName, { color: colors.tertiary }]} numberOfLines={2}>
+        <Text style={[styles.visaName, { color: colors.muted, opacity: 0.8 }]} numberOfLines={2}>
           {label}
         </Text>
       </View>
@@ -197,15 +195,18 @@ const styles = StyleSheet.create({
   stampRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', rowGap: 14 },
   methodCell: { width: '33.33%', alignItems: 'center' },
   methodRing: { width: RING, height: RING, borderRadius: RING / 2, alignItems: 'center', justifyContent: 'center' },
-  emptyRing: { borderColor: colors.line, borderStyle: 'dashed', borderWidth: 1.5 },
+  emptyRing: { borderColor: colors.tertiary, borderStyle: 'dashed', borderWidth: 1.5 },
   methodCount: { fontFamily: fonts.heavy, fontSize: 15, marginTop: 1 },
   methodLabel: { ...type.caption, fontWeight: '700', color: colors.text, marginTop: 8, textAlign: 'center', paddingHorizontal: 4 },
   visaRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, paddingHorizontal: 4 },
   visaWrap: { width: '47%' },
   visa: { width: '100%', minHeight: 66, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 12 },
-  visaEmpty: { width: '47%', minHeight: 62, borderRadius: 8, borderColor: colors.line, borderStyle: 'dashed', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', padding: 8 },
+  visaEmpty: { width: '47%', minHeight: 62, borderRadius: 8, borderColor: colors.tertiary, borderStyle: 'dashed', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', padding: 8 },
   visaKicker: { fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
   visaName: { fontFamily: fonts.display, fontSize: 14, textAlign: 'center', marginTop: 2 },
+  emptyCard: { backgroundColor: colors.card, borderRadius: 20, padding: 18, marginTop: 16 },
+  emptyTitle: { ...type.headline },
+  emptyBody: { ...type.subhead, marginTop: 4 },
   empty: { ...type.subhead },
   placeWrap: { flexBasis: '46%', flexGrow: 1, maxWidth: '49%' },
   placeStamp: {

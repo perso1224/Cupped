@@ -60,9 +60,11 @@ export function PillButton({
       </PressScale>
     );
   }
-  const bg = variant === 'dark' ? colors.black : variant === 'accent' ? colors.accent : colors.card;
-  const border = variant === 'light' ? colors.line : bg;
-  const fg = variant === 'dark' ? colors.white : colors.text;
+  // Pasif düğme soluklaştırılmaz (okunmuyordu): gri zemin, okunur gri yazı.
+  // Turuncu zeminde yazı her temada koyu (açık renk yazı turuncu üstünde okunmaz).
+  const bg = disabled ? colors.line : variant === 'dark' ? colors.black : variant === 'accent' ? colors.accent : colors.card;
+  const border = disabled ? colors.line : variant === 'light' ? colors.line : bg;
+  const fg = disabled ? colors.muted : variant === 'dark' ? colors.white : variant === 'accent' ? '#111111' : colors.text;
   return (
     <PressScale
       onPress={() => {
@@ -70,7 +72,7 @@ export function PillButton({
         onPress();
       }}
       disabled={disabled}
-      style={[styles.pill, { backgroundColor: bg, borderColor: border }, disabled && { opacity: 0.35 }, style]}
+      style={[styles.pill, { backgroundColor: bg, borderColor: border }, style]}
     >
       <View style={styles.pillInner}>
         {icon ? <Icon name={icon} size={18} color={fg} /> : null}
