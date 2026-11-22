@@ -146,7 +146,7 @@ export default function Home() {
           </Text>
         ))}
       </View>
-      <MenuLine color={tint.amber} label={tr.home.cupsToday} value={String(caffeine.cups)} />
+      <MenuLine color={tint.amber} label={tr.home.cupsToday} value={`${caffeine.cups} fincan`} />
       <MenuLine color={tint.cherry} label={tr.home.lastCup} value={agoLabel(caffeine.minutesSinceLast)} />
     </View>
   );

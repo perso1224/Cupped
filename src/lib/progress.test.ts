@@ -162,7 +162,7 @@ describe('pasaport ve rozetler', () => {
     expect(ids([1, 2, 3].map((d) => cup(at(2026, 10, d), s)))).toContain('chain_loyal');
   });
 
-  it('Ev Baristası, Kafe Kâşifi, Geisha Anı, Şehir Gezgini', () => {
+  it('Ev Baristası, Kafe Kaşifi, Geisha Anı, Şehir Gezgini', () => {
     const home = [1, 3, 5, 7, 9].map((d) => cup(at(2026, 10, d), { method: 'filter' }));
     expect(ids(home)).toContain('pourover_patience');
     const indep = [1, 2, 3, 4, 5].map((d) => cup(at(2026, 10, d, 12), { venueKind: 'independent', placeName: `Yer ${d}` }));

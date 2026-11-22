@@ -64,7 +64,7 @@ export default function Progress() {
               <View style={[styles.barFill, { width: `${Math.max(4, (level?.fraction ?? 0) * 100)}%` }]} />
             </View>
             <Text style={styles.small} numberOfLines={2}>
-              {level ? (level.next ? tr.progress.toNext(level.next, level.toNext) : tr.progress.topLevel) : tr.progress.empty}
+              {level ? (level.next ? tr.progress.toNext(level.next, level.toNext) : tr.progress.topLevel) : tr.progress.levelEmpty}
             </Text>
           </View>
         </View>

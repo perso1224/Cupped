@@ -239,7 +239,7 @@ export function badgeProgress(entries: CupEntry[]): BadgeProgress[] {
     bump('routine', run);
   }
 
-  // Kafe Kâşifi
+  // Kafe Kaşifi
   bump('third_wave_refugee', new Set(sorted.filter((e) => e.venueKind === 'independent').map(placeKeyOf).filter(Boolean)).size);
 
   // Müdavim: aynı zincire art arda N ziyaret (en uzun seri)
