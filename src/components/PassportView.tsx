@@ -53,7 +53,8 @@ export function PassportView({ header }: { header: ReactNode }) {
       </View>
 
       <Text style={styles.section}>{tr.passport.badges}</Text>
-      {badgeProgress(entries).map((bp, i) => (
+      {/* Kazanılan rozetler en üstte; kalanlar kendi sırasında */}
+      {[...badgeProgress(entries)].sort((a, b) => Number(b.earned) - Number(a.earned)).map((bp, i) => (
         <FadeIn key={bp.badge.id} index={i}>
           <BadgeCard progress={bp} />
         </FadeIn>
