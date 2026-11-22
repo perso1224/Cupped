@@ -88,6 +88,7 @@ export const tr = {
       favorites: 'Favorilerin',
       hourType: (h: number) => (h < 12 ? 'Sen bir sabah kahvecisisin' : h < 17 ? 'Sen bir öğleden sonra kahvecisisin' : 'Sen bir akşam kahvecisisin'),
       place: 'Mekan',
+      loved: 'En sevdiğin',
       method: 'Yöntem',
       bean: 'Çekirdek',
       hour: 'Kahve saatin',
@@ -295,6 +296,13 @@ export const tr = {
     methodSub: (cups: number, avg: number) => `${cups} fincan · ort. skor ${avg}`,
     lastCup: (date: string) => `Son: ${date}`,
     untriedSub: 'Bir fincanla damganı al',
+  },
+  rating: {
+    question: 'Nasıl buldun? (isteğe bağlı)',
+    label: (n: number) => `${n} yıldız`,
+    none: 'Yıldız verilmedi',
+    current: (n: number) => `Puanın: ${n} yıldız`,
+    avg: (n: number) => `★ ${n.toLocaleString('tr-TR', { maximumFractionDigits: 1 })}`,
   },
   passport: {
     title: 'Damak Pasaportu',

@@ -396,11 +396,11 @@ export function noteShares(entries: CupEntry[]): NoteShare[] {
     .map(([note, count]) => ({ note, count, pct: Math.round((count / total) * 100) }));
 }
 
-export type Favorites = { place: string | null; method: Method | null; origin: string | null; hour: number | null };
+export type Favorites = { place: string | null; method: Method | null; origin: string | null; hour: number | null; loved: { name: string; avg: number } | null };
 
 /** Favorilerin: en sık mekan, yöntem, çekirdek (menşei metninin ilk parçası) ve kahve saati. */
 export function favorites(entries: CupEntry[]): Favorites {
-  if (!entries.length) return { place: null, method: null, origin: null, hour: null };
+  if (!entries.length) return { place: null, method: null, origin: null, hour: null, loved: null };
   const sorted = [...entries].sort(byDate);
   const p = passport(sorted).places[0];
   const origins = sorted.map((e) => e.origin?.split(' · ')[0]?.trim()).filter((o): o is string => !!o);
@@ -410,5 +410,28 @@ export function favorites(entries: CupEntry[]): Favorites {
     method: mostCommon(sorted.map((e) => e.method))[0] ?? null,
     origin: origins.length ? mostCommon(origins)[0] : null,
     hour: Number(mostCommon(hours)[0]),
+    loved: lovedPlace(sorted),
   };
+}
+
+/** Mekan başına kişisel yıldız ortalaması (sadece yıldız verilen fincanlar). Anahtar: placeKey. */
+export function placeRatings(entries: CupEntry[]): Map<string, { avg: number; count: number }> {
+  const sums = new Map<string, { sum: number; count: number }>();
+  for (const e of entries) {
+    const k = placeKeyOf(e);
+    if (!k || !e.rating) continue;
+    const cur = sums.get(k) ?? { sum: 0, count: 0 };
+    sums.set(k, { sum: cur.sum + e.rating, count: cur.count + 1 });
+  }
+  return new Map([...sums].map(([k, v]) => [k, { avg: Math.round((v.sum / v.count) * 10) / 10, count: v.count }]));
+}
+
+/** En sevdiğin mekan: yıldız ortalaması en yüksek olan; eşitlikte daha çok yıldız verilen. */
+function lovedPlace(entries: CupEntry[]): { name: string; avg: number } | null {
+  const r = placeRatings(entries);
+  let best: { key: string; avg: number; count: number } | null = null;
+  for (const [key, v] of r) if (!best || v.avg > best.avg || (v.avg === best.avg && v.count > best.count)) best = { key, ...v };
+  if (!best) return null;
+  const p = passport(entries).places.find((x) => x.key === best.key);
+  return p ? { name: p.name, avg: best.avg } : null;
 }

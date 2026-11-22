@@ -19,6 +19,11 @@ const posOrNull = (v: unknown): number | null => {
   const n = typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v.replace(',', '.')) : NaN;
   return Number.isFinite(n) && n > 0 && n < 100000 ? n : null;
 };
+/** 1-5 arası tam sayı yıldız; değilse null. */
+export const ratingOrNull = (v: unknown): number | null => {
+  const n = typeof v === 'number' ? Math.round(v) : NaN;
+  return n >= 1 && n <= 5 ? n : null;
+};
 const text = (v: unknown, max: number): string | null => (typeof v === 'string' && v.trim() ? v.slice(0, max) : null);
 
 /**
@@ -58,6 +63,7 @@ export function normalizeEntry(raw: unknown): CupEntry | null {
     origin: text(r.origin, MAX_NAME),
     brew: doseG || waterMl || grind ? { doseG, waterMl, grind } : null,
     note: text(r.note, MAX_TEXT),
+    rating: ratingOrNull(r.rating),
     captureMs: typeof r.captureMs === 'number' && r.captureMs > 0 ? r.captureMs : null,
     score: Math.max(0, Math.min(100, num(r.score))),
     parts,

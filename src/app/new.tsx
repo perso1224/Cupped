@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../components/Icon';
 import { CloseButton, goBack } from '../components/NavButtons';
 import { OriginPicker } from '../components/OriginPicker';
+import { StarInput } from '../components/Stars';
 import { PressScale, animateLayout, haptic, reduceMotionNow } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
@@ -77,6 +78,7 @@ export default function NewCup() {
   const [showDetail, setShowDetail] = useState(false);
   const [notes, setNotes] = useState<TasteNote[]>([]);
   const [origin, setOrigin] = useState('');
+  const [rating, setRating] = useState<number | null>(null);
   const [originPicker, setOriginPicker] = useState(false);
   const [dose, setDose] = useState('');
   const [water, setWater] = useState('');
@@ -106,6 +108,7 @@ export default function NewCup() {
         setWater(e.brew?.waterMl ? String(e.brew.waterMl) : '');
         setGrind(e.brew?.grind ?? null);
         setNote(e.note ?? '');
+        setRating(e.rating ?? null);
         setShowDetail(!!(e.notes?.length || e.origin || e.brew || e.note));
       });
       return;
@@ -174,8 +177,9 @@ export default function NewCup() {
         note.trim() !== (original.note ?? '') ||
         dose !== (original.brew?.doseG ? String(original.brew.doseG) : '') ||
         water !== (original.brew?.waterMl ? String(original.brew.waterMl) : '') ||
-        grind !== (original.brew?.grind ?? null)
-      : !!(photo || method || where || typed.trim() || notes.length || origin.trim() || dose || water || grind || note.trim());
+        grind !== (original.brew?.grind ?? null) ||
+        rating !== (original.rating ?? null)
+      : !!(photo || method || where || typed.trim() || notes.length || origin.trim() || dose || water || grind || note.trim() || rating);
     if (!dirty) return goBack();
     if (Platform.OS === 'web') {
       if (globalThis.confirm?.(original ? tr.capture.discardEditTitle : tr.capture.discardTitle)) goBack();
@@ -259,7 +263,7 @@ export default function NewCup() {
         }
       }
       const captureMs = Date.now() - openedAt.current;
-      const newEntry: CupEntry = { id, createdAt, photoUri, ...input, brew, note: noteText, captureMs, score: total, parts, palateTypeId };
+      const newEntry: CupEntry = { id, createdAt, photoUri, ...input, brew, note: noteText, rating, captureMs, score: total, parts, palateTypeId };
       await saveEntry(newEntry);
       // Bu fincanla yeni kazanılan rozetler (sonuç ekranında kutlanır)
       const before = new Set(earnedBadges(history).map((b) => b.id));
@@ -295,8 +299,15 @@ export default function NewCup() {
       const doseG = parseNum(dose);
       const waterMl = parseNum(water);
       const brew = doseG || waterMl || grind ? { doseG, waterMl, grind } : null;
-      const { total, parts } = scoreCup(input, before, orig.createdAt);
-      const palateTypeId = computePalateTypeId([...before, { ...input, createdAt: orig.createdAt }]);
+      // Skoru etkileyen bilgiler değişmediyse (ör. sadece yıldız, not ya da fotoğraf) skor olduğu gibi kalır.
+      const scoringSame =
+        input.method === orig.method &&
+        input.placeName === orig.placeName &&
+        input.venueKind === orig.venueKind &&
+        input.notes.join() === (orig.notes ?? []).join() &&
+        input.origin === orig.origin;
+      const { total, parts } = scoringSame ? { total: orig.score, parts: orig.parts } : scoreCup(input, before, orig.createdAt);
+      const palateTypeId = scoringSame ? orig.palateTypeId : computePalateTypeId([...before, { ...input, createdAt: orig.createdAt }]);
       let photoUri = orig.photoUri;
       if (photoChanged && photo) {
         try {
@@ -306,7 +317,7 @@ export default function NewCup() {
         }
       }
       try {
-        await updateEntry({ ...orig, ...input, photoUri, brew, note: note.trim() || null, score: total, parts, palateTypeId });
+        await updateEntry({ ...orig, ...input, photoUri, brew, note: note.trim() || null, rating, score: total, parts, palateTypeId });
       } catch (err) {
         if (photoUri && photoUri !== orig.photoUri) discardPhoto(photoUri); // yarım kalan yeni fotoğraf dosyası kalmasın
         throw err;
@@ -454,6 +465,10 @@ export default function NewCup() {
             style={styles.input}
           />
         </View>
+
+        {/* Kişisel beğeni: isteğe bağlı, skoru etkilemez */}
+        <Text style={styles.label}>{tr.rating.question}</Text>
+        <StarInput value={rating} onChange={setRating} />
 
         <PressScale
           onPress={() => {

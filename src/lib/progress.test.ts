@@ -11,6 +11,7 @@ import {
   longestStreak,
   noteShares,
   favorites,
+  placeRatings,
   scoreTrend,
   passport,
   periodReport,
@@ -320,7 +321,22 @@ describe('ana sayfa kaydırmalı kartlar', () => {
       cup(at(2026, 0, 2, 9), { method: 'filter', venueKind: 'independent', placeName: 'kör nokta', origin: 'Etiyopya Guji' }),
       cup(at(2026, 0, 3, 15), { method: 'espresso', venueKind: 'home', placeName: null }),
     ];
-    expect(favorites(l)).toEqual({ place: 'Kör Nokta', method: 'filter', origin: 'Etiyopya Guji', hour: 9 });
-    expect(favorites([])).toEqual({ place: null, method: null, origin: null, hour: null });
+    expect(favorites(l)).toEqual({ place: 'Kör Nokta', method: 'filter', origin: 'Etiyopya Guji', hour: 9, loved: null });
+    expect(favorites([])).toEqual({ place: null, method: null, origin: null, hour: null, loved: null });
+  });
+});
+
+describe('kişisel yıldız: mekanlar', () => {
+  it('mekan ortalaması ve en sevilen mekan (yıldızsız fincanlar sayılmaz)', () => {
+    const l = [
+      cup(at(2026, 0, 1), { venueKind: 'independent', placeName: 'Kör Nokta', rating: 5 }),
+      cup(at(2026, 0, 2), { venueKind: 'independent', placeName: 'kör nokta', rating: 4 }),
+      cup(at(2026, 0, 3), { venueKind: 'independent', placeName: 'Kör Nokta' }),
+      cup(at(2026, 0, 4), { venueKind: 'independent', placeName: 'Petra', rating: 3 }),
+      cup(at(2026, 0, 5), { venueKind: 'home', rating: 5 }),
+    ];
+    const r = placeRatings(l);
+    expect([...r.values()]).toEqual([{ avg: 4.5, count: 2 }, { avg: 3, count: 1 }]);
+    expect(favorites(l).loved).toEqual({ name: 'Kör Nokta', avg: 4.5 });
   });
 });

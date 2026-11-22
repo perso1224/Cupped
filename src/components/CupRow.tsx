@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { Stars } from './Stars';
 import { Icon } from './Icon';
 import { PressScale } from './motion';
 import { tr } from '../i18n/tr';
@@ -43,11 +44,14 @@ export function CupRow({ entry, timeOnly, showParts, plain }: { entry: CupEntry;
           <Text style={styles.rowSub} numberOfLines={1}>
             {placeLabel(entry)}
           </Text>
-          <Text style={styles.rowTime}>
-            {timeOnly
-              ? new Date(entry.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-              : timeLabel(entry.createdAt)}
-          </Text>
+          <View style={styles.timeRow}>
+            <Text style={styles.rowTime}>
+              {timeOnly
+                ? new Date(entry.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+                : timeLabel(entry.createdAt)}
+            </Text>
+            <Stars value={entry.rating} size={11} />
+          </View>
           {chips.length ? (
             <View style={styles.chips}>
               {chips.map((k) => (
@@ -72,7 +76,8 @@ const styles = StyleSheet.create({
   thumbEmpty: { backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   rowTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   rowSub: { fontSize: 14, color: colors.muted, marginTop: 2 },
-  rowTime: { fontSize: 12, color: colors.muted, marginTop: 4 },
+  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  rowTime: { fontSize: 12, color: colors.muted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 6, gap: 4 },
   chip: {
     fontSize: 11,

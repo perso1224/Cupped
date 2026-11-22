@@ -206,6 +206,7 @@ export default function Home() {
       {fav.hour !== null ? <Text style={styles.boardTitle}>{tr.home.board.hourType(fav.hour)}</Text> : null}
       <View style={styles.boardRule} />
       <MenuLine color={tint.cherry} label={tr.home.board.place} value={fav.place ?? '—'} />
+      {fav.loved ? <MenuLine color={STAR_COLOR} label={tr.home.board.loved} value={`${fav.loved.name} ${tr.rating.avg(fav.loved.avg)}`} /> : null}
       <MenuLine color={tint.amber} label={tr.home.board.method} value={fav.method ? tr.methods[fav.method] : '—'} />
       <MenuLine color={SAGE_ON_DARK} label={tr.home.board.bean} value={fav.origin ?? '—'} />
       <MenuLine color={BOARD.muted} label={tr.home.board.hour} value={fav.hour !== null ? `${String(fav.hour).padStart(2, '0')}:00` : '—'} />
@@ -404,6 +405,7 @@ const BOARD = isDark
   ? { bg: '#2B1A12', text: '#F6EBDD', muted: '#CDBBA6', rule: 'rgba(246,235,221,0.18)', track: 'rgba(246,235,221,0.14)', faint: 'rgba(246,235,221,0.25)', bean: '#7A4A2A' }
   : { bg: colors.card, text: colors.text, muted: colors.muted, rule: colors.line, track: colors.line, faint: colors.line, bean: tint.espresso };
 const SAGE_ON_DARK = isDark ? '#8FB08A' : tint.sage;
+const STAR_COLOR = '#E3A43A';
 const NOTE_COLORS = ['#D98B2B', '#C9604C', '#8FB08A', '#B99A7A'];
 
 /** Kafe menüsü satırı: renkli nokta, ad, noktalı çizgi, değer. */

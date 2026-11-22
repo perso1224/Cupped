@@ -93,3 +93,15 @@ describe('içe aktarma sertleştirme', () => {
     expect(r.dropped).toBe(1);
   });
 });
+
+describe('kişisel yıldız', () => {
+  const base = { id: 'r1', createdAt: '2026-01-01T09:00:00.000Z', method: 'filter', venueKind: 'home', notes: [], score: 50 };
+  it('1-5 arası yıldız korunur; eski kayıtta yoksa null', () => {
+    expect(normalizeEntry({ ...base, rating: 4 })?.rating).toBe(4);
+    expect(normalizeEntry(base)?.rating).toBeNull();
+  });
+  it('geçersiz yıldız null olur', () => {
+    for (const r of [0, 6, -1, '5', null, NaN]) expect(normalizeEntry({ ...base, rating: r })?.rating).toBeNull();
+    expect(normalizeEntry({ ...base, rating: 4.6 })?.rating).toBe(5);
+  });
+});

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { placeLabel, ShareCard, type CardHandle } from './ShareCard';
 import { CupGauge } from './coffee';
 import { MetricTile } from './dashboard';
+import { Stars } from './Stars';
 import { Icon, type IconName } from './Icon';
 import { ListRow, ListSection } from './List';
 import { goBack } from './NavButtons';
@@ -164,6 +165,11 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
           </View>
           <Text style={styles.title}>{tr.methods[entry.method]}</Text>
           {place ? <Text style={styles.place}>{place}</Text> : null}
+          {entry.rating ? (
+            <View style={{ marginTop: 8 }}>
+              <Stars value={entry.rating} size={20} />
+            </View>
+          ) : null}
 
           {newBadges.map((b, i) => (
             <Pop key={b.id} delay={1300 + i * 250} style={styles.newBadge}>

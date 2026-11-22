@@ -5,7 +5,7 @@ import { CollectionScreen } from '../../components/collection';
 import { ListRow, ListSection } from '../../components/List';
 import { PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
-import { passport } from '../../lib/progress';
+import { passport, placeRatings } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
 import { tint, type } from '../../theme';
 
@@ -15,6 +15,7 @@ const shortDate = (iso: string) => new Date(iso).toLocaleDateString('tr-TR', { d
 export default function Places() {
   const entries = useEntries();
   const places = useMemo(() => passport(entries ?? []).places, [entries]);
+  const ratings = useMemo(() => placeRatings(entries ?? []), [entries]);
   const visits = places.reduce((s, p) => s + p.visits, 0);
   const open = (key: string, name: string) => router.push({ pathname: '/history', params: { place: key, title: name } });
 
@@ -35,7 +36,7 @@ export default function Places() {
               icon={i === 0 && p.visits > 1 ? 'trophy' : 'location'}
               tint={i === 0 && p.visits > 1 ? tint.amber : tint.cherry}
               title={p.name}
-              subtitle={tr.collection.placeSub(p.visits, shortDate(p.firstVisit))}
+              subtitle={[tr.collection.placeSub(p.visits, shortDate(p.firstVisit)), ratings.get(p.key) ? tr.rating.avg(ratings.get(p.key)!.avg) : null].filter(Boolean).join(' · ')}
               chevron
               onPress={() => open(p.key, p.name)}
             />
