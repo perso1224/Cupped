@@ -9,8 +9,10 @@ import {
   Animated,
   Image,
   Linking,
+  BackHandler,
   InputAccessoryView,
   Keyboard,
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
@@ -130,6 +132,20 @@ export default function NewCup() {
   }, [editId, againId]);
 
   const places = knownPlaces(history).slice(0, 6);
+
+  // Android geri tuşu: doğrudan çıkmasın, Kapat ile aynı davransın (girilen bilgi varsa önce sorar).
+  const closeRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    closeRef.current = closeNew;
+  });
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      closeRef.current();
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
 
   /** Kapat: bir şey seçildiyse önce sor (tam ekran modalda kaydırarak kapatma yok, tek çıkış burası). */
   function closeNew() {
@@ -356,7 +372,8 @@ export default function NewCup() {
   // --- 2. adım: Nasıl? + Nerede? ---
   const typedKey = normalizePlace(typed);
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    // Android'de klavye formun altındaki alanları örtmesin (iOS'ta ScrollView kendisi ayarlıyor)
+    <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 24 }}
@@ -544,7 +561,7 @@ export default function NewCup() {
           </View>
         </InputAccessoryView>
       ) : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
