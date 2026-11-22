@@ -7,14 +7,17 @@ import type { CardHandle } from '../components/ShareCard';
 import { BRAND } from '../config/brand';
 import { tr, upper } from '../i18n/tr';
 import { getPalateType } from '../lib/palate';
-import { profileSummary } from '../lib/progress';
+import { fingerprintRings, memberNo } from '../lib/fingerprint';
+import { noteShares, profileSummary, type NoteShare } from '../lib/progress';
 import { shareViewAsImage } from '../lib/share';
 import { useEntries } from '../lib/useEntries';
 import { useProfile } from '../lib/useProfile';
-import { Icon } from '../components/Icon';
+import { Bean } from '../components/coffee';
+import { cardTheme, type CardTheme } from '../config/palateThemes';
+import Svg, { Circle, Defs, Path, Text as SvgText, TextPath } from 'react-native-svg';
 import { CloseButton } from '../components/NavButtons';
 import { PillButton } from '../components/ui';
-import { colors, tint, type } from '../theme';
+import { colors, fonts, type } from '../theme';
 
 /** "Göster" modu: tam ekran Damak Kartı. Parlaklık artar, ekran kapanmaz. */
 export default function PalateCard() {
@@ -59,10 +62,12 @@ export default function PalateCard() {
   const typeId = s.palateTypeId ?? profile?.starterTypeId ?? null;
   const type = typeId ? getPalateType(typeId) : null;
   // Paylaşılan görsel tam 9:16 olsun diye kart, ekrana sığan 9:16 bir çerçevenin içinde.
-  const frameW = Math.min(width, ((height - insets.top - insets.bottom - 64) * 9) / 16);
+  const frameW = Math.min(width - 32, ((height - insets.top - insets.bottom - 80) * 9) / 16);
   const frameH = (frameW * 16) / 9;
-  const cardWidth = frameW - 32;
-  const u = cardWidth / 100;
+  const u = frameW / 100;
+  const th = cardTheme(typeId);
+  const notes = noteShares(entries ?? []).slice(0, 4);
+  const since = profile?.onboardedAt ? new Date(profile.onboardedAt).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }) : null;
 
   async function share() {
     if (busy.current) return;
@@ -91,54 +96,98 @@ export default function PalateCard() {
       </View>
 
       <View style={styles.center}>
-        <View
-          ref={cardRef}
-          collapsable={false}
-          style={{ width: frameW, height: frameH, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}
-        >
-          {/* Ölçüler kart genişliğine göre (u = genişliğin %1'i): küçük ekranda taşmaz, görsel her telefonda aynı */}
-          <View style={[styles.card, { width: cardWidth, height: frameH - 32, padding: u * 7, borderRadius: u * 8 }]}>
+        {/* Ekranda yuvarlak köşeli görünür; paylaşılan görsel (iç kutu) köşesiz, tam renkli 9:16 */}
+        <View style={{ borderRadius: u * 6, overflow: 'hidden' }}>
+          <View ref={cardRef} collapsable={false} style={[styles.card, { width: frameW, height: frameH, padding: u * 7, backgroundColor: th.bg }]}>
+            {/* Üst: kimlik başlığı ve kart numarası */}
             <View>
-              <T style={[styles.kicker, { fontSize: u * 3.4 }]}>{upper(s.palateTypeId ? tr.palateCard.title : tr.profile.starter)}</T>
-              {profile?.nickname ? <T style={[styles.nick, { fontSize: u * 4.2 }]}>@{profile.nickname}</T> : null}
-              {type ? (
-                <>
-                  <T style={[styles.typeName, { fontSize: u * 11, lineHeight: u * 12, marginTop: u * 3 }]} adjustsFontSizeToFit numberOfLines={2}>
-                    {type.name}
-                  </T>
-                  <T style={[styles.tagline, { fontSize: u * 4.1, lineHeight: u * 5.8, marginTop: u * 2.5 }]} numberOfLines={3}>
-                    {type.tagline}
-                  </T>
-                  {s.cups === 0 ? (
-                    <T style={[styles.starterNote, { fontSize: u * 3.9, marginTop: u * 4 }]}>{tr.palateCard.starterNote}</T>
-                  ) : s.streak > 0 ? (
-                    <View style={[styles.streakRow, { marginTop: u * 4 }]}>
-                      <Icon name="flame" size={u * 4.5} color={tint.cherry} />
-                      <T style={[styles.streak, { fontSize: u * 4.1 }]}>{tr.palateCard.streakLine(s.streak)}</T>
-                    </View>
-                  ) : null}
-                </>
-              ) : (
-                <T style={[styles.empty, { fontSize: u * 4.6 }]}>{tr.palateCard.empty}</T>
-              )}
+              <View style={styles.rowBetween}>
+                <T style={[styles.kicker, { fontSize: u * 3.2, color: th.accent }]}>{upper(s.palateTypeId ? tr.palateCard.idTitle : tr.profile.starter)}</T>
+                <T style={[styles.kicker, { fontSize: u * 3.2, color: th.muted }]}>{tr.palateCard.no(memberNo(profile?.onboardedAt))}</T>
+              </View>
+              {profile?.nickname ? <T style={[styles.nick, { fontSize: u * 4.4, color: th.fg }]}>@{profile.nickname}</T> : null}
             </View>
 
-            {type && s.cups > 0 ? (
-              <View style={styles.grid}>
-                <Stat u={u} value={s.cups} label={tr.palateCard.cups} big />
-                <Stat u={u} value={s.avg} label={tr.palateCard.avg} big />
-                <Stat u={u} value={s.places} label={tr.palateCard.places} />
-                <Stat u={u} value={s.methods} label={tr.palateCard.methods} />
-              </View>
-            ) : null}
+            {/* Amblem: kişiye özel damak parmak izi + damga yazısı + tip monogramı */}
+            {type ? <Emblem size={frameW * 0.62} seed={`${profile?.nickname ?? ''}:${type.id}`} cups={s.cups} notes={notes} theme={th} monogram={monogram(type.name)} /> : null}
 
-            <View style={styles.footer}>
-              <T style={[styles.question, { fontSize: u * 3.4 }]}>{tr.card.question}</T>
-              <T style={[styles.brand, { fontSize: u * 4.6 }]}>{BRAND.name}</T>
+            <View>
+              {type ? (
+                <>
+                  <T style={[styles.typeName, { fontSize: u * 10.5, lineHeight: u * 11.5, color: th.fg }]} adjustsFontSizeToFit numberOfLines={2}>
+                    {type.name}
+                  </T>
+                  <T style={[styles.tagline, { fontSize: u * 3.9, lineHeight: u * 5.4, marginTop: u * 2, color: th.muted }]} numberOfLines={3}>
+                    {type.tagline}
+                  </T>
+                  {s.cups === 0 ? <T style={[styles.tagline, { fontSize: u * 3.6, marginTop: u * 3, color: th.muted }]}>{tr.palateCard.starterNote}</T> : null}
+                </>
+              ) : (
+                <T style={[styles.typeName, { fontSize: u * 6, lineHeight: u * 8, color: th.fg }]}>{tr.palateCard.empty}</T>
+              )}
+
+              {type && s.cups > 0 ? (
+                <View style={[styles.stats, { marginTop: u * 6, borderColor: th.muted }]}>
+                  <Stat u={u} th={th} value={s.cups} label={tr.palateCard.cups} />
+                  <Stat u={u} th={th} value={s.avg} label={tr.palateCard.avg} divider />
+                  <Stat u={u} th={th} value={s.places} label={tr.palateCard.places} divider />
+                  <Stat u={u} th={th} value={s.methods} label={tr.palateCard.methods} divider />
+                </View>
+              ) : null}
+
+              <View style={[styles.rowBetween, { marginTop: u * 6 }]}>
+                <T style={[styles.since, { fontSize: u * 3.3, color: th.muted }]}>
+                  {s.streak > 0 ? tr.palateCard.streakLine(s.streak) : since ? tr.palateCard.since(since) : tr.card.question}
+                </T>
+                <View style={styles.brandRow}>
+                  <Bean size={u * 5} color={th.accent} line={th.bg} />
+                  <T style={[styles.brand, { fontSize: u * 5.6, color: th.fg }]}>{BRAND.name}</T>
+                </View>
+              </View>
             </View>
           </View>
         </View>
       </View>
+    </View>
+  );
+}
+
+/** Tip adının baş harfleri: "Saf Yoğunluk" → "SY", "Pour-over Filozofu" → "PF". */
+function monogram(name: string): string {
+  return name
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toLocaleUpperCase('tr-TR');
+}
+
+/** Amblem: iç içe dalgalı halkalar (kahve halkası izi gibi), çevresinde damga yazısı, ortada monogram. */
+function Emblem({ size, seed, cups, notes, theme: th, monogram: mono }: { size: number; seed: string; cups: number; notes: NoteShare[]; theme: CardTheme; monogram: string }) {
+  const c = size / 2;
+  const rings = fingerprintRings({ seed, cups, notes, radius: size * 0.36, cx: c, cy: c });
+  const textR = size * 0.45;
+  const stamp = `${BRAND.name.toLocaleUpperCase('tr-TR')} · ${tr.palateCard.stamp} · `;
+  return (
+    <View style={{ alignSelf: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Svg width={size} height={size}>
+        <Defs>
+          <Path id="stampCircle" d={`M ${c - textR},${c} a ${textR},${textR} 0 1,1 ${textR * 2},0 a ${textR},${textR} 0 1,1 ${-textR * 2},0`} />
+        </Defs>
+        <Circle cx={c} cy={c} r={size * 0.49} stroke={th.accent} strokeWidth={1.5} fill="none" opacity={0.6} />
+        <Circle cx={c} cy={c} r={size * 0.41} stroke={th.accent} strokeWidth={1} fill="none" opacity={0.4} />
+        <SvgText fill={th.accent} fontSize={size * 0.052} fontWeight="700" letterSpacing={size * 0.012}>
+          <TextPath href="#stampCircle">{stamp.repeat(2)}</TextPath>
+        </SvgText>
+        {rings.map((r, i) => (
+          <Path key={i} d={r.d} stroke={th.fg} strokeWidth={r.width} opacity={r.opacity} fill="none" />
+        ))}
+        <Circle cx={c} cy={c} r={size * 0.1} fill={th.accent} />
+        <SvgText x={c} y={c + size * 0.034} fill={th.bg} fontSize={size * 0.095} fontFamily={fonts.heavy} textAnchor="middle">
+          {mono}
+        </SvgText>
+      </Svg>
     </View>
   );
 }
@@ -148,11 +197,11 @@ function T(props: TextProps) {
   return <Text allowFontScaling={false} {...props} />;
 }
 
-function Stat({ u, value, label, big }: { u: number; value: number; label: string; big?: boolean }) {
+function Stat({ u, th, value, label, divider }: { u: number; th: CardTheme; value: number; label: string; divider?: boolean }) {
   return (
-    <View style={[styles.stat, { paddingVertical: u * 1.5 }]}>
-      <T style={[styles.statValue, { fontSize: big ? u * 11 : u * 7.5 }]}>{value}</T>
-      <T style={[styles.statLabel, { fontSize: u * 3.3 }]}>{label}</T>
+    <View style={[styles.stat, divider && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: th.muted }]}>
+      <T style={[styles.statValue, { fontSize: u * 7, color: th.fg }]}>{value}</T>
+      <T style={[styles.statLabel, { fontSize: u * 2.9, color: th.muted }]}>{label}</T>
     </View>
   );
 }
@@ -163,20 +212,17 @@ const styles = StyleSheet.create({
   hint: { ...type.footnote, fontWeight: '600' },
   shareBtn: { height: 36, paddingHorizontal: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  card: { backgroundColor: colors.black, justifyContent: 'space-between' },
-  kicker: { color: colors.accent, fontWeight: '800', letterSpacing: 1.4 },
-  nick: { color: colors.mutedOnDark, fontWeight: '700', marginTop: 6 },
-  typeName: { color: colors.white, fontWeight: '800', letterSpacing: -1 },
-  tagline: { color: colors.mutedOnDark },
-  streakRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  streak: { color: colors.white, fontWeight: '700' },
-  starterNote: { color: colors.mutedOnDark, lineHeight: 21 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  stat: { width: '50%' },
-  statValue: { color: colors.white, fontWeight: '800' },
-  statLabel: { color: colors.mutedOnDark, marginTop: -2 },
-  empty: { color: colors.white, marginTop: 24, lineHeight: 26 },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  question: { fontWeight: '600', color: colors.mutedOnDark },
-  brand: { fontWeight: '800', color: colors.white, letterSpacing: -0.5 },
+  card: { justifyContent: 'space-between' },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  kicker: { fontWeight: '800', letterSpacing: 1.6 },
+  nick: { fontFamily: fonts.semibold, marginTop: 6 },
+  typeName: { fontFamily: fonts.heavy, letterSpacing: -0.5 },
+  tagline: { fontStyle: 'italic' },
+  stats: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 10 },
+  stat: { flex: 1, alignItems: 'center' },
+  statValue: { fontFamily: fonts.display },
+  statLabel: { fontWeight: '600', marginTop: 1, letterSpacing: 0.3 },
+  since: { fontWeight: '600' },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  brand: { fontFamily: fonts.heavy, letterSpacing: -0.3 },
 });

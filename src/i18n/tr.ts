@@ -240,6 +240,10 @@ export const tr = {
     level: 'Seviye',
     streakLine: (n: number) => `${n} günlük seri`,
     starterNote: 'Tahmin · ilk fincandan sonra netleşir.',
+    idTitle: 'Damak kimliği',
+    no: (n: string) => `No. ${n}`,
+    stamp: 'DAMAK KİMLİĞİ',
+    since: (d: string) => `Üyelik · ${d}`, // yıl ekinden kaçınmak için (2026'dan / 2027'den)
   },
   progress: {
     title: 'İlerleme',
