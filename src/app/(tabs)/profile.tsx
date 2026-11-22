@@ -1,3 +1,4 @@
+import { FEATURES } from '../../config/brand';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -27,6 +28,7 @@ export default function Profile() {
   // H6: Kulüp kartının kaç kez görüldüğü
   useFocusEffect(
     useCallback(() => {
+      if (!FEATURES.club) return;
       updateMetrics((m) => {
         m.clubViews += 1;
       }).catch(() => {});
@@ -99,7 +101,8 @@ export default function Profile() {
         <ListRow icon="time" tint={tint.slate} title={tr.progress.history} chevron onPress={() => router.push('/history')} />
       </ListSection>
 
-      {/* H6 sahte kapı: ödeme yok, sadece ilgi ölçülür */}
+      {/* H6 sahte kapı: ödeme yok, sadece ilgi ölçülür. Şimdilik askıda (FEATURES.club). */}
+      {FEATURES.club ? (
       <View style={styles.club}>
         <View style={styles.clubHead}>
           <View style={styles.clubIcon}>
@@ -113,6 +116,7 @@ export default function Profile() {
           <PillButton label={tr.profile.clubCtaShort} variant="accent" onPress={joinClub} style={{ marginTop: 14, height: 46 }} />
         )}
       </View>
+      ) : null}
     </ScrollView>
   );
 }
