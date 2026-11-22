@@ -1,0 +1,55 @@
+# Elle çalıştırılır: GitHub > Actions > "TestFlight'a gönder" > Run workflow.
+# iOS uygulamasını bulutta (EAS) derler ve TestFlight'a yükler. Bilgisayar gerekmez.
+# Gerekli GitHub gizli anahtarları (Settings > Secrets and variables > Actions):
+#   EXPO_TOKEN            (zaten var)
+#   ASC_API_KEY_P8        App Store Connect API anahtarının .p8 dosyasının İÇERİĞİ
+#   ASC_API_KEY_ID        Anahtar kimliği (Key ID)
+#   ASC_API_ISSUER_ID     Issuer ID
+#   APPLE_TEAM_ID         Apple geliştirici takım kimliği (Team ID)
+name: TestFlight'a gönder
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-submit:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+      EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+      EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      EXPO_ASC_API_KEY_PATH: ${{ github.workspace }}/asc-key.p8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Anahtar kontrolü
+        env:
+          P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          for v in EXPO_TOKEN EXPO_ASC_KEY_ID EXPO_ASC_ISSUER_ID EXPO_APPLE_TEAM_ID; do
+            if [ -z "${!v}" ]; then echo "::error::$v eksik. GitHub > Settings > Secrets and variables > Actions altına ekleyin."; exit 1; fi
+          done
+          if [ -z "$P8" ]; then echo "::error::ASC_API_KEY_P8 eksik."; exit 1; fi
+          printf '%s' "$P8" > "$EXPO_ASC_API_KEY_PATH"
+
+      - name: Paketleri kur
+        run: npm ci
+
+      - name: Testler ve tür kontrolü
+        run: |
+          npm test
+          npm run typecheck
+          npm run lint
+
+      - name: Derle ve TestFlight'a yükle
+        run: npx eas-cli@latest build --platform ios --profile production --auto-submit --non-interactive --no-wait
+
+      - name: Anahtar dosyasını sil
+        if: always()
+        run: rm -f "$EXPO_ASC_API_KEY_PATH"
