@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Icon } from '../components/Icon';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Easing, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Animated, Easing, Image, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressScale, haptic, reduceMotionNow } from '../components/motion';
 import { Chip, PillButton } from '../components/ui';
@@ -17,7 +17,12 @@ import {
 import { getPalateType } from '../lib/palate';
 import { saveProfile } from '../lib/storage';
 import { METHODS, NOTES, type TasteNote } from '../lib/types';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
+import { Emblem, monogram } from '../components/Emblem';
+import { cardTheme } from '../config/palateThemes';
+
+// Açılış logosundaki halkalar (şeffaf görsel)
+const RINGS = require('../../assets/intro-rings.png');
 
 const CUPS: CupsPerDay[] = ['one', 'few', 'many'];
 const PLACES: UsualPlace[] = ['home', 'cafe', 'office', 'mixed'];
@@ -116,6 +121,11 @@ export default function Onboarding() {
   if (step === 0) {
     content = (
       <View style={{ flex: 1, justifyContent: 'center' }}>
+        {/* Açılış logosundaki halkalar: tanıtım da uygulamanın kahve kimliğiyle başlasın */}
+        <View style={styles.hero}>
+          <Image source={RINGS} style={styles.heroRings} resizeMode="contain" />
+          <View style={styles.heroDot} />
+        </View>
         <Text style={styles.brand}>{BRAND.name}</Text>
         <Text style={styles.welcomeTitle}>{tr.onboarding.welcomeTitle}</Text>
         <Text style={styles.body}>{tr.onboarding.welcomeBody}</Text>
@@ -195,13 +205,18 @@ export default function Onboarding() {
     );
   } else {
     const type = getPalateType(starterTypeId);
+    const th = cardTheme(type.id);
     content = (
       <View style={{ flex: 1, justifyContent: 'center' }}>
-        <View style={styles.revealCard}>
-          <Text style={styles.revealKicker}>{upper(tr.onboarding.revealKicker)}</Text>
-          {answers.nickname ? <Text style={styles.revealNick}>{answers.nickname}</Text> : null}
-          <Text style={styles.revealName}>{type.name}</Text>
-          <Text style={styles.revealTagline}>{type.tagline}</Text>
+        {/* Damak Kartı'yla aynı dil: tipin renkleri, damga amblemi, Fraunces başlık */}
+        <View style={[styles.revealCard, { backgroundColor: th.bg }]}>
+          <Text style={[styles.revealKicker, { color: th.accent }]}>{upper(tr.onboarding.revealKicker)}</Text>
+          {answers.nickname ? <Text style={[styles.revealNick, { color: th.muted }]}>{answers.nickname}</Text> : null}
+          <View style={{ marginVertical: 14 }}>
+            <Emblem size={150} seed={`${answers.nickname}:${type.id}`} cups={0} notes={[]} theme={th} monogram={monogram(type.name)} />
+          </View>
+          <Text style={[styles.revealName, { color: th.fg }]}>{type.name}</Text>
+          <Text style={[styles.revealTagline, { color: th.muted }]}>{type.tagline}</Text>
         </View>
         <Text style={[styles.body, { marginTop: 20 }]}>{tr.onboarding.revealNote}</Text>
       </View>
@@ -254,15 +269,18 @@ function Option({ label, selected, onPress }: { label: string; selected: boolean
 }
 
 const styles = StyleSheet.create({
-  brand: { fontSize: 22, fontWeight: '900', color: colors.accentText, letterSpacing: -0.3 },
-  welcomeTitle: { fontSize: 44, fontWeight: '900', color: colors.text, letterSpacing: -1.5, lineHeight: 48, marginTop: 12 },
+  hero: { width: 120, height: 120, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
+  heroRings: { position: 'absolute', width: 120, height: 120 },
+  heroDot: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.text },
+  brand: { fontSize: 24, fontFamily: fonts.heavy, color: colors.accentText },
+  welcomeTitle: { fontSize: 42, fontFamily: fonts.heavy, color: colors.text, lineHeight: 48, marginTop: 8 },
   body: { fontSize: 17, color: colors.muted, lineHeight: 25, marginTop: 16 },
   topRow: { flexDirection: 'row', alignItems: 'center' },
   back: { fontSize: 36, fontWeight: '300', color: colors.text, marginTop: -6, width: 28 },
   progress: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.line, overflow: 'hidden', marginHorizontal: 12 },
   progressFill: { height: 6, backgroundColor: colors.black },
   stepText: { fontSize: 13, fontWeight: '700', color: colors.muted, width: 28, textAlign: 'right' },
-  q: { fontSize: 34, fontWeight: '900', color: colors.text, letterSpacing: -1, lineHeight: 38 },
+  q: { fontSize: 32, fontFamily: fonts.heavy, color: colors.text, lineHeight: 38 },
   hint: { fontSize: 15, color: colors.muted, marginTop: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap' },
   option: {
@@ -287,9 +305,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: colors.text,
   },
-  revealCard: { backgroundColor: colors.black, borderRadius: 28, padding: 28 },
-  revealKicker: { color: colors.accent, fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },
-  revealNick: { color: colors.mutedOnDark, fontSize: 16, fontWeight: '700', marginTop: 10 },
-  revealName: { color: colors.white, fontSize: 40, fontWeight: '900', letterSpacing: -1, marginTop: 8, lineHeight: 44 },
-  revealTagline: { color: colors.mutedOnDark, fontSize: 17, lineHeight: 24, marginTop: 12 },
+  revealCard: { borderRadius: 28, padding: 24, alignItems: 'center' },
+  revealKicker: { fontSize: 13, fontWeight: '800', letterSpacing: 1.4 },
+  revealNick: { fontSize: 16, fontWeight: '700', marginTop: 8 },
+  revealName: { fontSize: 34, fontFamily: fonts.heavy, lineHeight: 40, textAlign: 'center' },
+  revealTagline: { fontSize: 16, lineHeight: 23, marginTop: 10, textAlign: 'center' },
 });
