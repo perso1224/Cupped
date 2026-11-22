@@ -57,3 +57,10 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - On Android, not yet confirmed: the 4-option sheet under "Damak hedefi", and the reminder actually arriving.
 - Share card follows the theme (dark in dark mode); the owner has not decided whether it should always be light.
 - TestFlight / Play Store prep is in `docs/YOL_HARITASI.md`.
+
+## Update (later the same day)
+- Rules: replies must be short (AGENTS.md). Build for iOS and Android.
+- Done since: Android share fix (expo-sharing); theme reload only on tab screens; scoring rework (cumulative XP levels in `XP_LEVELS`, chain penalty 0, return/month discovery bonuses); home/progress simplification; badges (12 + art in `assets/badges`, frame redrawn by script); "dün" backfill; quick-add prefill; beta section hidden (tap Sürüm 5×); coffeeTime unified; onboarding 3 questions; Turkish type names; backup date + nudge (`metrics.lastBackupAt/backupNudgeAt`); rescore after delete/edit (`lib/rescore.ts`); Kulüp hidden (`FEATURES.club`); Damak Uyumu (`lib/match.ts`, `/match`, 6-char code); Fincan Duvarı (`/wall`, December banner); Damak Evrimi (`/evolution`); invite line with damak kodu on share cards; intro animation (`BrandIntro`).
+- TestFlight prep: `eas.json` (production → channel preview), `.github/workflows/testflight.yml` (manual, needs secrets ASC_API_KEY_P8/ASC_API_KEY_ID/ASC_API_ISSUER_ID/APPLE_TEAM_ID). Never run yet; env var names not verified against docs (docs.expo.dev blocked here).
+- Waiting on: owner's Apple Developer membership activation; then App Store Connect app + API key + GitHub secrets, run the workflow.
+- Deferred: app address/QR on cards; Kulüp contact.
