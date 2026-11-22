@@ -1,7 +1,7 @@
 import { router, useScrollToTop } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
@@ -17,8 +17,15 @@ const ROW_PAD = 6;
 /** Sekme ekranlarının içeriği yüzen menünün altında kalmasın diye en alta bırakılacak boşluk. */
 export function useTabBarSpace() {
   const insets = useSafeAreaInsets();
+  if (Platform.OS === 'ios') {
+    // iPhone'da Apple'ın kendi menüsü var. Alt güvenli alan menüyü zaten içeriyorsa (≥ 49) üstüne biraz boşluk;
+    // içermiyorsa menünün yüksekliğini de ekle. İçerik camın arkasından akar, son satır menünün üstünde biter.
+    return insets.bottom >= IOS_TAB_BAR ? insets.bottom + 24 : insets.bottom + IOS_TAB_BAR + 24;
+  }
   return barBottom(insets.bottom) + BAR_HEIGHT + 24;
 }
+
+const IOS_TAB_BAR = 49;
 
 /** Sekme ekranının kaydırma alanı için: etkin sekmeye tekrar dokununca en üste kayar (iOS/Android alışkanlığı). */
 export function useTabScrollRef() {

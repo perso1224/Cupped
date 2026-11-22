@@ -72,3 +72,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - `Segmented`: sliding selected box.
 - `GrowBar` in `motion.tsx`: XP and weekly-discovery bars fill up.
 - Not yet verified on device.
+- iPhone tab bar is now Apple's native one (`NativeTabs` from `expo-router/native-tabs` in `(tabs)/_layout.tsx`), which is full Liquid Glass on iOS 26.
+  - Android and web keep the custom `TabBar`.
+  - "+" is the `add` trigger with `disabled`; its tabPress pushes `/new`. On iOS 26.1+ it has `role="search"`, so it sits separately as a circle.
+  - Screens use `disableAutomaticContentInsets`; `useTabBarSpace` has an iOS branch.
+  - Not yet verified on iPhone. Check the bottom spacing, the "+" circle, and whether it works in Expo Go.

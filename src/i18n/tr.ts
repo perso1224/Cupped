@@ -38,6 +38,7 @@ export const tr = {
     progress: 'İlerleme',
     passport: 'Pasaport',
     profile: 'Profil',
+    add: 'Ekle',
   },
   weekdaysShort: ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz'],
   methods: {
