@@ -1,0 +1,154 @@
+import { File, Paths } from 'expo-file-system';
+import { Appearance, Platform } from 'react-native';
+
+/** Görünüm tercihi: telefonu izle, hep açık ya da hep koyu. */
+export type ThemePref = 'system' | 'light' | 'dark';
+const THEME_FILE = 'cupped-theme.txt';
+const THEME_WEB_KEY = 'cupped.theme';
+
+/**
+ * Tercih, renkler oluşturulmadan ÖNCE (uygulama açılırken) okunmalı; bu yüzden eşzamanlı okunan
+ * küçük bir dosyada durur (fincan kayıtlarına ve ayarlara dokunmaz). Okunamazsa "telefonu izle".
+ */
+function readThemePref(): ThemePref {
+  try {
+    const v =
+      Platform.OS === 'web'
+        ? globalThis.localStorage?.getItem(THEME_WEB_KEY)
+        : (() => {
+            const f = new File(Paths.document, THEME_FILE);
+            return f.exists ? f.textSync().trim() : null;
+          })();
+    return v === 'light' || v === 'dark' ? v : 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+export async function saveThemePref(p: ThemePref): Promise<void> {
+  if (Platform.OS === 'web') {
+    globalThis.localStorage?.setItem(THEME_WEB_KEY, p);
+    return;
+  }
+  const f = new File(Paths.document, THEME_FILE);
+  if (!f.exists) f.create();
+  await f.write(p);
+}
+
+/** "Tüm verileri sil" için: tercih dosyasını siler (bir sonraki açılışta "telefonu izle"). */
+export function clearThemePref() {
+  try {
+    if (Platform.OS === 'web') globalThis.localStorage?.removeItem(THEME_WEB_KEY);
+    else {
+      const f = new File(Paths.document, THEME_FILE);
+      if (f.exists) f.delete();
+    }
+  } catch {
+    // silinemese de veriler silinmiş olur
+  }
+}
+
+export const themePref = readThemePref();
+// Sistem bileşenleri (anahtarlar, uyarılar, klavye, cam) da aynı temayı kullansın.
+try {
+  Appearance.setColorScheme(themePref === 'system' ? 'auto' : themePref);
+} catch {
+  // eski sürümlerde 'auto' yoksa sistemde kalır
+}
+
+/**
+ * Renkler telefonun görünüm ayarını izler (Açık / Koyu). Tema uygulama açılırken seçilir;
+ * telefon görünümü değişince kökteki _layout uygulamayı yeniden yükler.
+ * black/white "mürekkep" çiftidir: koyu temada tersine döner (koyu düğme açık olur, yazısı koyu).
+ * onColor ise her temada beyazdır: renkli zemin, fotoğraf ve kamera üstündeki simge/yazı için.
+ */
+const LIGHT = {
+  bg: '#FAF8F5',
+  card: '#FFFFFF',
+  surface: '#F1EEE9', // klavye çubuğu gibi ikincil yüzey
+  text: '#111111',
+  muted: '#706A62', // zemin üstünde ≥4.5:1 kontrast
+  tertiary: '#C4BEB6', // ok (chevron), yer tutucu metin
+  mutedOnDark: '#CFC8BE', // "black" kart üstünde ikincil metin
+  accentText: '#8A5212', // turuncu METİN (bağlantı, geri) — accent dolgu/simge içindir. Krem zeminde de ≥4.5:1
+  line: '#ECE7E0',
+  accent: '#D98B2B',
+  accentSoft: '#F6E6D1',
+  black: '#111111',
+  white: '#FFFFFF',
+  onColor: '#FFFFFF',
+  danger: '#C0392B',
+  success: '#4A6A46', // yeşil metin açık yeşil zeminde ≥4.5:1
+  successSoft: '#E8F0E6',
+};
+
+const DARK: typeof LIGHT = {
+  bg: '#15110E',
+  card: '#211A15',
+  surface: '#2A221C',
+  text: '#F3ECE4',
+  muted: '#A99E92',
+  tertiary: '#5C524A',
+  mutedOnDark: '#5E554D',
+  accentText: '#E9A75A',
+  line: '#33291F',
+  accent: '#D98B2B',
+  accentSoft: '#3B2A19',
+  black: '#F3ECE4',
+  white: '#15110E',
+  onColor: '#FFFFFF',
+  danger: '#E0604F',
+  success: '#9CC096',
+  successSoft: '#22301F',
+};
+
+export const isDark = themePref === 'system' ? Appearance.getColorScheme() === 'dark' : themePref === 'dark';
+export const colors = isDark ? DARK : LIGHT;
+
+export const radius = {
+  card: 22,
+  tile: 18,
+  group: 14,
+  pill: 999,
+};
+
+/** Ekran kenar ve üst boşlukları (tüm ekranlarda aynı). */
+export const layout = { screenPad: 20, topPad: 8 };
+
+export const space = (n: number) => n * 4;
+
+/**
+ * Kahve kimliği: büyük başlık ve rakamlarda sıcak, tırnaklı Fraunces yazı tipi (kökteki _layout yükler).
+ * Özel yazı tipinde fontWeight verilmez; kalınlık dosyanın kendisinden gelir.
+ */
+/** Not: Fraunces'te harf aralığı (letterSpacing) daraltılmaz; iPhone son harfi kesebiliyor ("Cupped"ın d'si). */
+export const fonts = {
+  display: 'Fraunces_700Bold',
+  heavy: 'Fraunces_800ExtraBold',
+  semibold: 'Fraunces_600SemiBold',
+};
+
+/** Yazı ölçeği (Apple'ın Dynamic Type sıralamasına benzer). */
+export const type = {
+  largeTitle: { fontSize: 34, fontFamily: fonts.display, color: colors.text },
+  title2: { fontSize: 22, fontFamily: fonts.display, color: colors.text },
+  title3: { fontSize: 20, fontWeight: '700' as const, color: colors.text },
+  headline: { fontSize: 17, fontWeight: '600' as const, color: colors.text },
+  body: { fontSize: 17, fontWeight: '400' as const, color: colors.text },
+  subhead: { fontSize: 15, fontWeight: '400' as const, color: colors.muted },
+  footnote: { fontSize: 13, fontWeight: '400' as const, color: colors.muted },
+  caption: { fontSize: 12, fontWeight: '500' as const, color: colors.muted },
+  sectionHeader: { fontSize: 13, fontWeight: '600' as const, color: colors.muted, letterSpacing: 0.4 },
+  display: { fontSize: 48, fontFamily: fonts.heavy, color: colors.text },
+  stat: { fontSize: 28, fontFamily: fonts.display, color: colors.text },
+};
+
+/** iOS Ayarlar tarzı simge kutusu renkleri (marka paletinden). */
+export const tint = {
+  amber: '#D98B2B',
+  espresso: isDark ? '#8A5A3B' : '#2B1A12', // koyu temada daha açık kavrum, zeminde kaybolmasın
+  cherry: '#B5402F',
+  sage: '#5E7D5A',
+  slate: '#5B6470',
+  sky: '#3E7CB1',
+};

@@ -1,0 +1,89 @@
+{
+  "expo": {
+    "name": "Cupped",
+    "slug": "cupped",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.perso1224.cupped",
+      "infoPlist": {
+        "RCTAsyncStorageExcludeFromBackup": false,
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "tr",
+        "NSPhotoLibraryAddUsageDescription": "Paylaşım kartını fotoğraflarına kaydedebilmen için gerekiyor.",
+        "CFBundleLocalizations": [
+          "tr"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#D98B2B",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.perso1224.cupped",
+      "blockedPermissions": [
+        "android.permission.WRITE_SETTINGS",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "cupped",
+    "owner": "perso1224",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c8c4040d-10b8-4a67-a97f-b0eb75c889b5"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c8c4040d-10b8-4a67-a97f-b0eb75c889b5"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Fincanının fotoğrafını çekmek için kameraya erişim gerekiyor. Fotoğraflar telefonunda kalır; sadece sen paylaşırsan çıkar.",
+          "recordAudioAndroid": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Fincan fotoğrafını galeriden seçebilmen için fotoğraflarına erişim gerekiyor.",
+          "microphonePermission": false,
+          "cameraPermission": "Fincanının fotoğrafını çekmek için kameraya erişim gerekiyor. Fotoğraflar telefonunda kalır; sadece sen paylaşırsan çıkar."
+        }
+      ],
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#FAF8F5",
+          "dark": {
+            "image": "./assets/splash-icon-dark.png",
+            "backgroundColor": "#15110E"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "reactCompiler": true
+    }
+  }
+}
