@@ -80,6 +80,18 @@
             "backgroundColor": "#15110E"
           }
         }
+      ],
+      "react-native-fast-tflite",
+      [
+        "react-native-share",
+        {
+          "ios": [
+            "instagram-stories"
+          ],
+          "android": [
+            "com.instagram.android"
+          ]
+        }
       ]
     ],
     "experiments": {

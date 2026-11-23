@@ -175,3 +175,20 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - The first run from main: build 1.0.0 (1) finished, and the App Store submission succeeded.
 - Next: Apple processing, an internal tester group in App Store Connect, and install via the TestFlight app.
 - For later releases, the workflow builds the branch it is dispatched from. Either pick the dev branch in "Run workflow" or bring main up to date with a PR first.
+
+## Update (23 Nov evening) — roadmap items 10 and 11: coffee photo check and Instagram Stories
+- New native dependencies, so a new EAS build is needed:
+  - `react-native-fast-tflite` 3.0.1 and `react-native-nitro-modules` 0.37.2
+  - `react-native-share` 12.3.1, whose config plugin needs `expo-build-properties` ~58.0.12
+  - `jpeg-js` (pure JS)
+- None of these are in Expo's bundledNativeModules. Native compatibility with RN 0.88 is unverified: there is no Android SDK or Xcode here (dl.google.com is blocked). `expo prebuild` works, and the iOS/Android/web exports work.
+- Coffee check:
+  - `src/lib/coffeeCheck.ts` (pure, tested), `coffeeCheckRunner.ts` (safe lazy require; null when the module is missing)
+  - `metro.config.js` adds the `tflite` asset extension
+  - `CupEntry.photoCheck` ('coffee' | 'unsure' | 'skipped' | null)
+  - The new.tsx notice is a non-blocking card with a "Yeniden çek" button
+- Instagram Stories:
+  - `src/lib/share.ts`: `chooseTarget()` shows an Alert with "Instagram Hikayesi / Diğer uygulamalar / Vazgeç", only when `INSTAGRAM.appId` (in `src/config/brand.ts`) is set, the module exists and Instagram is installed.
+  - On Android, the temp file is not released on the story path.
+  - Waiting on the owner for the Meta App ID.
+- Tests: 163.

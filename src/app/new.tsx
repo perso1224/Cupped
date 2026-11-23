@@ -34,6 +34,7 @@ import { getEntry, knownPlaces, loadEntries, photoUrl, updateMetrics } from '../
 import { brewRatio, dayKey } from '../lib/progress';
 import { whenToDate, type When } from '../lib/when';
 import { createCup, editCup, parseNum, type Where } from '../lib/cupSave';
+import { checkCoffeePhoto, coffeeCheckAvailable } from '../lib/coffeeCheckRunner';
 import { safely } from '../lib/safe';
 import { useProfile } from '../lib/useProfile';
 import { GRINDS, METHODS, NOTES, type CupEntry, type Grind, type Method, type TasteNote } from '../lib/types';
@@ -55,6 +56,8 @@ export default function NewCup() {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [photo, setPhoto] = useState<string | null>(null);
+  /** Yeni çekilen/seçilen fotoğrafın kahve kontrolü (cihaz içi), hangi fotoğrafa ait olduğuyla. */
+  const [checked, setChecked] = useState<{ uri: string; result: 'coffee' | 'unsure' | null } | null>(null);
   const photoWidth = useRef<number | undefined>(undefined);
   const [step, setStep] = useState<'photo' | 'details'>(editId ? 'details' : 'photo');
   const [method, setMethod] = useState<Method | null>(null);
@@ -100,6 +103,26 @@ export default function NewCup() {
     setNoteLimit(false);
     setNotes((cur) => (cur.includes(n) ? cur.filter((x) => x !== n) : [...cur, n]));
   }
+
+  // Kahve kontrol modelini önceden yükle: fotoğraf çekilince sonuç hemen gelsin
+  useEffect(() => {
+    coffeeCheckAvailable().catch(() => {});
+  }, []);
+
+  // Yeni fotoğraf → kahve kontrolü. Kayıt asla engellenmez; sadece not gösterilir.
+  useEffect(() => {
+    if (!photo || !photoChanged) return;
+    let live = true;
+    checkCoffeePhoto(photo).then((result) => {
+      if (live) setChecked({ uri: photo, result });
+    });
+    return () => {
+      live = false;
+    };
+  }, [photo, photoChanged]);
+
+  // Eski fotoğraf (düzenleme) yeniden kontrol edilmez; sonuç sadece şu anki fotoğrafa aitse geçerli
+  const photoCheck = photoChanged && photo && checked?.uri === photo ? checked.result : null;
 
   // H3: ekranın açılışından kayda kadar geçen süre
   const openedAt = useRef(0);
@@ -291,6 +314,7 @@ export default function NewCup() {
       when: when === 'keep' ? ('now' as const) : when,
       photo,
       photoWidth: photoWidth.current,
+      photoCheck,
       openedAt: openedAt.current,
     };
   }
@@ -428,6 +452,18 @@ export default function NewCup() {
             )}
           </PressScale>
         </View>
+
+        {photoCheck === 'unsure' ? (
+          <FadeIn style={styles.notCoffee}>
+            <View accessible accessibilityLiveRegion="polite" accessibilityLabel={`${tr.capture.notCoffee} ${tr.capture.notCoffeeBody}`} style={{ flex: 1 }}>
+              <Text style={styles.notCoffeeTitle}>{tr.capture.notCoffee}</Text>
+              <Text style={styles.notCoffeeBody}>{tr.capture.notCoffeeBody}</Text>
+            </View>
+            <PressScale onPress={() => setStep('photo')} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr.capture.retake}>
+              <Text style={styles.notCoffeeAction}>{tr.capture.retake}</Text>
+            </PressScale>
+          </FadeIn>
+        ) : null}
 
         {original ? <Text style={[type.largeTitle, { marginTop: 16 }]}>{tr.capture.editTitle}</Text> : null}
         <Text accessibilityRole="header" style={styles.q}>{tr.capture.how}</Text>
@@ -684,6 +720,10 @@ const styles = StyleSheet.create({
   preview: { width: 72, height: 72, borderRadius: 16 },
   previewEmpty: { backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.accent, gap: 2 },
   q: { ...type.title2, marginTop: 24, marginBottom: 12 },
+  notCoffee: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 14, padding: 14, borderRadius: 16, backgroundColor: colors.accentSoft },
+  notCoffeeTitle: { ...type.body, fontWeight: '700', color: colors.text },
+  notCoffeeBody: { ...type.footnote, color: colors.muted, marginTop: 2 },
+  notCoffeeAction: { ...type.body, fontWeight: '700', color: colors.accentText },
   chips: { flexDirection: 'row', flexWrap: 'wrap' },
   inputRow: { marginTop: 4 },
   detailToggle: { marginTop: 24, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6 },

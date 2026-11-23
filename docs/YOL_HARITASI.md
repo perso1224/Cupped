@@ -29,9 +29,25 @@ Hazırlık listesi:
 - [x] "Verilerimi dışa aktar" (JSON), Profil'de
 - [ ] Apple Developer hesabı (kurucu alır), ardından EAS Build ile bulutta iOS derlemesi (Mac gerekmez) ve TestFlight'a gönderim
 - [ ] Otomatik yayın düzeni: TestFlight sürümü de aynı EAS Update kanalından güncellenecek şekilde ayarlanır
-- [ ] Tek dokunuşla doğrudan Instagram Hikayesi'ne paylaşım (Instagram Stories URL şeması). Ücretsiz bir Facebook/Meta geliştirici uygulama kimliği ve uygulamanın kendi derlemesi gerekir; Expo Go'da çalışmaz. Şimdilik iOS paylaşım menüsü kullanılıyor.
+- [~] Tek dokunuşla doğrudan Instagram Hikayesi'ne paylaşım (23 Kas, kod hazır: `react-native-share`, `src/lib/share.ts`).
+  - Paylaş'a basınca, Instagram yüklüyse "Instagram Hikayesi / Diğer uygulamalar" seçimi çıkar. Kart tam ekran hikaye arka planı olur.
+  - Eksik: kurucunun Meta (Facebook) uygulama kimliği → `src/config/brand.ts` içinde `INSTAGRAM.appId`. Boşken seçenek görünmez.
+    Kimlik anlık güncellemeyle eklenebilir; yeni derleme gerekmez (yerel parça 23 Kas sonrası derlemelerde var).
+  - Expo Go'da ve eski derlemede çalışmaz; oralarda her zamanki paylaşım menüsü açılır.
 
-## Ertelenen özellik: Fotoğrafta kahve kontrolü (ücretsiz, cihaz içi)
+## Fotoğrafta kahve kontrolü (ücretsiz, cihaz içi) — 23 Kas'ta yapıldı
+
+**Durum (23 Kas, kurucu kararıyla öne alındı):**
+- Model: MobileNet v1 quant (ImageNet, 4 MB, Apache 2.0), `assets/models/coffee-check.tflite`.
+- Kütüphane: `react-native-fast-tflite`. Kod: `src/lib/coffeeCheck.ts` (karar, testli) ve `coffeeCheckRunner.ts` (modeli çalıştırır).
+- Ayarlar: `scoring.config.ts` → `COFFEE_CHECK`.
+- Fotoğraf çekilince arka planda çalışır. Model başka bir şeyden eminse formda "Bu kahveye benzemiyor 🤔 · Yeniden çek" notu çıkar. Kayıt engellenmez.
+- Kayda `photoCheck` yazılır. Skora etkisi yok.
+- Örnek görsellerle denendi: espresso, kupa, fincan, köpüklü kahve → kahve; pizza, kedi, portakal, gazoz şişesi → uyarı. Belirsiz fotoğrafta (ör. su şişesi) uyarı yok.
+- Expo Go, web ve eski derlemede kontrol çalışmaz (null), uygulama çökmez.
+- Telefonda henüz denenmedi. Beta verisine göre eşikler ayarlanacak.
+
+### İlk plan (referans)
 
 **Sorun:** Kullanıcı kahve olmayan bir şeyin (ör. su şişesi) fotoğrafını çekip kahve diye kaydedebiliyor.
 

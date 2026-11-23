@@ -212,3 +212,37 @@ export const CAFFEINE_MG: Record<Method, number> = {
 
 /** Ana sayfadaki küçük halkaların tavan puanları (Emek / Keşif / Derinlik). */
 export const PART_MAX = { effort: 25, discovery: 25, depth: 10 } as const;
+
+/**
+ * Fotoğrafta kahve kontrolü (cihaz içi, ücretsiz; YOL_HARITASI "Fotoğrafta kahve kontrolü").
+ * Model: MobileNet v1 (ImageNet, 1001 sınıf, 0 = "background"). Sınıf numaraları modelin etiket dosyasındaki sıradır.
+ * Kayıt asla engellenmez; sadece "Bu kahveye benzemiyor" notu gösterilir. Yanlış alarm, kaçırmaktan kötüdür
+ * (gerçek kahvesi reddedilen kullanıcı uygulamayı bırakır), bu yüzden eşikler bilerek gevşektir.
+ */
+export const COFFEE_CHECK = {
+  /** Kahve olduğunu gösteren sınıflar. */
+  coffeeClasses: {
+    espresso: 968,
+    cup: 969,
+    coffeeMug: 505,
+    coffeepot: 506,
+    espressoMaker: 551,
+    eggnog: 970, // köpüklü sütlü içecekler çoğu zaman buraya düşer
+    chocolateSauce: 961, // latte art / mocha
+  },
+  /** İçecek kabı olabilen ama kahve demeyen sınıflar: uyarı sebebi sayılmaz (buzlu kahve bardağı, sürahi…). */
+  neutralClasses: {
+    measuringCup: 648,
+    teapot: 850,
+    pitcher: 726,
+    soupBowl: 810,
+    beerGlass: 442,
+    goblet: 573,
+  },
+  /** Kahve sınıflarının toplam olasılığı en az bu kadarsa "kahve". */
+  minCoffee: 0.08,
+  /** Kahve + nötr sınıflar en az bu kadarsa yine uyarı yok. */
+  minDrinkLike: 0.2,
+  /** Uyarı ancak model başka bir şeyden bu kadar eminse gösterilir (karanlık/bulanık fotoğrafta uyarı çıkmasın). */
+  minOtherConfidence: 0.35,
+} as const;

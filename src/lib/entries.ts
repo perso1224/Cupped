@@ -1,4 +1,4 @@
-import { GRINDS, METHODS, NOTES, VENUES, type CupEntry, type Grind, type ScoreParts, type TasteNote, type VenueKind } from './types';
+import { GRINDS, METHODS, NOTES, PHOTO_CHECKS, VENUES, type CupEntry, type Grind, type ScoreParts, type TasteNote, type VenueKind } from './types';
 
 // Kayıtları okurken doğrulama/onarım. Saf fonksiyonlar (telefon hafızasına dokunmaz), testli.
 
@@ -7,7 +7,7 @@ const MAX_TEXT = 500;
 const MAX_NAME = 80;
 /** Bu sürümün bildiği kayıt alanları (gerisi olduğu gibi saklanır). */
 const KNOWN_KEYS = new Set([
-  'id', 'createdAt', 'photoUri', 'method', 'placeName', 'venueKind', 'notes', 'origin', 'brew', 'note', 'rating', 'captureMs', 'score', 'parts', 'palateTypeId',
+  'id', 'createdAt', 'photoUri', 'method', 'placeName', 'venueKind', 'notes', 'origin', 'brew', 'note', 'rating', 'captureMs', 'photoCheck', 'score', 'parts', 'palateTypeId',
 ]);
 const ZERO_PARTS: ScoreParts = { base: 0, effort: 0, depth: 0, discovery: 0, selectivity: 0 };
 
@@ -69,6 +69,7 @@ export function normalizeEntry(raw: unknown): CupEntry | null {
     note: text(r.note, MAX_TEXT),
     rating: ratingOrNull(r.rating),
     captureMs: typeof r.captureMs === 'number' && r.captureMs > 0 ? r.captureMs : null,
+    photoCheck: PHOTO_CHECKS.includes(r.photoCheck) ? r.photoCheck : null,
     score: Math.max(0, Math.min(100, num(r.score))),
     parts,
     palateTypeId: typeof r.palateTypeId === 'string' && r.palateTypeId ? r.palateTypeId : 'third_wave_nomad',
