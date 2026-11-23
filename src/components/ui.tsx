@@ -37,7 +37,7 @@ export function PillButton({
   onPress: () => void;
   disabled?: boolean;
   /** dark: ana eylem · light: ikincil · accent: turuncu (yazı siyah, okunur) */
-  variant?: 'dark' | 'light' | 'accent';
+  variant?: 'dark' | 'light' | 'accent' | 'onDark';
   icon?: IconName;
   style?: StyleProp<ViewStyle>;
   /** iPhone iOS 26+'da Liquid Glass kapsül (paylaş gibi düğmeler); diğerlerinde `variant` görünümü. */
@@ -63,9 +63,10 @@ export function PillButton({
   }
   // Pasif düğme soluklaştırılmaz (okunmuyordu): gri zemin, okunur gri yazı.
   // Turuncu zeminde yazı her temada koyu (açık renk yazı turuncu üstünde okunmaz).
-  const bg = disabled ? colors.line : variant === 'dark' ? colors.black : variant === 'accent' ? colors.accent : colors.card;
+  // onDark: her zaman koyu olan ekranlarda (kamera) temadan bağımsız açık düğme
+  const bg = disabled ? colors.line : variant === 'dark' ? colors.black : variant === 'accent' ? colors.accent : variant === 'onDark' ? '#FAF8F5' : colors.card;
   const border = disabled ? colors.line : variant === 'light' ? colors.line : bg;
-  const fg = disabled ? colors.muted : variant === 'dark' ? colors.white : variant === 'accent' ? '#111111' : colors.text;
+  const fg = disabled ? colors.muted : variant === 'dark' ? colors.white : variant === 'accent' || variant === 'onDark' ? '#111111' : colors.text;
   return (
     <PressScale
       onPress={() => {

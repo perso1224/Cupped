@@ -226,7 +226,19 @@ export function Pop({
  * Çubuk tam genişlikte çizilip soldan kaydırılır (native animasyon, JS meşgulken de akıcı; uçlar yuvarlak kalır).
  * Kabın `overflow: 'hidden'` olması gerekir.
  */
-export function GrowBar({ fraction, style }: { fraction: number; style?: StyleProp<ViewStyle> }) {
+export function GrowBar({
+  fraction,
+  style,
+  label,
+  value,
+}: {
+  fraction: number;
+  style?: StyleProp<ViewStyle>;
+  /** Ekran okuyucu adı (ör. "Seviye ilerlemesi"). */
+  label?: string;
+  /** Okunacak gerçek değer 0–1 (çizilen çubuktaki en küçük görünür dolgu okunmasın). */
+  value?: number;
+}) {
   const target = Math.max(0, Math.min(1, fraction));
   const [v] = useState(() => new Animated.Value(reduceMotion ? target : 0));
   const [w, setW] = useState(0);
@@ -244,7 +256,8 @@ export function GrowBar({ fraction, style }: { fraction: number; style?: StylePr
       pointerEvents="none"
       accessible
       accessibilityRole="progressbar"
-      accessibilityValue={{ min: 0, max: 100, now: Math.round(target * 100) }}
+      accessibilityLabel={label}
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(Math.max(0, Math.min(1, value ?? target)) * 100) }}
     >
       {w ? (
         <Animated.View

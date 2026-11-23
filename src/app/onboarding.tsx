@@ -186,6 +186,7 @@ export default function Onboarding() {
     content = (
       <Question title={tr.onboarding.nickQ} hint={tr.onboarding.nickHint}>
         <TextInput
+            maxFontSizeMultiplier={1.4}
           value={a.nickname}
           onChangeText={(t) => setA((p) => ({ ...p, nickname: t.slice(0, 24) }))}
           accessibilityLabel={tr.onboarding.nickQ}
@@ -255,7 +256,7 @@ export default function Onboarding() {
 function Question({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <View style={{ flex: 1, paddingTop: 32 }}>
-      <Text style={styles.q}>{title}</Text>
+      <Text accessibilityRole="header" style={styles.q}>{title}</Text>
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
       <View style={{ marginTop: 24 }}>{children}</View>
     </View>

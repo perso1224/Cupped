@@ -70,10 +70,10 @@ export default function Progress() {
               </Text>
             </View>
             <View style={styles.barTrack}>
-              <GrowBar style={styles.barFill} fraction={Math.max(0.04, level?.fraction ?? 0)} />
+              <GrowBar style={styles.barFill} fraction={Math.max(0.04, level?.fraction ?? 0)} value={level?.fraction ?? 0} label={tr.a11y.levelBar} />
             </View>
             {level ? <Text style={styles.xp}>{tr.progress.xp(level.xp)}</Text> : null}
-            <Text style={styles.small} numberOfLines={2}>
+            <Text style={styles.small} numberOfLines={3}>
               {level ? (level.next ? tr.progress.toNext(level.next, level.toNext) : tr.progress.topLevel) : tr.progress.levelEmpty}
             </Text>
           </View>

@@ -124,6 +124,7 @@ export default function SettingsScreen() {
           title={tr.settings.nickname}
           right={
             <TextInput
+            maxFontSizeMultiplier={1.4}
               value={nickValue}
               onChangeText={setNick}
               onEndEditing={saveNick}

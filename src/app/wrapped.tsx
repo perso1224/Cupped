@@ -286,18 +286,24 @@ export default function Wrapped() {
         </View>
       </Animated.View>
 
-      {index === 0 ? (
+      {index === 0 && !sr ? (
         <Text style={styles.hint} pointerEvents="none">
           {tr.wrapped.tapHint}
         </Text>
       ) : null}
-      <View style={styles.bottomRow}>
-        {/* Ekran okuyucu: görünür önceki/sonraki düğmeleri (kenara dokunarak geri gitmek mümkün değil) */}
-        {sr ? (
+      {/* Ekran okuyucu: önceki/sonraki kendi satırında (küçük ekranda paylaş düğmesiyle yan yana sığmıyordu) */}
+      {sr ? (
+        <View style={styles.navRow}>
           <PressScale onPress={() => go(index - 1)} scaleTo={0.95} style={styles.navBtn} accessibilityRole="button" accessibilityLabel={tr.wrapped.prev} disabled={index === 0}>
             <Icon name="chevron-back" size={22} color="#FAF8F5" />
           </PressScale>
-        ) : null}
+          <Text style={styles.navText}>{tr.wrapped.slideOf(index + 1, slides.length)}</Text>
+          <PressScale onPress={() => go(index + 1)} scaleTo={0.95} style={styles.navBtn} accessibilityRole="button" accessibilityLabel={tr.wrapped.next} disabled={isLast}>
+            <Icon name="chevron-forward" size={22} color="#FAF8F5" />
+          </PressScale>
+        </View>
+      ) : null}
+      <View style={styles.bottomRow}>
         {/* Kapatmak için sağ üstte ✕ var; altta yalnızca son slaytta "Bitti" */}
         {isLast && finished ? (
           <PressScale onPress={close} scaleTo={0.95} style={[styles.closeBtn, styles.finishBtn]}>
@@ -305,15 +311,12 @@ export default function Wrapped() {
           </PressScale>
         ) : null}
         {/* iPhone iOS 26+: Liquid Glass kapsül (yazı slayt renginde); diğerlerinde açık renk kapsül */}
-        <PressScale onPress={share} scaleTo={0.95} style={[styles.shareBtn, GLASS && styles.shareClear]}>
+        <PressScale onPress={share} scaleTo={0.95} style={[styles.shareBtn, { flexShrink: 1 }, GLASS && styles.shareClear]}>
           {GLASS ? <GlassSurface style={styles.glassFill} interactive /> : null}
-          <Text style={[styles.shareText, GLASS && { color: theme.fg }]}>{tr.wrapped.share}</Text>
+          <Text style={[styles.shareText, GLASS && { color: theme.fg }]} numberOfLines={1}>
+            {tr.wrapped.share}
+          </Text>
         </PressScale>
-        {sr ? (
-          <PressScale onPress={() => go(index + 1)} scaleTo={0.95} style={styles.navBtn} accessibilityRole="button" accessibilityLabel={tr.wrapped.next} disabled={isLast}>
-            <Icon name="chevron-forward" size={22} color="#FAF8F5" />
-          </PressScale>
-        ) : null}
       </View>
     </View>
   );
@@ -606,6 +609,8 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: 'center',
   },
+  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 10 },
+  navText: { color: '#FAF8F5', fontSize: 14, fontWeight: '600' },
   pauseBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   navBtn: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(250,248,245,0.5)', alignItems: 'center', justifyContent: 'center' },
   shareClear: { backgroundColor: 'transparent' },

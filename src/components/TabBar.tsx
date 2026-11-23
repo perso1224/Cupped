@@ -145,7 +145,7 @@ function TabItem({ name, icon, label, focused, onPress }: { name: string; icon: 
       <Animated.View style={{ transform: [{ scale: bump }] }}>
         {name === 'profile' ? <Avatar focused={focused} /> : <Icon name={(focused ? icon : `${icon}-outline`) as IconName} size={22} color={color} />}
       </Animated.View>
-      <Text style={[styles.label, { color }, compact && { fontSize: 9 }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+      <Text style={[styles.label, { color }, compact && { fontSize: 10 }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
         {label}
       </Text>
     </PressScale>
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   pillRow: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: ROW_PAD },
   item: { flex: 1, height: BAR_HEIGHT - 12, alignItems: 'center', justifyContent: 'center', gap: 2 },
   highlight: { position: 'absolute', top: 6, left: 0, height: BAR_HEIGHT - 12, borderRadius: (BAR_HEIGHT - 12) / 2, backgroundColor: GLASS ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)') : colors.accentSoft },
-  label: { fontSize: 10, fontWeight: '600' },
+  label: { fontSize: 11, fontWeight: '600' },
   plusWrap: { width: BAR_HEIGHT, height: BAR_HEIGHT },
   plus: { width: BAR_HEIGHT, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2, alignItems: 'center', justifyContent: 'center' },
   plusSolid: { backgroundColor: tint.espresso, ...shadow },

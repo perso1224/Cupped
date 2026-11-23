@@ -161,3 +161,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
     - Non-interactive submit needs `ascAppId` in the eas.json submit profile.
     - The API key needs the Admin role.
   - Waiting on the owner for the ASC app's Apple ID number, then add `"ascAppId"` to `submit.testflight.ios` and `submit.production.ios`.
+- 23 Nov morning: second verification round (code review, visual/a11y, first-time user); all findings fixed.
+  - New: `InfoSheet` (ChoiceSheet.tsx) for the score explanation; `palateReason` (Profile "Neden" line); choose() takes a `current` value (✓ mark); PillButton has an `onDark` variant (camera permission).
+  - The Wrapped screen-reader nav sits on its own row; the CupDetail top bar is first in reading order (zIndex).
+  - Inline error on Damak Uyumu; GrowBar label/value.
+- Tests: 150.

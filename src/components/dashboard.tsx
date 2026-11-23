@@ -77,7 +77,7 @@ export function MetricTile({
       </Text>
       {/* Dolum çubuğu: bardağın dolması gibi soldan sağa */}
       <View style={styles.tileTrack}>
-        <GrowBar style={[styles.tileFill, { backgroundColor: color }]} fraction={f > 0 ? Math.max(0.06, f) : 0} />
+        <GrowBar style={[styles.tileFill, { backgroundColor: color }]} fraction={f > 0 ? Math.max(0.06, f) : 0} value={f} label={`${label} ${value}`} />
       </View>
     </View>
   );

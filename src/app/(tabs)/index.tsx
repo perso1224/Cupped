@@ -280,7 +280,7 @@ export default function Home() {
           <Text style={styles.date}>{dateLabel}</Text>
           <Text accessibilityRole="header" style={styles.largeTitle}>{tr.home.summary}</Text>
         </View>
-        <View style={styles.streak}>
+        <View style={styles.streak} accessible accessibilityLabel={tr.a11y.streak(streak)}>
           <Pop trigger={streak}>
             <Bean size={18} color={streak > 0 ? tint.espresso : colors.tertiary} />
           </Pop>
@@ -366,7 +366,7 @@ export default function Home() {
                 </Text>
               </View>
               <View style={styles.bar}>
-                <GrowBar style={styles.barFill} fraction={discoveries / WEEKLY.discoveryGoal} />
+                <GrowBar style={styles.barFill} fraction={discoveries / WEEKLY.discoveryGoal} label={tr.a11y.discoveryBar} />
               </View>
             </Card>
           </FadeIn>
@@ -394,7 +394,7 @@ export default function Home() {
                 {level ? (
                   <>
                     <View style={[styles.bar, { marginTop: 14 }]}>
-                      <GrowBar style={[styles.barFill, { backgroundColor: colors.black }]} fraction={Math.max(0.04, level.fraction)} />
+                      <GrowBar style={[styles.barFill, { backgroundColor: colors.black }]} fraction={Math.max(0.04, level.fraction)} value={level.fraction} label={tr.a11y.levelBar} />
                     </View>
                     <Text style={styles.cardSub}>
                       {level.next ? tr.home.levelLine(level.level, level.xp, level.next, level.toNext) : tr.home.levelTopXp(level.level, level.xp)}

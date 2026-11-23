@@ -65,6 +65,7 @@ export function OriginPicker({
         <View style={styles.search}>
           <Icon name="search" size={18} color={colors.muted} />
           <TextInput
+            maxFontSizeMultiplier={1.4}
             value={q}
             onChangeText={setQ}
             accessibilityLabel={tr.capture.originSearch}

@@ -146,7 +146,7 @@ function VisaStamp({ label, earned, index }: { label: string; earned: boolean; i
   if (!earned) {
     return (
       <View style={[styles.visa, styles.visaEmpty]} accessible accessibilityLabel={`${label}, ${tr.passport.locked}`}>
-        <Text style={[styles.visaName, { color: colors.muted, opacity: 0.8 }]} numberOfLines={2}>
+        <Text style={[styles.visaName, { color: colors.muted }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
           {label}
         </Text>
       </View>
@@ -177,7 +177,7 @@ function EarnedVisa({ label, ink, tilt, index }: { label: string; ink: string; t
         ) : null}
         <View style={{ alignItems: 'center', transform: [{ rotate: `${tilt}deg` }] }}>
           <Text style={[styles.visaKicker, { color: ink }]}>{tr.passport.visa}</Text>
-          <Text style={[styles.visaName, { color: ink }]} numberOfLines={2}>
+          <Text style={[styles.visaName, { color: ink }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
             {label}
           </Text>
         </View>

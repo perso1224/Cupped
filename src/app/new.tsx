@@ -339,14 +339,14 @@ export default function NewCup() {
           <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" onCameraReady={() => setCameraReady(true)} />
         ) : (
           <View style={[styles.permission, { paddingTop: insets.top + 60 }]}>
-            <Text style={styles.permTitle}>{tr.capture.permissionTitle}</Text>
+            <Text accessibilityRole="header" style={styles.permTitle}>{tr.capture.permissionTitle}</Text>
             <Text style={styles.permBody}>
               {permission.canAskAgain ? tr.capture.permissionBody : tr.capture.permissionDenied}
             </Text>
             {permission.canAskAgain ? (
-              <PillButton label={tr.capture.allow} onPress={requestPermission} style={{ marginTop: 24, alignSelf: 'stretch' }} variant="light" />
+              <PillButton label={tr.capture.allow} onPress={requestPermission} style={{ marginTop: 24, alignSelf: 'stretch' }} variant="onDark" />
             ) : (
-              <PillButton label={tr.capture.openSettings} onPress={() => Linking.openSettings()} style={{ marginTop: 24, alignSelf: 'stretch' }} variant="light" />
+              <PillButton label={tr.capture.openSettings} onPress={() => Linking.openSettings()} style={{ marginTop: 24, alignSelf: 'stretch' }} variant="onDark" />
             )}
           </View>
         )}
@@ -417,7 +417,7 @@ export default function NewCup() {
       >
         <View style={styles.topRow}>
           <CloseButton onPress={closeNew} />
-          <PressScale onPress={() => setStep('photo')} hitSlop={12} scaleTo={0.95} accessibilityLabel={tr.capture.retake}>
+          <PressScale onPress={() => setStep('photo')} hitSlop={12} scaleTo={0.95} accessibilityLabel={photo ? tr.capture.retake : tr.capture.addPhoto}>
             {photo ? (
               <Image source={{ uri: photo }} style={styles.preview} />
             ) : (
@@ -430,14 +430,14 @@ export default function NewCup() {
         </View>
 
         {original ? <Text style={[type.largeTitle, { marginTop: 16 }]}>{tr.capture.editTitle}</Text> : null}
-        <Text style={styles.q}>{tr.capture.how}</Text>
+        <Text accessibilityRole="header" style={styles.q}>{tr.capture.how}</Text>
         <View style={styles.chips}>
           {methodOrder.map((m) => (
             <Chip key={m} label={tr.methods[m]} selected={method === m} onPress={() => setMethod(m)} />
           ))}
         </View>
 
-        <Text style={styles.q}>{tr.capture.where}</Text>
+        <Text accessibilityRole="header" style={styles.q}>{tr.capture.where}</Text>
         <View style={styles.chips}>
           <Chip label={tr.capture.home} selected={where?.kind === 'home'} onPress={() => {
               setTyped('');
@@ -461,6 +461,7 @@ export default function NewCup() {
         </View>
         <View style={styles.inputRow}>
           <TextInput
+              maxFontSizeMultiplier={1.4}
               inputAccessoryViewID={KB_DONE}
             value={typed}
             onChangeText={(t) => {
@@ -481,7 +482,7 @@ export default function NewCup() {
 
         {/* Kişisel beğeni: isteğe bağlı, skoru etkilemez */}
         {/* Unutulan fincan dün olarak eklenebilir; düzenlemede yanlış güne eklenen fincan düzeltilebilir */}
-        <Text style={styles.label}>{tr.capture.whenLabel}</Text>
+        <Text accessibilityRole="header" style={styles.label}>{tr.capture.whenLabel}</Text>
         <View style={styles.chips}>
           {original ? (
             <Chip
@@ -499,7 +500,7 @@ export default function NewCup() {
           ) : null}
         </View>
 
-        <Text style={styles.label}>{tr.rating.question}</Text>
+        <Text accessibilityRole="header" style={styles.label}>{tr.rating.question}</Text>
         <StarInput value={rating} onChange={setRating} />
 
         <PressScale
@@ -524,7 +525,7 @@ export default function NewCup() {
           <FadeIn>
             <Text style={styles.detailHint}>{tr.capture.detailHint}</Text>
 
-            <Text style={styles.label}>{tr.capture.notesLabel}</Text>
+            <Text accessibilityRole="header" style={styles.label}>{tr.capture.notesLabel}</Text>
             <View style={styles.chips}>
               {NOTES.map((n) => (
                 <Chip key={n} label={tr.notes[n]} selected={notes.includes(n)} onPress={() => toggleNote(n)} />
@@ -532,9 +533,10 @@ export default function NewCup() {
             </View>
             {noteLimit ? <Text style={styles.limitHint}>{tr.onboarding.notesLimit}</Text> : null}
 
-            <Text style={styles.label}>{tr.capture.originLabel}</Text>
+            <Text accessibilityRole="header" style={styles.label}>{tr.capture.originLabel}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TextInput
+              maxFontSizeMultiplier={1.4}
                 inputAccessoryViewID={KB_DONE}
                 value={origin}
                 onChangeText={setOrigin}
@@ -559,7 +561,7 @@ export default function NewCup() {
             </View>
             <OriginPicker visible={originPicker} value={origin} onChange={setOrigin} onClose={() => setOriginPicker(false)} />
 
-            <Text style={styles.label}>
+            <Text accessibilityRole="header" style={styles.label}>
               {tr.capture.recipeLabel}
               {brewRatio(parseNum(dose), parseNum(water)) ? `  ·  ${tr.capture.ratio(brewRatio(parseNum(dose), parseNum(water))!)}` : ''}
             </Text>
@@ -578,6 +580,7 @@ export default function NewCup() {
             </View>
             <View style={{ flexDirection: 'row' }}>
               <TextInput
+              maxFontSizeMultiplier={1.4}
               inputAccessoryViewID={KB_DONE}
                 value={dose}
                 onChangeText={setDose}
@@ -588,6 +591,7 @@ export default function NewCup() {
                 style={[styles.input, { flex: 1, flexBasis: 0, minWidth: 0, marginRight: 8 }]}
               />
               <TextInput
+              maxFontSizeMultiplier={1.4}
               inputAccessoryViewID={KB_DONE}
                 value={water}
                 onChangeText={setWater}
@@ -599,15 +603,16 @@ export default function NewCup() {
               />
             </View>
 
-            <Text style={styles.label}>{tr.capture.grindLabel}</Text>
+            <Text accessibilityRole="header" style={styles.label}>{tr.capture.grindLabel}</Text>
             <View style={styles.chips}>
               {GRINDS.map((g) => (
                 <Chip key={g} label={tr.capture.grind[g]} selected={grind === g} onPress={() => setGrind(grind === g ? null : g)} />
               ))}
             </View>
 
-            <Text style={styles.label}>{tr.capture.noteLabel}</Text>
+            <Text accessibilityRole="header" style={styles.label}>{tr.capture.noteLabel}</Text>
             <TextInput
+              maxFontSizeMultiplier={1.4}
               inputAccessoryViewID={KB_DONE}
               value={note}
               onChangeText={setNote}

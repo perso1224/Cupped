@@ -94,6 +94,7 @@ export default function MatchScreen() {
         <View style={styles.box}>
           <Text style={styles.label}>{tr.match.friendCode}</Text>
           <TextInput
+            maxFontSizeMultiplier={1.3}
             value={input}
             // Arkadaşın gönderdiği mesajın tamamı yapıştırılırsa içindeki kod ayıklanır
             onChangeText={(t) => {

@@ -10,7 +10,11 @@ export function ListSection({ title, footer, children }: { title?: string; foote
   const items = Children.toArray(children).filter(Boolean);
   return (
     <View style={styles.section}>
-      {title ? <Text style={styles.header}>{upper(title)}</Text> : null}
+      {title ? (
+        <Text accessibilityRole="header" style={styles.header}>
+          {upper(title)}
+        </Text>
+      ) : null}
       <View style={styles.group}>
         {items.map((child, i) => (
           <Fragment key={i}>

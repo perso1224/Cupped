@@ -52,17 +52,18 @@ export function CupRow({ entry, timeOnly, showParts, plain }: { entry: CupEntry;
             {placeLabel(entry)}
           </Text>
           <View style={styles.timeRow}>
-            <Text style={styles.rowTime}>
+            <Text style={styles.rowTime} numberOfLines={1}>
               {timeOnly
                 ? new Date(entry.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
                 : timeLabel(entry.createdAt)}
             </Text>
-            <Stars value={entry.rating} size={11} />
+            {narrow ? null : <Stars value={entry.rating} size={11} />}
           </View>
           {chips.length ? (
             // Tek satır, sade: "+12 Emek · +5 Keşif · +10 Derinlik" (dar ekranda satır uzamasın)
             <Text style={styles.parts} numberOfLines={1}>
-              {chips.map((k) => `${entry.parts[k] > 0 ? '+' : ''}${entry.parts[k]} ${tr.result.breakdown[k]}`).join(' · ')}
+              {/* Dar ekranda kısa etiket (E/K/D) ki üç parça da sığsın */}
+              {chips.map((k) => `${entry.parts[k] > 0 ? '+' : ''}${entry.parts[k]} ${narrow ? tr.result.breakdown[k][0] : tr.result.breakdown[k]}`).join(' · ')}
             </Text>
           ) : null}
         </View>
