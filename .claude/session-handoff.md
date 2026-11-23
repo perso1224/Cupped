@@ -204,3 +204,6 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - A secret scan of the history found no keys. The commit author email will be visible.
 - OWNER DECISION (23 Nov): do not use the Expo cloud (EAS Build) for builds while the GitHub Mac runner works, because the EAS free quota is limited. Both workflows now build on macos-latest with `eas build --local`. EAS is still used for credentials storage and OTA (free).
   - The first two Mac dispatches sat queued with no runner; the first one was cancelled after 15 minutes. Being investigated; next step is an explicit macos-15 label.
+- 23 Nov 16:57: 3 Mac dispatches (macos-latest x2, macos-15 x1) were all cancelled after exactly 15 minutes with no runner assigned. Ubuntu jobs run fine. Likely account-side: macOS runners are not being granted to this account/repo yet (the repo was made public around 15:30).
+  - Next: retry tomorrow with the "Expo'ya yayınla" workflow dispatch (ios_build=true); ask the owner to check GitHub Settings > Billing and licensing (Actions).
+  - Until then, native changes have NO working build path, because the owner decided against the Expo cloud. Ask the owner before any native change.
