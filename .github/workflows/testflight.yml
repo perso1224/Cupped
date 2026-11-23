@@ -1,11 +1,19 @@
 # Elle çalıştırılır: GitHub > Actions > "TestFlight'a gönder" > Run workflow.
 # iOS uygulamasını bulutta (EAS) derler ve TestFlight'a yükler. Bilgisayar gerekmez.
-# Gerekli GitHub gizli anahtarları (Settings > Secrets and variables > Actions):
-#   EXPO_TOKEN            (zaten var)
-#   ASC_API_KEY_P8        App Store Connect API anahtarının .p8 dosyasının İÇERİĞİ
-#   ASC_API_KEY_ID        Anahtar kimliği (Key ID)
-#   ASC_API_ISSUER_ID     Issuer ID
-#   APPLE_TEAM_ID         Apple geliştirici takım kimliği (Team ID)
+#
+# İki ayrı kimlik bilgisi var:
+# 1) EAS'te kayıtlı olanlar (docs/TESTFLIGHT.md Adım 4, bir kez bilgisayardan):
+#    imza sertifikası + provisioning profile ve "EAS Submit" için App Store Connect API anahtarı.
+#    TestFlight'a yükleme (submit) YALNIZCA EAS'te kayıtlı anahtarı kullanır; GitHub'daki anahtarları okumaz.
+# 2) GitHub gizli anahtarları (Settings > Secrets and variables > Actions):
+#    EXPO_TOKEN            ZORUNLU (zaten var)
+#    ASC_API_KEY_P8        İSTEĞE BAĞLI: App Store Connect API anahtarının .p8 dosyasının İÇERİĞİ
+#    ASC_API_KEY_ID        İSTEĞE BAĞLI: Anahtar kimliği (Key ID)
+#    ASC_API_ISSUER_ID     İSTEĞE BAĞLI: Issuer ID
+#    APPLE_TEAM_ID         İSTEĞE BAĞLI: Apple geliştirici takım kimliği (Team ID)
+#    ASC_* üçlüsü yalnızca DERLEME sırasında Apple'a giriş içindir (ör. provisioning profile yenilemek).
+#    EAS'te "EAS Submit" anahtarı kayıtlıysa derleme onu da kullanabilir; bu yüzden üçlü isteğe bağlı.
+#    Eklenecekse üçü birlikte eklenmeli.
 name: TestFlight'a gönder
 
 on:
@@ -16,10 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      EXPO_ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-      EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
-      EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      EXPO_ASC_API_KEY_PATH: ${{ github.workspace }}/asc-key.p8
     steps:
       - uses: actions/checkout@v4
 
@@ -31,12 +35,32 @@ jobs:
       - name: Anahtar kontrolü
         env:
           P8: ${{ secrets.ASC_API_KEY_P8 }}
+          KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          for v in EXPO_TOKEN EXPO_ASC_KEY_ID EXPO_ASC_ISSUER_ID EXPO_APPLE_TEAM_ID; do
-            if [ -z "${!v}" ]; then echo "::error::$v eksik. GitHub > Settings > Secrets and variables > Actions altına ekleyin."; exit 1; fi
-          done
-          if [ -z "$P8" ]; then echo "::error::ASC_API_KEY_P8 eksik."; exit 1; fi
-          printf '%s' "$P8" > "$EXPO_ASC_API_KEY_PATH"
+          if [ -z "$EXPO_TOKEN" ]; then echo "::error::EXPO_TOKEN eksik. GitHub > Settings > Secrets and variables > Actions altına ekleyin."; exit 1; fi
+          # Boş değer EAS CLI'a "takım kimliği" diye gitmesin; yalnızca doluysa ekle.
+          if [ -n "$TEAM_ID" ]; then echo "EXPO_APPLE_TEAM_ID=$TEAM_ID" >> "$GITHUB_ENV"; fi
+          set_count=0
+          for v in P8 KEY_ID ISSUER_ID; do [ -n "${!v}" ] && set_count=$((set_count+1)); done
+          if [ "$set_count" -eq 3 ]; then
+            # EAS CLI bu üç değişkeni yalnızca birlikte ve dosya gerçekten varken kullanmalı;
+            # bu yüzden yol, dosya yazıldıktan sonra ortama eklenir.
+            key_path="$RUNNER_TEMP/asc-key.p8"
+            printf '%s' "$P8" > "$key_path"
+            {
+              echo "EXPO_ASC_API_KEY_PATH=$key_path"
+              echo "EXPO_ASC_KEY_ID=$KEY_ID"
+              echo "EXPO_ASC_ISSUER_ID=$ISSUER_ID"
+            } >> "$GITHUB_ENV"
+            echo "App Store Connect API anahtarı derleme için GitHub gizli anahtarlarından alındı."
+          elif [ "$set_count" -eq 0 ]; then
+            echo "GitHub'da ASC anahtarı yok; derleme ve yükleme EAS'te kayıtlı kimlik bilgilerini kullanacak."
+          else
+            echo "::error::ASC_API_KEY_P8, ASC_API_KEY_ID ve ASC_API_ISSUER_ID ya üçü birlikte eklenmeli ya da hiçbiri."
+            exit 1
+          fi
 
       - name: Paketleri kur
         run: npm ci
@@ -52,4 +76,4 @@ jobs:
 
       - name: Anahtar dosyasını sil
         if: always()
-        run: rm -f "$EXPO_ASC_API_KEY_PATH"
+        run: rm -f "$RUNNER_TEMP/asc-key.p8"
