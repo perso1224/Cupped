@@ -91,7 +91,7 @@ jobs:
   ios-build:
     needs: update
     if: needs.update.outputs.build == 'true'
-    runs-on: ${{ github.event.repository.private && 'ubuntu-latest' || 'macos-latest' }}
+    runs-on: ${{ github.event.repository.private && 'ubuntu-latest' || 'macos-15' }}
     # Aynı anda tek derleme: art arda iki gönderimde aynı hal iki kez derlenmesin (sıradaki, etiketi görüp atlar)
     concurrency:
       group: ios-build
