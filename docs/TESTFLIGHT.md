@@ -78,7 +78,7 @@ Bulutta otomatik derleme, ilk sertifikayı kendisi oluşturamıyor. Bunun bir ke
    - Paket kimliği: com.perso1224.cupped
    - SKU: cupped-ios-1
 3. Kayıttan sonra **Uygulama Bilgileri** sayfasındaki **Apple ID** numarasını (ör. `6740000000`) Claude'a gönder. Claude bunu `eas.json` içinde `submit.testflight.ios.ascAppId` olarak ekler.
-   - Numara gelene kadar bu alan bilerek eklenmedi. EAS, boş ya da rakam dışı bir `ascAppId` görürse `eas.json`'u geçersiz sayıyor; bu da diğer EAS komutlarını bozar.
+   - ✅ Eklendi: `6838273482` (`testflight` ve `production` gönderim profilleri). EAS, boş ya da rakam dışı bir `ascAppId` görürse `eas.json`'u geçersiz sayar; numara değişirse yalnızca rakam yazılmalı.
 
 ## Adım 6: Yükleme
 
