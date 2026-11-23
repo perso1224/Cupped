@@ -1,0 +1,16 @@
+# Teşhis: GitHub bu depoya standart Mac sunucusu veriyor mu? (1 dakikalık, sadece bilgi yazdırır)
+# Bu dosya değiştiğinde ya da elle çalıştırılınca çalışır. Sorun çözülünce silinebilir.
+name: Mac sunucu testi
+
+on:
+  push:
+    branches: ['claude/expo-setup-guide-9xz45k']
+    paths: ['.github/workflows/mac-test.yml']
+  workflow_dispatch:
+
+jobs:
+  mac-latest:
+    runs-on: macos-latest
+    timeout-minutes: 5
+    steps:
+      - run: echo "Mac sunucusu verildi" && sw_vers && ls -d /Applications/Xcode_*.app
