@@ -54,9 +54,9 @@ Hata ya da garip bir şey görürsen ekran görüntüsü alıp TestFlight'taki "
 
 | Alan | Değer |
 |---|---|
-| Geri bildirim e-postası | `[kurucunun e-postası]` |
+| Geri bildirim e-postası | `beratyapar4@gmail.com` |
 | Pazarlama URL'si | Boş bırakılabilir |
-| Gizlilik politikası URL'si | `[gizlilik sayfasının adresi]` (bkz. bölüm 3) |
+| Gizlilik politikası URL'si | `https://perso1224.github.io/Cupped/gizlilik.html` (bkz. bölüm 3) |
 
 **Beta İnceleme bilgileri** (yalnızca dış test için; ilk 100 kişiye kadar iç test bunu istemez)
 
@@ -121,7 +121,7 @@ Hesap açman gerekmez. Fincanların, fotoğrafların ve ayarların yalnızca tel
 espresso,filtre,türk,kafe,barista,tadım,latte,v60,demleme,çekirdek,rozet,seri,damak,pasaport
 ```
 
-**Destek URL'si:** `[destek sayfasının adresi]` (gizlilik sayfasıyla aynı sayfa olabilir; içinde iletişim e-postası olmalı)
+**Destek URL'si:** `https://perso1224.github.io/Cupped/gizlilik.html` (gizlilik sayfasıyla aynı; içinde iletişim e-postası var)
 
 ### Kategori ve yaş
 
@@ -175,7 +175,7 @@ App Store sayfasında "Kimliğinize Bağlı Olmayan Veriler: Tanımlayıcılar" 
 
 - Apple, gizlilik politikası için herkese açık bir internet adresi ister.
 - Hazır sayfa: `docs/gizlilik.html`. Uygulamadaki Gizlilik ekranıyla aynı konuları anlatır (veri telefonda, kamera ve fotoğraflar, bildirimler, kullanım sayıları, güncelleme sunucusu, silme) ve ek olarak çocuklar ile iletişim bölümü içerir.
-- İçindeki `[iletişim e-postası]` doldurulmalı.
+- İletişim e-postası: `beratyapar4@gmail.com` (23 Kas).
 
 Ücretsiz yayınlama seçenekleri:
 

@@ -1,7 +1,16 @@
-# Geliştirme dalına her gönderimde uygulamanın yeni halini Expo'nun "preview" kanalına yükler.
-# Expo Go ve TestFlight sürümleri bu kanalı dinler. App Store sürümü AYRI "production" kanalını dinler;
-# oraya güncelleme yalnızca elle (eas update --branch production) gönderilir, böylece her gönderim mağazaya gitmez.
-# Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar.
+# Geliştirme dalına her gönderimde:
+#  1) Uygulamanın yeni hali Expo'nun "preview" kanalına anlık güncelleme (OTA) olarak yüklenir.
+#     Expo Go ve TestFlight sürümleri bu kanalı dinler; açılışta iner, uygulama yeniden açılınca görünür.
+#  2) Yerel (native) taraf değiştiyse (yeni yerel kütüphane, izin, ikon…) ve bu hali içeren bir iOS derlemesi
+#     yoksa, otomatik olarak yeni bir TestFlight derlemesi başlatılır ve bitince TestFlight'a yüklenir.
+#     Karar EAS "parmak izi" (fingerprint) ile verilir: aynı parmak izine sahip derleme varsa yeniden derlenmez.
+#     Nerede derlenir?
+#       - Depo HERKESE AÇIKSA: GitHub'ın Mac sunucusunda (açık depolarda ücretsiz), `eas build --local` ile.
+#         Expo'nun derleme kotası harcanmaz. Başarılı derlemenin parmak izi `ios-fp-<parmak izi>` etiketiyle işaretlenir.
+#       - Depo GİZLİYSE: Expo'nun bulutunda (EAS Build, ücretsiz planın aylık kotasından düşer).
+# App Store sürümü AYRI "production" kanalını dinler; oraya güncelleme yalnızca elle gönderilir,
+# böylece her gönderim mağazaya gitmez. App Store'da yayın her seferinde Apple incelemesinden geçer.
+# Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar. TestFlight kimlik bilgileri EAS'te kayıtlı (docs/TESTFLIGHT.md).
 name: Expo'ya yayınla
 
 on:
@@ -10,10 +19,18 @@ on:
     # Sadece belge değişikliklerinde yeniden yayınlama
     paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:
+    inputs:
+      ios_build:
+        description: "Yerel değişiklik olmasa da yeni iOS derlemesi yap ve TestFlight'a gönder"
+        type: boolean
+        default: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.native.outputs.build }}
+      fp: ${{ steps.native.outputs.fp }}
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       COMMIT_MESSAGE: ${{ github.event.head_commit.message || 'Elle başlatıldı' }}
@@ -44,8 +61,95 @@ jobs:
       - name: Expo projesine bağlan
         run: npx eas-cli@latest init --force --non-interactive
 
+      - name: Yeni iOS derlemesi gerekiyor mu?
+        id: native
+        run: |
+          FP=$(npx eas-cli@latest fingerprint:generate --platform ios --build-profile testflight --json --non-interactive | jq -r '.hash')
+          if [ -z "$FP" ] || [ "$FP" = "null" ]; then echo "::error::Parmak izi hesaplanamadı."; exit 1; fi
+          echo "iOS parmak izi: $FP"
+          echo "fp=$FP" >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.ios_build }}" = "true" ]; then
+            echo "Elle istendi: yeni derleme yapılacak."; echo "build=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # GitHub'da (Mac sunucusunda) bu parmak iziyle başarılı derleme yapıldı mı?
+          if git ls-remote --exit-code --tags origin "refs/tags/ios-fp-$FP" >/dev/null 2>&1; then
+            echo "Bu yerel hal GitHub'da zaten derlenmiş."; echo "build=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # Expo bulutunda bu parmak izine sahip, başarısız/iptal olmamış bir derleme var mı (sürüyor olanlar dahil)?
+          N=$(npx eas-cli@latest build:list --platform ios --build-profile testflight --fingerprint-hash "$FP" --limit 10 --json --non-interactive \
+            | jq '[.[] | select(.status != "ERRORED" and .status != "CANCELED")] | length')
+          echo "Expo'da eşleşen derleme sayısı: $N"
+          if [ "$N" = "0" ]; then echo "build=true" >> "$GITHUB_OUTPUT"; else echo "build=false" >> "$GITHUB_OUTPUT"; fi
+
       - name: Güncelleme ayarlarını hazırla
         run: npx eas-cli@latest update:configure --platform all --environment preview --non-interactive
 
       - name: Yayınla
         run: npx eas-cli@latest update --branch preview --message "$COMMIT_MESSAGE" --platform all --environment preview --non-interactive
+
+  # Yeni iOS derlemesi: açık depoda GitHub'ın Mac sunucusunda (ücretsiz), gizli depoda Expo bulutunda.
+  ios-build:
+    needs: update
+    if: needs.update.outputs.build == 'true'
+    runs-on: ${{ github.event.repository.private && 'ubuntu-latest' || 'macos-15' }}
+    # Aynı anda tek derleme: art arda iki gönderimde aynı hal iki kez derlenmesin (sıradaki, etiketi görüp atlar)
+    concurrency:
+      group: ios-build
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      FP: ${{ needs.update.outputs.fp }}
+      LOCAL: ${{ github.event.repository.private && 'false' || 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hâlâ gerekli mi?
+        id: still
+        run: |
+          if [ "${{ inputs.ios_build }}" != "true" ] && git ls-remote --exit-code --tags origin "refs/tags/ios-fp-$FP" >/dev/null 2>&1; then
+            echo "Bu hal bu arada derlenmiş; atlanıyor."; echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.still.outputs.go == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Paketleri kur
+        if: steps.still.outputs.go == 'true'
+        run: npm ci
+
+      - name: Expo bulutunda derle ve TestFlight'a gönder (gizli depo)
+        if: steps.still.outputs.go == 'true' && env.LOCAL != 'true'
+        run: |
+          echo "::notice::Yerel değişiklik var: Expo bulutunda yeni iOS derlemesi başlatılıyor, bitince TestFlight'a yüklenecek."
+          npx eas-cli@latest build --platform ios --profile testflight --auto-submit --non-interactive --no-wait
+
+      - name: En yeni Xcode'u seç (açık depo)
+        if: steps.still.outputs.go == 'true' && env.LOCAL == 'true'
+        run: |
+          X=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Xcode: $X"
+          sudo xcode-select -s "$X/Contents/Developer"
+          xcodebuild -version
+
+      - name: GitHub Mac sunucusunda derle (açık depo, ücretsiz)
+        if: steps.still.outputs.go == 'true' && env.LOCAL == 'true'
+        run: |
+          echo "::notice::Yerel değişiklik var: GitHub Mac sunucusunda yeni iOS derlemesi yapılıyor."
+          npx eas-cli@latest build --platform ios --profile testflight --local --non-interactive --output "$RUNNER_TEMP/cupped.ipa"
+
+      - name: TestFlight'a gönder (açık depo)
+        if: steps.still.outputs.go == 'true' && env.LOCAL == 'true'
+        run: npx eas-cli@latest submit --platform ios --profile testflight --path "$RUNNER_TEMP/cupped.ipa" --non-interactive
+
+      - name: Bu hali "derlendi" olarak işaretle (açık depo)
+        if: steps.still.outputs.go == 'true' && env.LOCAL == 'true'
+        run: |
+          git tag -f "ios-fp-$FP"
+          git push -f origin "ios-fp-$FP"

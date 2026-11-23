@@ -105,3 +105,14 @@ describe('kişisel yıldız', () => {
     expect(normalizeEntry({ ...base, rating: 4.6 })?.rating).toBe(5);
   });
 });
+
+describe('fotoğraf kahve kontrolü alanı', () => {
+  const base = { id: 'p1', createdAt: '2026-01-01T09:00:00.000Z', method: 'filter', venueKind: 'home', notes: [], score: 50 };
+  it('geçerli değerler korunur; eski kayıtta yoksa null', () => {
+    for (const v of ['coffee', 'unsure', 'skipped']) expect(normalizeEntry({ ...base, photoCheck: v })?.photoCheck).toBe(v);
+    expect(normalizeEntry(base)?.photoCheck).toBeNull();
+  });
+  it('geçersiz değer null olur', () => {
+    for (const v of ['tea', 1, true, {}]) expect(normalizeEntry({ ...base, photoCheck: v })?.photoCheck).toBeNull();
+  });
+});

@@ -3,7 +3,7 @@ import { earnedBadges } from './progress';
 import { refreshReminder } from './reminders';
 import { classifyPlace, scoreCup } from './scoring';
 import { discardPhoto, loadEntries, loadMetrics, newId, persistPhoto, saveEntry, updateEntry, updateMetrics } from './storage';
-import type { CupEntry, CupInput, Grind, Method, TasteNote, VenueKind } from './types';
+import type { CupEntry, CupInput, Grind, Method, PhotoCheck, TasteNote, VenueKind } from './types';
 import { whenToDate, type When } from './when';
 
 /**
@@ -27,6 +27,8 @@ export type CupForm = {
   /** Geçici fotoğraf adresi (kamera/galeri) ya da null. */
   photo: string | null;
   photoWidth: number | undefined;
+  /** Bu fotoğrafın kahve kontrolü sonucu; kontrol yapılamadıysa ya da bitmediyse null. */
+  photoCheck: Exclude<PhotoCheck, 'skipped'> | null;
   /** Ekranın açıldığı an (kayıt süresi ölçümü). */
   openedAt: number;
 };
@@ -100,6 +102,7 @@ export async function createCup(f: CupForm): Promise<CreateResult> {
       note: f.note.trim() || null,
       rating: f.rating,
       captureMs: Date.now() - f.openedAt,
+      photoCheck: photoUri ? f.photoCheck : 'skipped',
       score: total,
       parts,
       palateTypeId,
@@ -154,15 +157,17 @@ export async function editCup(orig: CupEntry, f: CupForm & { photoChanged: boole
     const { total, parts } = scoringSame ? { total: orig.score, parts: orig.parts } : scoreCup(input, before, createdAt);
     const palateTypeId = scoringSame ? orig.palateTypeId : computePalateTypeId([...before, { ...input, createdAt }]);
     let photoUri = orig.photoUri;
+    let photoCheck = orig.photoCheck ?? null;
     if (f.photoChanged && f.photo) {
       try {
         newPhoto = await persistPhoto(f.photo, orig.id, { version: Date.now().toString(36), width: f.photoWidth });
         photoUri = newPhoto;
+        photoCheck = f.photoCheck;
       } catch {
         photoUri = orig.photoUri;
       }
     }
-    await updateEntry({ ...orig, ...input, createdAt, photoUri, brew: brewOf(f), note: f.note.trim() || null, rating: f.rating, score: total, parts, palateTypeId });
+    await updateEntry({ ...orig, ...input, createdAt, photoUri, photoCheck, brew: brewOf(f), note: f.note.trim() || null, rating: f.rating, score: total, parts, palateTypeId });
     refreshReminder();
     return true;
   } catch {

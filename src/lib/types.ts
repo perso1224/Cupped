@@ -14,6 +14,14 @@ export const GRINDS = ['fine', 'medium', 'coarse'] as const;
 export type Grind = (typeof GRINDS)[number];
 
 /** Detay modu: isteğe bağlı tarif bilgisi. */
+/**
+ * Fotoğrafta kahve kontrolünün sonucu (sadece ölçüm; skora etkisi yok).
+ * coffee: kahve gibi ya da belirsiz · unsure: "kahveye benzemiyor" notu gösterildi · skipped: fotoğrafsız kayıt.
+ * Kontrol bu cihazda çalışamadıysa (ör. Expo Go) alan yoktur/null.
+ */
+export const PHOTO_CHECKS = ['coffee', 'unsure', 'skipped'] as const;
+export type PhotoCheck = (typeof PHOTO_CHECKS)[number];
+
 export type Brew = {
   doseG: number | null; // kahve (gram)
   waterMl: number | null; // su (ml)
@@ -50,6 +58,8 @@ export type CupEntry = {
   rating?: number | null;
   /** H3 ölçümü: ekleme ekranının açılışından kayda kadar geçen süre (ms). */
   captureMs?: number | null;
+  /** Fotoğrafta kahve kontrolü (eski kayıtlarda yok). */
+  photoCheck?: PhotoCheck | null;
   score: number;
   parts: ScoreParts;
   palateTypeId: string;

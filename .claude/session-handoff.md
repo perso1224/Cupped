@@ -166,3 +166,44 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - The Wrapped screen-reader nav sits on its own row; the CupDetail top bar is first in reading order (zIndex).
   - Inline error on Damak Uyumu; GrowBar label/value.
 - Tests: 150.
+
+## Update (23 Nov afternoon) — first TestFlight upload done
+- PR #1 (dev → main) merged by the owner. `main` now has the whole app.
+- Owner ran `eas credentials -p ios` on Windows. On EAS now: distribution cert (until 23 Nov 2027), provisioning profile, EAS Submit ASC API key (ADMIN, team 8SU4USQK9K).
+- `ascAppId` 6838273482 is in eas.json. On main only in `testflight`; the dev branch also has it in `production` (send it in a later PR).
+- testflight.yml: only EXPO_TOKEN is required. The ASC_* GitHub secrets are optional and not set.
+- The first run from main: build 1.0.0 (1) finished, and the App Store submission succeeded.
+- Next: Apple processing, an internal tester group in App Store Connect, and install via the TestFlight app.
+- For later releases, the workflow builds the branch it is dispatched from. Either pick the dev branch in "Run workflow" or bring main up to date with a PR first.
+
+## Update (23 Nov evening) — roadmap items 10 and 11: coffee photo check and Instagram Stories
+- New native dependencies, so a new EAS build is needed:
+  - `react-native-fast-tflite` 3.0.1 and `react-native-nitro-modules` 0.37.2
+  - `react-native-share` 12.3.1, whose config plugin needs `expo-build-properties` ~58.0.12
+  - `jpeg-js` (pure JS)
+- None of these are in Expo's bundledNativeModules. Native compatibility with RN 0.88 is unverified: there is no Android SDK or Xcode here (dl.google.com is blocked). `expo prebuild` works, and the iOS/Android/web exports work.
+- Coffee check:
+  - `src/lib/coffeeCheck.ts` (pure, tested), `coffeeCheckRunner.ts` (safe lazy require; null when the module is missing)
+  - `metro.config.js` adds the `tflite` asset extension
+  - `CupEntry.photoCheck` ('coffee' | 'unsure' | 'skipped' | null)
+  - The new.tsx notice is a non-blocking card with a "Yeniden çek" button
+- Instagram Stories:
+  - `src/lib/share.ts`: `chooseTarget()` shows an Alert with "Instagram Hikayesi / Diğer uygulamalar / Vazgeç", only when `INSTAGRAM.appId` (in `src/config/brand.ts`) is set, the module exists and Instagram is installed.
+  - On Android, the temp file is not released on the story path.
+  - Waiting on the owner for the Meta App ID.
+- Tests: 163.
+- Automation (23 Nov evening): the expo-update.yml workflow now computes the iOS fingerprint (`eas fingerprint:generate --build-profile testflight`) on every dev-branch push.
+  - If no non-errored testflight build has that fingerprint, it starts `eas build -p ios --profile testflight --auto-submit --no-wait`.
+  - The OTA update is still published either way.
+  - runtimeVersion stays `appVersion`. Because of that, an OTA also reaches older builds, so new native modules must always be required safely (try/catch), as done in coffeeCheckRunner.ts and share.ts.
+  - App Store release stays manual (owner decision + Apple review).
+- Build location (23 Nov): the expo-update.yml `ios-build` job runs on macos-latest with `eas build --local` plus `eas submit --path` when the repo is PUBLIC.
+  - That is free: local builds don't use EAS quota, and public-repo macOS minutes are free. Success is marked by git tag `ios-fp-<fingerprint>`.
+  - When the repo is PRIVATE, the job falls back to an EAS cloud build.
+  - The owner wants to make the repo public "for the start"; that is the owner's action in GitHub settings.
+  - A secret scan of the history found no keys. The commit author email will be visible.
+- OWNER DECISION (23 Nov): do not use the Expo cloud (EAS Build) for builds while the GitHub Mac runner works, because the EAS free quota is limited. Both workflows now build on macos-latest with `eas build --local`. EAS is still used for credentials storage and OTA (free).
+  - The first two Mac dispatches sat queued with no runner; the first one was cancelled after 15 minutes. Being investigated; next step is an explicit macos-15 label.
+- 23 Nov 16:57: 3 Mac dispatches (macos-latest x2, macos-15 x1) were all cancelled after exactly 15 minutes with no runner assigned. Ubuntu jobs run fine. Likely account-side: macOS runners are not being granted to this account/repo yet (the repo was made public around 15:30).
+  - Next: retry tomorrow with the "Expo'ya yayınla" workflow dispatch (ios_build=true); ask the owner to check GitHub Settings > Billing and licensing (Actions).
+  - Until then, native changes have NO working build path, because the owner decided against the Expo cloud. Ask the owner before any native change.
