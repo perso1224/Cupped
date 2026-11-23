@@ -207,3 +207,9 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - 23 Nov 16:57: 3 Mac dispatches (macos-latest x2, macos-15 x1) were all cancelled after exactly 15 minutes with no runner assigned. Ubuntu jobs run fine. Likely account-side: macOS runners are not being granted to this account/repo yet (the repo was made public around 15:30).
   - Next: retry tomorrow with the "Expo'ya yayınla" workflow dispatch (ios_build=true); ask the owner to check GitHub Settings > Billing and licensing (Actions).
   - Until then, native changes have NO working build path, because the owner decided against the Expo cloud. Ask the owner before any native change.
+- 23 Nov evening:
+  - PR #2 merged to main. The owner accidentally deleted the dev branch on GitHub; it was restored by pushing the local copy (same commit).
+  - GitHub Pages serves main /docs (with `.nojekyll`). The privacy page is at https://perso1224.github.io/Cupped/gizlilik.html. `docs/index.html` (a copy) is only on dev until the next PR.
+  - In App Store Connect: the Privacy Policy URL is set under App Store > App Privacy. The App Privacy label is published as Identifiers > Device ID, App Functionality, not linked, no tracking.
+  - The TestFlight "Test Information" privacy URL field gave a validation error in the ASC mobile app; it is left empty there.
+  - Support tickets are open with GitHub (macOS runners never assigned) and Apple (TestFlight invite emails not arriving). The owner added a card and set the Actions budget to $1 (it can be set back to $0).
