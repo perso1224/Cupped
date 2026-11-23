@@ -192,3 +192,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - On Android, the temp file is not released on the story path.
   - Waiting on the owner for the Meta App ID.
 - Tests: 163.
+- Automation (23 Nov evening): the expo-update.yml workflow now computes the iOS fingerprint (`eas fingerprint:generate --build-profile testflight`) on every dev-branch push.
+  - If no non-errored testflight build has that fingerprint, it starts `eas build -p ios --profile testflight --auto-submit --no-wait`.
+  - The OTA update is still published either way.
+  - runtimeVersion stays `appVersion`. Because of that, an OTA also reaches older builds, so new native modules must always be required safely (try/catch), as done in coffeeCheckRunner.ts and share.ts.
+  - App Store release stays manual (owner decision + Apple review).

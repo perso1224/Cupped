@@ -1,7 +1,12 @@
-# Geliştirme dalına her gönderimde uygulamanın yeni halini Expo'nun "preview" kanalına yükler.
-# Expo Go ve TestFlight sürümleri bu kanalı dinler. App Store sürümü AYRI "production" kanalını dinler;
-# oraya güncelleme yalnızca elle (eas update --branch production) gönderilir, böylece her gönderim mağazaya gitmez.
-# Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar.
+# Geliştirme dalına her gönderimde:
+#  1) Uygulamanın yeni hali Expo'nun "preview" kanalına anlık güncelleme (OTA) olarak yüklenir.
+#     Expo Go ve TestFlight sürümleri bu kanalı dinler; açılışta iner, uygulama yeniden açılınca görünür.
+#  2) Yerel (native) taraf değiştiyse (yeni yerel kütüphane, izin, ikon…) ve bu hali içeren bir iOS derlemesi
+#     yoksa, otomatik olarak yeni bir TestFlight derlemesi başlatılır ve bitince TestFlight'a yüklenir.
+#     Karar EAS "parmak izi" (fingerprint) ile verilir: aynı parmak izine sahip derleme varsa yeniden derlenmez.
+# App Store sürümü AYRI "production" kanalını dinler; oraya güncelleme yalnızca elle gönderilir,
+# böylece her gönderim mağazaya gitmez. App Store'da yayın her seferinde Apple incelemesinden geçer.
+# Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar. TestFlight kimlik bilgileri EAS'te kayıtlı (docs/TESTFLIGHT.md).
 name: Expo'ya yayınla
 
 on:
@@ -43,6 +48,24 @@ jobs:
 
       - name: Expo projesine bağlan
         run: npx eas-cli@latest init --force --non-interactive
+
+      - name: Yeni iOS derlemesi gerekiyor mu?
+        id: native
+        run: |
+          FP=$(npx eas-cli@latest fingerprint:generate --platform ios --build-profile testflight --json --non-interactive | jq -r '.hash')
+          if [ -z "$FP" ] || [ "$FP" = "null" ]; then echo "::error::Parmak izi hesaplanamadı."; exit 1; fi
+          echo "iOS parmak izi: $FP"
+          # Bu parmak izine sahip, başarısız/iptal olmamış bir testflight derlemesi var mı (sürüyor olanlar dahil)?
+          N=$(npx eas-cli@latest build:list --platform ios --build-profile testflight --fingerprint-hash "$FP" --limit 10 --json --non-interactive \
+            | jq '[.[] | select(.status != "ERRORED" and .status != "CANCELED")] | length')
+          echo "Eşleşen derleme sayısı: $N"
+          if [ "$N" = "0" ]; then echo "build=true" >> "$GITHUB_OUTPUT"; else echo "build=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Yeni TestFlight derlemesi başlat
+        if: steps.native.outputs.build == 'true'
+        run: |
+          echo "::notice::Yerel değişiklik var: yeni iOS derlemesi başlatılıyor, bitince TestFlight'a yüklenecek."
+          npx eas-cli@latest build --platform ios --profile testflight --auto-submit --non-interactive --no-wait
 
       - name: Güncelleme ayarlarını hazırla
         run: npx eas-cli@latest update:configure --platform all --environment preview --non-interactive

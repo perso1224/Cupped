@@ -80,6 +80,16 @@ Bulutta otomatik derleme, ilk sertifikayı kendisi oluşturamıyor. Bunun bir ke
 3. Kayıttan sonra **Uygulama Bilgileri** sayfasındaki **Apple ID** numarasını (ör. `6740000000`) Claude'a gönder. Claude bunu `eas.json` içinde `submit.testflight.ios.ascAppId` olarak ekler.
    - ✅ Eklendi: `6838273482` (`testflight` ve `production` gönderim profilleri). EAS, boş ya da rakam dışı bir `ascAppId` görürse `eas.json`'u geçersiz sayar; numara değişirse yalnızca rakam yazılmalı.
 
+## Otomatik güncellemeler (23 Kas'tan itibaren)
+
+Geliştirme dalına yapılan her gönderimde ("Expo'ya yayınla" iş akışı):
+1. **Anlık güncelleme (OTA):** Kod, metin ve tasarım değişiklikleri TestFlight'taki uygulamaya kendiliğinden iner. Uygulama kapatılıp açılınca görünür.
+2. **Yerel değişiklik varsa yeni derleme:** Yeni bir yerel kütüphane, izin, ikon ya da açılış ekranı değiştiyse ve bu hali içeren bir iOS derlemesi yoksa, iş akışı kendiliğinden yeni bir TestFlight derlemesi başlatır. Derleme bitince TestFlight'a yüklenir; Apple'ın işlemesinden sonra TestFlight uygulamasında "Güncelle" çıkar.
+   - Karar EAS parmak iziyle (fingerprint) verilir: aynı yerel hale sahip derleme varsa yeniden derlenmez.
+   - Her derleme EAS'in aylık ücretsiz derleme hakkından düşer.
+
+**App Store (herkese açık mağaza):** Her yayın Apple incelemesinden geçer, mağaza metni ve ekran görüntüsü ister. Bu yüzden otomatik değildir; kurucu "yayınla" deyince yapılır.
+
 ## Adım 6: Yükleme
 
 1. GitHub → **Actions** → **TestFlight'a gönder** → **Run workflow**.
