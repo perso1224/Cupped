@@ -202,3 +202,5 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - When the repo is PRIVATE, the job falls back to an EAS cloud build.
   - The owner wants to make the repo public "for the start"; that is the owner's action in GitHub settings.
   - A secret scan of the history found no keys. The commit author email will be visible.
+- OWNER DECISION (23 Nov): do not use the Expo cloud (EAS Build) for builds while the GitHub Mac runner works, because the EAS free quota is limited. Both workflows now build on macos-latest with `eas build --local`. EAS is still used for credentials storage and OTA (free).
+  - The first two Mac dispatches sat queued with no runner; the first one was cancelled after 15 minutes. Being investigated; next step is an explicit macos-15 label.
