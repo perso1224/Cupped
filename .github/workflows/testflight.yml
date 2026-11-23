@@ -1,6 +1,7 @@
 # Elle çalıştırılır: GitHub > Actions > "TestFlight'a gönder" > Run workflow.
-# iOS uygulamasını GitHub'ın Mac sunucusunda derler (açık depoda ücretsiz; Expo'nun derleme kotası kullanılmaz)
-# ve TestFlight'a yükler. Bilgisayar gerekmez. Kurucu kararı (23 Kas): derleme için Expo bulutu kullanılmaz.
+# iOS uygulamasını derler ve TestFlight'a yükler. Bilgisayar gerekmez.
+# Nerede derlenir: GitHub depo değişkeni IOS_BUILDER. Yok ya da "eas" ise Expo bulutu (ücretsiz plan kotası),
+# "github-mac" ise GitHub Mac sunucusu (açık depoda ücretsiz; 23 Kas itibarıyla bu hesaba atanmıyor).
 #
 # İki ayrı kimlik bilgisi var:
 # 1) EAS'te kayıtlı olanlar (docs/TESTFLIGHT.md Adım 4, bir kez bilgisayardan):
@@ -22,9 +23,10 @@ on:
 
 jobs:
   build-and-submit:
-    runs-on: macos-15
+    runs-on: ${{ vars.IOS_BUILDER == 'github-mac' && 'macos-15' || 'ubuntu-latest' }}
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      LOCAL: ${{ vars.IOS_BUILDER == 'github-mac' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -72,7 +74,13 @@ jobs:
           npm run typecheck
           npm run lint
 
-      - name: En yeni Xcode'u seç
+      - name: Expo bulutunda derle ve TestFlight'a yükle
+        if: env.LOCAL != 'true'
+        timeout-minutes: 240
+        run: npx eas-cli@latest build --platform ios --profile testflight --auto-submit --non-interactive
+
+      - name: En yeni Xcode'u seç (GitHub Mac)
+        if: env.LOCAL == 'true'
         run: |
           X=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
           echo "Xcode: $X"
@@ -80,9 +88,11 @@ jobs:
           xcodebuild -version
 
       - name: GitHub Mac sunucusunda derle
+        if: env.LOCAL == 'true'
         run: npx eas-cli@latest build --platform ios --profile testflight --local --non-interactive --output "$RUNNER_TEMP/cupped.ipa"
 
-      - name: TestFlight'a yükle
+      - name: TestFlight'a yükle (GitHub Mac)
+        if: env.LOCAL == 'true'
         run: npx eas-cli@latest submit --platform ios --profile testflight --path "$RUNNER_TEMP/cupped.ipa" --non-interactive
 
       - name: Anahtar dosyasını sil

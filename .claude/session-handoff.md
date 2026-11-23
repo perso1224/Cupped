@@ -213,3 +213,9 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - In App Store Connect: the Privacy Policy URL is set under App Store > App Privacy. The App Privacy label is published as Identifiers > Device ID, App Functionality, not linked, no tracking.
   - The TestFlight "Test Information" privacy URL field gave a validation error in the ASC mobile app; it is left empty there.
   - Support tickets are open with GitHub (macOS runners never assigned) and Apple (TestFlight invite emails not arriving). The owner added a card and set the Actions budget to $1 (it can be set back to $0).
+- 23 Nov night, CI/CD (owner's analysis request): the build target is now a GitHub repo variable `IOS_BUILDER`.
+  - Unset or `eas` is the default: EAS cloud build on ubuntu-latest, with `--auto-submit`, WAITING (no `--no-wait`) so the GitHub log shows build + submit success.
+  - `github-mac` uses the macOS runner with `eas build --local` + submit.
+  - Applies to both expo-update.yml (ios-build job) and testflight.yml.
+  - Claude starts a build by dispatching expo-update.yml with `ios_build=true` (mcp actions_run_trigger, ref = dev branch).
+  - This revises the earlier "no Expo cloud" decision because no macOS runner is available; the owner asked for a Mac-free build with no new cost.

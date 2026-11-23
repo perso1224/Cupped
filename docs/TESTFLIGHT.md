@@ -86,8 +86,10 @@ Geliştirme dalına yapılan her gönderimde ("Expo'ya yayınla" iş akışı):
 1. **Anlık güncelleme (OTA):** Kod, metin ve tasarım değişiklikleri TestFlight'taki uygulamaya kendiliğinden iner. Uygulama kapatılıp açılınca görünür.
 2. **Yerel değişiklik varsa yeni derleme:** Yeni bir yerel kütüphane, izin, ikon ya da açılış ekranı değiştiyse ve bu hali içeren bir iOS derlemesi yoksa, iş akışı kendiliğinden yeni bir TestFlight derlemesi başlatır. Derleme bitince TestFlight'a yüklenir; Apple'ın işlemesinden sonra TestFlight uygulamasında "Güncelle" çıkar.
    - Karar EAS parmak iziyle (fingerprint) verilir: aynı yerel hale sahip derleme varsa yeniden derlenmez.
-   - **Depo herkese açıksa** derleme GitHub'ın Mac sunucusunda yapılır (açık depolarda ücretsiz) ve Expo'nun derleme kotası harcanmaz. Başarılı derleme `ios-fp-…` etiketiyle işaretlenir.
-   - **Depo gizliyse** derleme Expo bulutunda yapılır ve ücretsiz planın aylık derleme hakkından düşer.
+   - **Derleme yeri** GitHub depo değişkeni `IOS_BUILDER` ile seçilir (Settings → Secrets and variables → Actions → **Variables**):
+     - Değişken yok ya da `eas` (varsayılan): **Expo bulutu**. Mac gerekmez, ücretsiz planın aylık derleme hakkından düşer. İş akışı derleme ve TestFlight'a gönderim bitene kadar bekler; sonuç GitHub kaydında görünür.
+     - `github-mac`: **GitHub Mac sunucusu** (açık depoda ücretsiz). 23 Kasım itibarıyla GitHub bu hesaba Mac sunucusu atamıyor; destek cevabı gelince bu değere geçilir. Başarılı derleme `ios-fp-…` etiketiyle işaretlenir.
+   - **Claude Code'dan derleme başlatmak:** "Expo'ya yayınla" iş akışı `ios_build = true` ile çalıştırılır (GitHub → Actions → Run workflow, ya da Claude GitHub üzerinden tetikler).
 
 ### Depoyu herkese açmak (kurucu yapar)
 GitHub → Cupped → **Settings** → en alttaki **Danger Zone** → **Change repository visibility** → **Make public**.
