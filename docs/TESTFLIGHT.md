@@ -86,7 +86,14 @@ Geliştirme dalına yapılan her gönderimde ("Expo'ya yayınla" iş akışı):
 1. **Anlık güncelleme (OTA):** Kod, metin ve tasarım değişiklikleri TestFlight'taki uygulamaya kendiliğinden iner. Uygulama kapatılıp açılınca görünür.
 2. **Yerel değişiklik varsa yeni derleme:** Yeni bir yerel kütüphane, izin, ikon ya da açılış ekranı değiştiyse ve bu hali içeren bir iOS derlemesi yoksa, iş akışı kendiliğinden yeni bir TestFlight derlemesi başlatır. Derleme bitince TestFlight'a yüklenir; Apple'ın işlemesinden sonra TestFlight uygulamasında "Güncelle" çıkar.
    - Karar EAS parmak iziyle (fingerprint) verilir: aynı yerel hale sahip derleme varsa yeniden derlenmez.
-   - Her derleme EAS'in aylık ücretsiz derleme hakkından düşer.
+   - **Depo herkese açıksa** derleme GitHub'ın Mac sunucusunda yapılır (açık depolarda ücretsiz) ve Expo'nun derleme kotası harcanmaz. Başarılı derleme `ios-fp-…` etiketiyle işaretlenir.
+   - **Depo gizliyse** derleme Expo bulutunda yapılır ve ücretsiz planın aylık derleme hakkından düşer.
+
+### Depoyu herkese açmak (kurucu yapar)
+GitHub → Cupped → **Settings** → en alttaki **Danger Zone** → **Change repository visibility** → **Make public**.
+- Kodun tamamı ve geçmişi herkese görünür olur, kopyalanabilir. Sonradan gizliye çevrilse bile o arada alınan kopyalar geri alınamaz.
+- Commit'lerdeki e-posta adresi görünür olur.
+- Gizli anahtarlar (EXPO_TOKEN vb.) görünmez; onlar GitHub Secrets'ta durur.
 
 **App Store (herkese açık mağaza):** Her yayın Apple incelemesinden geçer, mağaza metni ve ekran görüntüsü ister. Bu yüzden otomatik değildir; kurucu "yayınla" deyince yapılır.
 

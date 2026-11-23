@@ -197,3 +197,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - The OTA update is still published either way.
   - runtimeVersion stays `appVersion`. Because of that, an OTA also reaches older builds, so new native modules must always be required safely (try/catch), as done in coffeeCheckRunner.ts and share.ts.
   - App Store release stays manual (owner decision + Apple review).
+- Build location (23 Nov): the expo-update.yml `ios-build` job runs on macos-latest with `eas build --local` plus `eas submit --path` when the repo is PUBLIC.
+  - That is free: local builds don't use EAS quota, and public-repo macOS minutes are free. Success is marked by git tag `ios-fp-<fingerprint>`.
+  - When the repo is PRIVATE, the job falls back to an EAS cloud build.
+  - The owner wants to make the repo public "for the start"; that is the owner's action in GitHub settings.
+  - A secret scan of the history found no keys. The commit author email will be visible.
