@@ -166,3 +166,12 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - The Wrapped screen-reader nav sits on its own row; the CupDetail top bar is first in reading order (zIndex).
   - Inline error on Damak Uyumu; GrowBar label/value.
 - Tests: 150.
+
+## Update (23 Nov afternoon) — first TestFlight upload done
+- PR #1 (dev → main) merged by the owner. `main` now has the whole app.
+- Owner ran `eas credentials -p ios` on Windows. On EAS now: distribution cert (until 23 Nov 2027), provisioning profile, EAS Submit ASC API key (ADMIN, team 8SU4USQK9K).
+- `ascAppId` 6838273482 is in eas.json. On main only in `testflight`; the dev branch also has it in `production` (send it in a later PR).
+- testflight.yml: only EXPO_TOKEN is required. The ASC_* GitHub secrets are optional and not set.
+- The first run from main: build 1.0.0 (1) finished, and the App Store submission succeeded.
+- Next: Apple processing, an internal tester group in App Store Connect, and install via the TestFlight app.
+- For later releases, the workflow builds the branch it is dispatched from. Either pick the dev branch in "Run workflow" or bring main up to date with a PR first.
