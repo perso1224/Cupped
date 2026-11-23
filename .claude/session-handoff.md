@@ -219,3 +219,6 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - Applies to both expo-update.yml (ios-build job) and testflight.yml.
   - Claude starts a build by dispatching expo-update.yml with `ios_build=true` (mcp actions_run_trigger, ref = dev branch).
   - This revises the earlier "no Expo cloud" decision because no macOS runner is available; the owner asked for a Mac-free build with no new cost.
+- 23 Nov 20:52: the new CI/CD was verified end to end. A Claude-dispatched run (expo-update.yml, ios_build=true, IOS_BUILDER default eas) produced EAS build 1.0.0 (3) (id b3361f35-…).
+  - The build itself took about 6 minutes. The EAS submission queue took about 35 minutes.
+  - Log: "Submitted your app to Apple App Store Connect!" The owner got the ASC notification.
