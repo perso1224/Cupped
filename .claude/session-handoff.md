@@ -154,3 +154,10 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - the Android icon
   - the splash screen
   - VoiceOver on Wrapped
+- TestFlight: `docs/TESTFLIGHT.md` has the owner's step list.
+  - Verified from the eas-cli 27.11 source:
+    - The EXPO_ASC_*/EXPO_APPLE_TEAM_ID env var names are correct.
+    - A non-interactive build can't create the distribution certificate, so the owner must run `eas credentials` once interactively.
+    - Non-interactive submit needs `ascAppId` in the eas.json submit profile.
+    - The API key needs the Admin role.
+  - Waiting on the owner for the ASC app's Apple ID number, then add `"ascAppId"` to `submit.testflight.ios` and `submit.production.ios`.
