@@ -583,7 +583,7 @@ export const tr = {
     title: 'Gizlilik',
     items: [
       ['Veriler telefonunda.', 'Fincanların, fotoğrafların ve ayarların sadece bu telefonda saklanır. Sunucumuz yok; hesap açman gerekmez. Telefonunun kendi yedeklemesi (iCloud / Google) açıksa uygulama verisi oraya da yedeklenebilir.'],
-      ['Kamera ve fotoğraflar.', 'Kamera ve fotoğraf arşivi sadece fincan fotoğrafı için kullanılır. Fotoğraflar telefonundan çıkmaz; sadece sen paylaşırsan, senin seçtiğin uygulamaya gider. Paylaşım kartını kaydetmek istersen fotoğraflarına eklenir.'],
+      ['Kamera ve fotoğraflar.', 'Kamera ve fotoğraf arşivi sadece fincan fotoğrafı için kullanılır. Fotoğraflar telefonundan çıkmaz; sadece sen paylaşırsan, senin seçtiğin uygulamaya gider. Paylaşım kartını kaydetmek istersen fotoğraflarına eklenir. Fotoğrafın kahveye benzeyip benzemediği telefonun içinde kontrol edilir; bunun için fotoğraf hiçbir yere gönderilmez.'],
       ['Bildirimler.', 'Hatırlatma, telefonun kendi bildirimidir; telefonda planlanır ve dışarıya veri gönderilmez.'],
       ['Kullanım istatistikleri.', 'Birkaç kullanım sayısı (paylaşım sayısı, kayıt süresi gibi) yalnızca bu telefonda tutulur. Reklam ya da analitik aracı yok.'],
       ['Uygulama güncellemeleri.', 'Uygulama, yeni sürümü indirmek için güncelleme sunucusuna bağlanır. Bu bağlantıda yalnızca sürüm bilgisi ve rastgele bir kurulum kimliği gibi teknik bilgiler gider; fincanların ve fotoğrafların gönderilmez.'],
