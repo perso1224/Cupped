@@ -19,6 +19,11 @@ on:
     # Sadece belge değişikliklerinde yeniden yayınlama
     paths-ignore: ['docs/**', '**/*.md']
   workflow_dispatch:
+    inputs:
+      ios_build:
+        description: "Yerel değişiklik olmasa da yeni iOS derlemesi yap ve TestFlight'a gönder"
+        type: boolean
+        default: false
 
 jobs:
   update:
@@ -63,6 +68,9 @@ jobs:
           if [ -z "$FP" ] || [ "$FP" = "null" ]; then echo "::error::Parmak izi hesaplanamadı."; exit 1; fi
           echo "iOS parmak izi: $FP"
           echo "fp=$FP" >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.ios_build }}" = "true" ]; then
+            echo "Elle istendi: yeni derleme yapılacak."; echo "build=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
           # GitHub'da (Mac sunucusunda) bu parmak iziyle başarılı derleme yapıldı mı?
           if git ls-remote --exit-code --tags origin "refs/tags/ios-fp-$FP" >/dev/null 2>&1; then
             echo "Bu yerel hal GitHub'da zaten derlenmiş."; echo "build=false" >> "$GITHUB_OUTPUT"; exit 0
@@ -100,7 +108,7 @@ jobs:
       - name: Hâlâ gerekli mi?
         id: still
         run: |
-          if git ls-remote --exit-code --tags origin "refs/tags/ios-fp-$FP" >/dev/null 2>&1; then
+          if [ "${{ inputs.ios_build }}" != "true" ] && git ls-remote --exit-code --tags origin "refs/tags/ios-fp-$FP" >/dev/null 2>&1; then
             echo "Bu hal bu arada derlenmiş; atlanıyor."; echo "go=false" >> "$GITHUB_OUTPUT"
           else
             echo "go=true" >> "$GITHUB_OUTPUT"
@@ -143,5 +151,5 @@ jobs:
       - name: Bu hali "derlendi" olarak işaretle (açık depo)
         if: steps.still.outputs.go == 'true' && env.LOCAL == 'true'
         run: |
-          git tag "ios-fp-$FP"
-          git push origin "ios-fp-$FP"
+          git tag -f "ios-fp-$FP"
+          git push -f origin "ios-fp-$FP"
