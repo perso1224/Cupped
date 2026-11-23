@@ -6,6 +6,7 @@ import { placeLabel, ShareCard, type CardHandle } from './ShareCard';
 import { CupGauge } from './coffee';
 import { MetricTile } from './dashboard';
 import { BadgeArt, CelebratedBadge } from './BadgeArt';
+import { InfoSheet } from './ChoiceSheet';
 import { Stars } from './Stars';
 import { Icon, type IconName } from './Icon';
 import { ListRow, ListSection } from './List';
@@ -60,6 +61,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
   const shown = useRef<string | null>(null);
   const unlockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrollY] = useState(() => new Animated.Value(0));
+  const [helpOpen, setHelpOpen] = useState(false);
   useFocusEffect(
     useCallback(() => {
       let alive = true;
@@ -111,10 +113,10 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
   function confirmDelete() {
     if (Platform.OS === 'web') {
       // Tarayıcıda Alert düğmeleri çalışmaz (sadece test için)
-      if (globalThis.confirm?.(`${tr.result.deleteTitle}\n${tr.result.deleteBody}`)) doDelete();
+      if (globalThis.confirm?.(`${tr.result.deleteTitle}\n${(entry?.photoUri ? tr.result.deleteBody : tr.result.deleteBodyNoPhoto)}`)) doDelete();
       return;
     }
-    Alert.alert(tr.result.deleteTitle, tr.result.deleteBody, [
+    Alert.alert(tr.result.deleteTitle, (entry?.photoUri ? tr.result.deleteBody : tr.result.deleteBodyNoPhoto), [
       { text: tr.result.cancel, style: 'cancel' },
       {
         text: tr.result.delete,
@@ -234,6 +236,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
                 {isFresh ? <CountUp value={entry.score} style={styles.scoreNumber} duration={1100} /> : <Text style={styles.scoreNumber}>{entry.score}</Text>}
                 <Text style={styles.scoreLabel}>{tr.card.cupScore}</Text>
                 <Text style={styles.scoreSub}>{partsSummary(entry.parts, tr.result.breakdown)}</Text>
+                <Text style={styles.scoreHint}>{tr.scoreHelp.oneLine}</Text>
               </View>
               <CupGauge size={104} fraction={entry.score / 100} animate={isFresh} />
             </Card>
@@ -248,7 +251,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
             </View>
             <Text style={styles.extras}>{extras}</Text>
             <PressScale
-              onPress={() => Alert.alert(tr.scoreHelp.title, tr.scoreHelp.body)}
+              onPress={() => setHelpOpen(true)}
               hitSlop={10}
               scaleTo={0.95}
               style={styles.helpLink}
@@ -307,6 +310,8 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
         {mode === 'detail' ? <RoundButton icon="chevron-back" label={tr.settings.back} onPress={goBack} /> : <View />}
         <RoundButton icon="share-outline" label={tr.result.share} onPress={share} disabled={!shareReady} />
       </View>
+
+      <InfoSheet visible={helpOpen} title={tr.scoreHelp.title} body={tr.scoreHelp.body} onClose={() => setHelpOpen(false)} />
 
       {/* Yeni fincan: puan yerine oturunca kahve renklerinde konfeti */}
       {isFresh ? <Confetti play={celebrate} /> : null}
@@ -419,6 +424,7 @@ const styles = StyleSheet.create({
   },
   scoreNumber: { fontSize: 60, fontFamily: fonts.heavy, color: colors.text },
   scoreLabel: { ...type.footnote, fontWeight: '600', color: colors.text },
+  scoreHint: { ...type.caption, marginTop: 6 },
   scoreSub: { ...type.footnote, marginTop: 2 },
   tiles: { flexDirection: 'row', gap: 10, marginTop: 10 },
   helpLink: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'center', marginTop: 8, paddingVertical: 6 },

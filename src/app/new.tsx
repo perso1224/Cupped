@@ -563,6 +563,15 @@ export default function NewCup() {
               {tr.capture.recipeLabel}
               {brewRatio(parseNum(dose), parseNum(water)) ? `  ·  ${tr.capture.ratio(brewRatio(parseNum(dose), parseNum(water))!)}` : ''}
             </Text>
+            {/* Olağandışı oran: yazım hatası olabilir (ör. 1000 ml yerine 100 ml) */}
+            {(() => {
+              const d = parseNum(dose);
+              const w = parseNum(water);
+              if (!d || !w) return null;
+              const r = w / d;
+              if (method === 'espresso' ? r > 4 : r < 8 || r > 22) return <Text style={styles.limitHint}>{tr.capture.ratioOdd}</Text>;
+              return null;
+            })()}
             <View style={{ flexDirection: 'row' }}>
               <Text style={[styles.unit, { flex: 1, marginRight: 8 }]}>{tr.capture.doseLabel}</Text>
               <Text style={[styles.unit, { flex: 1 }]}>{tr.capture.waterLabel}</Text>
@@ -609,6 +618,7 @@ export default function NewCup() {
               multiline
               style={[styles.input, { height: 90, paddingTop: 14, textAlignVertical: 'top' }]}
             />
+            {note.length >= 400 ? <Text style={styles.limitHint}>{tr.capture.placeLimit(note.length, 500)}</Text> : null}
           </FadeIn>
         ) : null}
       </ScrollView>

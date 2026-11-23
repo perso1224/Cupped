@@ -6,6 +6,7 @@ import {
   Animated,
   Easing,
   LayoutAnimation,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -375,16 +376,19 @@ export function useIntroDone(): boolean {
 /** Ekran okuyucu (VoiceOver / TalkBack) açık mı. Otomatik ilerleyen ekranlar buna göre durur. */
 let screenReader = false;
 const srListeners = new Set<() => void>();
-AccessibilityInfo.isScreenReaderEnabled()
+// Web'de (yalnızca test) bu bilgi güvenilir değil (her zaman "açık" dönebiliyor): yalnızca telefonda dinlenir
+if (Platform.OS !== 'web') AccessibilityInfo.isScreenReaderEnabled()
   .then((v) => {
     screenReader = v;
     srListeners.forEach((fn) => fn());
   })
   .catch(() => {});
-AccessibilityInfo.addEventListener('screenReaderChanged', (v) => {
-  screenReader = v;
-  srListeners.forEach((fn) => fn());
-});
+if (Platform.OS !== 'web') {
+  AccessibilityInfo.addEventListener('screenReaderChanged', (v) => {
+    screenReader = v;
+    srListeners.forEach((fn) => fn());
+  });
+}
 const subscribeSR = (cb: () => void) => {
   srListeners.add(cb);
   return () => {

@@ -89,3 +89,30 @@ export function rawPalateTypeId(entries: PalateSource[], opts: { wholePeriod?: b
 export function getPalateType(id: string): PalateType {
   return PALATE_TYPES.find((t) => t.id === id) ?? PALATE_TYPES[0];
 }
+
+/**
+ * Damak tipinin gerekçesi (tek satır): "En sık tat notların: Meyvemsi ve Parlak-ekşi" gibi.
+ * Gösterilen (kararlı) tip, son fincanların ham sonucundan farklıysa genel bir cümle döner.
+ */
+export type PalateReason =
+  | { kind: 'notes'; notes: TasteNote[] }
+  | { kind: 'nomad'; places: number; of: number }
+  | { kind: 'method'; method: Method; home: boolean | null }
+  | { kind: 'settling' };
+export function palateReason(entries: PalateSource[]): PalateReason | null {
+  if (!entries.length) return null;
+  const sorted = [...entries].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const stable = computePalateTypeId(sorted);
+  if (rawPalateTypeId(sorted) !== stable) return { kind: 'settling' };
+  const recent = sorted.slice(-PALATE_RULES.window);
+  const notes: TasteNote[] = recent.flatMap((e) => e.notes);
+  const withNotes = recent.filter((e) => e.notes.length > 0).length;
+  if (notes.length > 0 && withNotes / recent.length >= PALATE_RULES.notesShare) return { kind: 'notes', notes: mostCommon(notes).slice(0, 2) };
+  const nomadSlice = recent.slice(-PALATE_RULES.nomadWindow);
+  const places = new Set(nomadSlice.map((e) => placeKey(e)).filter((k): k is string => !!k));
+  if (places.size >= PALATE_RULES.nomadDistinctPlaces) return { kind: 'nomad', places: places.size, of: nomadSlice.length };
+  const method: Method = mostCommon(recent.map((e) => e.method))[0];
+  const ofMethod = recent.filter((e) => e.method === method);
+  const atHome = ofMethod.filter((e) => e.venueKind === 'home').length;
+  return { kind: 'method', method, home: method === 'filter' ? atHome * 2 >= ofMethod.length : null };
+}

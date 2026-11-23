@@ -25,6 +25,8 @@ export default function MatchScreen() {
   const mine = tasteProfile(entries, myType);
   const myCode = mine ? encodeProfile(mine) : null;
   const [input, setInput] = useState('');
+  // Hata yazının altında görünür (uyarı penceresi yerine)
+  const [err, setErr] = useState<string | null>(null);
   const [result, setResult] = useState<{ friend: TasteProfile; match: Match; code: string } | null>(null);
   const cardRef = useRef<CardHandle>(null);
   const [sharing, setSharing] = useState(false);
@@ -34,14 +36,15 @@ export default function MatchScreen() {
     const friend = decodeCode(input);
     if (!friend || !mine) {
       setResult(null); // eski sonuç ekranda kalıp yanıltmasın
-      Alert.alert(tr.match.invalid);
+      setErr(tr.match.invalid);
       return;
     }
     if (myCode && canonicalCode(input) === canonicalCode(myCode)) {
       setResult(null);
-      Alert.alert(tr.match.ownCode);
+      setErr(tr.match.ownCode);
       return;
     }
+    setErr(null);
     setResult({ friend, match: compatibility(mine, friend), code: input.toUpperCase() });
   }
 
@@ -93,7 +96,10 @@ export default function MatchScreen() {
           <TextInput
             value={input}
             // Arkadaşın gönderdiği mesajın tamamı yapıştırılırsa içindeki kod ayıklanır
-            onChangeText={(t) => setInput((t.length > 8 ? (extractCode(t) ?? t) : t).replace(/[İı]/g, '1').toUpperCase().slice(0, 7))}
+            onChangeText={(t) => {
+              setErr(null);
+              setInput((t.length > 8 ? (extractCode(t) ?? t) : t).replace(/[İı]/g, '1').toUpperCase().slice(0, 7));
+            }}
             accessibilityLabel={tr.match.friendCode}
             placeholder={tr.match.placeholder}
             placeholderTextColor={colors.muted}
@@ -101,8 +107,13 @@ export default function MatchScreen() {
             autoCorrect={false}
             returnKeyType="done"
             onSubmitEditing={find}
-            style={styles.input}
+            style={[styles.input, err ? { borderColor: colors.danger } : null]}
           />
+          {err ? (
+            <Text style={styles.err} accessibilityLiveRegion="polite" accessibilityRole="alert">
+              {err}
+            </Text>
+          ) : null}
           <PillButton label={tr.match.find} onPress={find} disabled={input.replace(/[\s-]/g, '').length < 6} style={{ marginTop: 12, height: 46 }} />
         </View>
       ) : null}
@@ -199,6 +210,7 @@ const styles = StyleSheet.create({
   sub: { ...type.subhead, marginTop: 6, lineHeight: 21 },
   box: { backgroundColor: colors.card, borderRadius: 20, padding: 18, marginTop: 18 },
   label: { ...type.footnote, fontWeight: '600' },
+  err: { ...type.footnote, color: colors.danger, marginTop: 6, fontWeight: '600' },
   codeNote: { ...type.footnote, marginTop: 6 },
   code: { fontSize: 40, fontFamily: fonts.heavy, color: colors.text, marginTop: 6, paddingRight: 6 },
   muted: { ...type.subhead, marginTop: 6 },

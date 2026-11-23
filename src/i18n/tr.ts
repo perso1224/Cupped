@@ -114,6 +114,7 @@ export const tr = {
       hour: 'Kahve saatin',
     },
     caffeineRef: (n: number) => `Günlük referans ~${n} mg · sağlık tavsiyesi değildir`,
+    caffeineOver: 'Bugün referansın üstündesin; bir sonrakini kafeinsiz düşünebilirsin.',
     cupsToday: 'Bugün içilen',
     lastCup: 'Son kahve',
     ago: (s: string) => `${s} önce`,
@@ -183,6 +184,7 @@ export const tr = {
     waterPlaceholder: 'ör. 250',
     waterLabel: 'Su (ml)',
     ratio: (r: string) => `Oran ${r}`,
+    ratioOdd: 'Bu oran alışılmışın dışında; gram ve mililitreyi kontrol eder misin?',
     grindLabel: 'Öğütme',
     grind: { fine: 'İnce', medium: 'Orta', coarse: 'Kalın' },
     noteLabel: 'Kişisel not',
@@ -191,12 +193,14 @@ export const tr = {
   },
   scoreHelp: {
     link: 'Skor nasıl hesaplanır?',
+    ok: 'Anladım',
+    oneLine: 'Yıldızlar beğenin, skor kahve yolculuğun.',
     title: 'Fincan Skoru',
     body:
       'Skor kahvenin tadını değil, kahve yolculuğunu ölçer. Kahveyi ne kadar beğendiğini yıldızlarla verirsin; yıldız skoru etkilemez.\n\n' +
       '• Taban: her fincan 40 puanla başlar.\n' +
       '• Emek: evde demleme +25, bağımsız kafe +15, zincir kafe ya da ofis +10.\n' +
-      '• Keşif: ilk kez gittiğin mekan +15, ilk kez denediğin yöntem +10. Uzun aradan sonra dönülen mekan ya da bu ay ilk kez kullanılan yöntem +5.\n' +
+      '• Keşif: ilk kez gittiğin mekan +15 (haftada en fazla 2 yeni mekan), ilk kez denediğin yöntem +10. Uzun aradan sonra dönülen mekan ya da bu ay ilk kez kullanılan yöntem +5.\n' +
       '• Derinlik: 2 tat notu +5, çekirdeğin menşei +5.\n\n' +
       'Sevdiğin kafeye tekrar gitmek seni cezalandırmaz; sadece keşif puanı gelmez. Seviyen her fincanla büyür.',
   },
@@ -221,6 +225,7 @@ export const tr = {
     newBadge: 'YENİ ROZET',
     deleteTitle: 'Bu fincan silinsin mi?',
     deleteBody: 'Fincan ve fotoğrafı telefonundan silinir. Bu geri alınamaz.',
+    deleteBodyNoPhoto: 'Fincan telefonundan silinir. Bu geri alınamaz.',
     deleteError: 'Silinemedi. Tekrar dener misin?',
     cancel: 'Vazgeç',
     details: 'Detaylar',
@@ -259,6 +264,7 @@ export const tr = {
     reminder: 'Günlük hatırlatma',
     reminderSub: 'Her gün 20:30, fincan eklemediysen. Günde en fazla 1 kez.',
     reminderDenied: 'Bildirim izni kapalı. Ayarlar > Bildirimler\'den açabilirsin.',
+    reminderOn: (t: string) => `Tamam! O gün fincan eklemediysen saat ${t} gibi hatırlatacağım.`,
     clubTitle: 'Cupped Kulüp · yakında',
     clubBody: 'Özel kart temaları, sezon rozetleri ve daha fazlası. Henüz satışta değil; sadece ilgini merak ediyoruz.',
     clubCta: 'İlgileniyorum',
@@ -378,6 +384,12 @@ export const tr = {
     bannerDone: (y: number) => `${y} Fincan Duvarın tamamlandı`,
     bannerDoneSub: 'Yılın tüm fincanları tek posterde. Aç ve paylaş.',
   },
+  palateReason: {
+    notes: (a: string, b?: string) => (b ? `Neden: en sık tat notların ${a} ve ${b}.` : `Neden: en sık tat notun ${a}.`),
+    nomad: (n: number, of: number) => `Neden: son ${of} fincanında ${n} farklı mekan.`,
+    method: (m: string, home: boolean | null) => `Neden: en sık yöntemin ${m}${home === true ? ', çoğu evde' : home === false ? ', çoğu dışarıda' : ''}.`,
+    settling: 'Son fincanların yeni bir tipe işaret ediyor; bir fincan daha aynı yöndeyse tipin değişir.',
+  },
   match: {
     title: 'Damak Uyumu',
     sub: 'Kodunu arkadaşına gönder, onun kodunu buraya yaz; uyumunuzu görün. Kod yalnızca zevk özetini taşır, adını ya da fincanlarını değil.',
@@ -458,7 +470,7 @@ export const tr = {
     cupsUnit: 'fincan',
     cupsFact: (ml: number) => (ml >= 1000 ? `≈ ${(ml / 1000).toFixed(1).replace('.', ',')} litre kahve.` : `≈ ${ml} ml kahve.`),
     methodTitle: 'En sadık olduğun yöntem',
-    methodFact: (count: number, pct: number) => `${count} fincan · payı %${pct}`,
+    methodFact: (count: number, pct: number) => `${count} fincan (toplamda %${pct})`,
     placeTitle: 'En çok uğradığın yer',
     placeFact: (n: number) =>
       n >= 3 ? `${n} ziyaret. Barista seni tanıyor olabilir.` : n === 2 ? '2 ziyaret. Burada bir şey var.' : 'Bir kez uğradın; ilk izlenim önemli.',
@@ -511,7 +523,7 @@ export const tr = {
     nickPlaceholder: 'Takma ad',
     revealKicker: 'Başlangıç damak tipin',
     revealNote: 'Bu bir tahmin. Gerçek damak tipin fincan ekledikçe ortaya çıkacak.',
-    finish: 'Hadi, ilk fincan',
+    finish: 'Hadi, ilk fincanını ekle',
   },
   settings: {
     appearance: 'Görünüm',
@@ -526,6 +538,7 @@ export const tr = {
     cancel: 'Vazgeç',
     profile: 'Profil',
     nickname: 'Takma ad',
+    nickAdd: 'Ekle…',
     goal: 'Damak hedefi',
     notifications: 'Bildirimler',
     reminderTime: 'Hatırlatma saati',

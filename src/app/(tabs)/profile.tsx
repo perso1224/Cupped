@@ -8,7 +8,7 @@ import { ListRow, ListSection } from '../../components/List';
 import { CountUp } from '../../components/motion';
 import { Card, PillButton } from '../../components/ui';
 import { tr } from '../../i18n/tr';
-import { getPalateType } from '../../lib/palate';
+import { getPalateType, palateReason } from '../../lib/palate';
 import { badgeProgress, profileSummary } from '../../lib/progress';
 import { levelProgress } from '../../lib/home';
 import { updateMetrics } from '../../lib/storage';
@@ -24,6 +24,17 @@ export default function Profile() {
   const tabSpace = useTabBarSpace();
   const scrollRef = useTabScrollRef();
   const entries = useEntries() ?? [];
+  // Damak tipinin tek satırlık gerekçesi ("Neden: en sık yöntemin Espresso.")
+  const reason = palateReason(entries);
+  const reasonText = !reason
+    ? null
+    : reason.kind === 'notes'
+      ? tr.palateReason.notes(tr.notes[reason.notes[0]], reason.notes[1] ? tr.notes[reason.notes[1]] : undefined)
+      : reason.kind === 'nomad'
+        ? tr.palateReason.nomad(reason.places, reason.of)
+        : reason.kind === 'method'
+          ? tr.palateReason.method(tr.methods[reason.method], reason.home)
+          : tr.palateReason.settling;
   const [metrics, reloadMetrics] = useMetrics();
   const profile = useProfile();
 
@@ -88,9 +99,9 @@ export default function Profile() {
           <Text style={styles.cardTitle}>{!palateTypeId ? tr.profile.starter : entries.length < 5 ? tr.home.palateGuess(entries.length) : tr.home.palateType}</Text>
           <Text style={styles.typeName}>{type_.name}</Text>
           <Text style={styles.tagline}>{type_.tagline}</Text>
+          {reasonText ? <Text style={styles.reason}>{reasonText}</Text> : null}
           <View style={styles.metaRow}>
             {level ? <Meta icon="podium" text={`${tr.result.level}: ${level.level}`} /> : null}
-            {profile ? <Meta icon="flag" text={`${tr.profile.goal}: ${tr.onboarding.goal[profile.goal]}`} /> : null}
           </View>
         </Card>
       ) : null}
@@ -142,6 +153,7 @@ function Meta({ icon, text }: { icon: 'podium' | 'flag'; text: string }) {
 }
 
 const styles = StyleSheet.create({
+  reason: { ...type.footnote, color: colors.accentText, marginTop: 8, fontWeight: '600' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   largeTitle: { ...type.largeTitle },
   gear: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },

@@ -66,6 +66,7 @@ export default function SettingsScreen() {
   async function toggleReminder(v: boolean) {
     const ok = await setReminderEnabled(v);
     if (v && !ok) Alert.alert(tr.profile.reminderDenied);
+    else if (v) Alert.alert(tr.profile.reminderOn(timeLabel(settings.reminderHour, settings.reminderMinute)));
     reloadMetrics();
   }
 
@@ -126,8 +127,11 @@ export default function SettingsScreen() {
               value={nickValue}
               onChangeText={setNick}
               onEndEditing={saveNick}
+              onSubmitEditing={saveNick}
+              maxLength={24}
               accessibilityLabel={tr.settings.nickname}
-              placeholder={tr.onboarding.nickPlaceholder}
+              // Başlıkla aynı yazı ("Takma ad") dolu bir değer gibi görünüyordu
+              placeholder={tr.settings.nickAdd}
               placeholderTextColor={colors.muted}
               autoCapitalize="none"
               returnKeyType="done"
@@ -147,6 +151,7 @@ export default function SettingsScreen() {
               tr.settings.goal,
               GOALS.map((g) => ({ label: tr.onboarding.goal[g], value: g })),
               (g) => saveProfile({ ...profile, goal: g }),
+              profile.goal,
             )
           }
         />
@@ -161,14 +166,18 @@ export default function SettingsScreen() {
           value={timeLabel(settings.reminderHour, settings.reminderMinute)}
           chevron
           onPress={() =>
-            choose(
-              tr.settings.reminderTime,
-              REMINDER_TIMES.map(([h, m]) => ({ label: timeLabel(h, m), value: [h, m] as const })),
-              async ([h, m]) => {
-                await updateSettings({ reminderHour: h, reminderMinute: m });
-                refreshReminder();
-              },
-            )
+            {
+              const opts = REMINDER_TIMES.map(([h, m]) => ({ label: timeLabel(h, m), value: [h, m] as const }));
+              choose(
+                tr.settings.reminderTime,
+                opts,
+                async ([h, m]) => {
+                  await updateSettings({ reminderHour: h, reminderMinute: m });
+                  refreshReminder();
+                },
+                opts.find((o) => o.value[0] === settings.reminderHour && o.value[1] === settings.reminderMinute)?.value,
+              );
+            }
           }
         />
       </ListSection>
@@ -194,6 +203,7 @@ export default function SettingsScreen() {
                   .then(() => Updates.reloadAsync())
                   .catch(() => Alert.alert(tr.settings.themeRestart));
               },
+              themePref,
             )
           }
         />
@@ -217,6 +227,7 @@ export default function SettingsScreen() {
               tr.settings.caffeineRef,
               CAFFEINE_REFS.map((v) => ({ label: `${v} mg`, value: v })),
               (v) => updateSettings({ caffeineRef: v }),
+              settings.caffeineRef,
             )
           }
         />

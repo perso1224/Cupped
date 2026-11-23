@@ -17,6 +17,7 @@ import { insights } from '../../lib/insights';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
 import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, wallBanner, weekDots, weekStrip, longestStreak, noteShares, favorites } from '../../lib/progress';
 import { setReminderEnabled } from '../../lib/reminders';
+import { timeLabel } from '../../lib/settings';
 import { partsSummary } from '../../lib/scoring';
 import { exportAllData, updateMetrics } from '../../lib/storage';
 import { shareFile } from '../../lib/share';
@@ -111,6 +112,7 @@ export default function Home() {
     if (yes) {
       const ok = await setReminderEnabled(true);
       if (!ok) Alert.alert(tr.profile.reminderDenied);
+      else Alert.alert(tr.profile.reminderOn(timeLabel(settings.reminderHour, settings.reminderMinute)));
     } else {
       await updateMetrics((m) => {
         m.reminderEnabled = false;
@@ -175,6 +177,7 @@ export default function Home() {
           ]}
         />
       </View>
+      {over ? <Text style={[styles.boardSub, { color: tint.cherry, fontWeight: '700' }]}>{tr.home.caffeineOver}</Text> : null}
       <Text style={styles.boardSub}>{tr.home.caffeineRef(settings.caffeineRef)}</Text>
       {/* Gün çizgisi: bugünkü kahveler saatine göre (06:00–24:00) */}
       <View style={styles.timeline}>

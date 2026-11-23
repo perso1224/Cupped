@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PALATE_TYPES } from '../config/scoring.config';
-import { computePalateTypeId, rawPalateTypeId, getPalateType } from './palate';
+import { computePalateTypeId, rawPalateTypeId, getPalateType, palateReason } from './palate';
 import type { CupEntry } from './types';
 
 let n = 0;
@@ -89,5 +89,16 @@ describe('Damak Tipi kararlılığı', () => {
     ];
     expect(computePalateTypeId(cups)).toBe('pourover_philosopher'); // profil: son 10 fincan
     expect(computePalateTypeId(cups, { wholePeriod: true })).toBe('oat_milk_diplomat'); // Özet: tüm dönem
+  });
+});
+
+describe('damak tipi gerekçesi', () => {
+  it('yönteme göre tipte en sık yöntemi söyler', () => {
+    const at = (i: number) => new Date(2026, 9, 1 + i, 9).toISOString();
+    const cups = Array.from({ length: 4 }, (_, i) => cup({ method: 'espresso', createdAt: at(i) }));
+    expect(palateReason(cups)).toEqual({ kind: 'method', method: 'espresso', home: null });
+  });
+  it('fincan yoksa gerekçe yok', () => {
+    expect(palateReason([])).toBeNull();
   });
 });

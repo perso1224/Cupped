@@ -298,11 +298,12 @@ export default function Wrapped() {
             <Icon name="chevron-back" size={22} color="#FAF8F5" />
           </PressScale>
         ) : null}
-        <PressScale onPress={close} scaleTo={0.95} style={[styles.closeBtn, isLast && finished && styles.finishBtn]}>
-          <Text style={[styles.closeBtnText, isLast && finished && { color: '#111' }]}>
-            {isLast && finished ? tr.wrapped.finish : tr.wrapped.close}
-          </Text>
-        </PressScale>
+        {/* Kapatmak için sağ üstte ✕ var; altta yalnızca son slaytta "Bitti" */}
+        {isLast && finished ? (
+          <PressScale onPress={close} scaleTo={0.95} style={[styles.closeBtn, styles.finishBtn]}>
+            <Text style={[styles.closeBtnText, { color: '#111' }]}>{tr.wrapped.finish}</Text>
+          </PressScale>
+        ) : null}
         {/* iPhone iOS 26+: Liquid Glass kapsül (yazı slayt renginde); diğerlerinde açık renk kapsül */}
         <PressScale onPress={share} scaleTo={0.95} style={[styles.shareBtn, GLASS && styles.shareClear]}>
           {GLASS ? <GlassSurface style={styles.glassFill} interactive /> : null}
@@ -574,7 +575,7 @@ const styles = StyleSheet.create({
   bar: { flex: 1, height: 3, borderRadius: 2, overflow: 'hidden' },
   close: { position: 'absolute', top: 22, right: 12 },
   hint: { color: '#CFC8BE', fontSize: 12, textAlign: 'center', marginTop: 6 },
-  bottomRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 12, paddingHorizontal: 16 },
+  bottomRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 12, paddingHorizontal: 24 },
   closeBtn: {
     borderRadius: 999,
     paddingHorizontal: 24,
@@ -582,7 +583,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: '#FAF8F5',
-    marginRight: 10,
+    marginRight: 0,
   },
   finishBtn: { backgroundColor: '#D98B2B', borderColor: '#D98B2B' },
   closeBtnText: { fontSize: 16, fontWeight: '800', color: '#FAF8F5' },

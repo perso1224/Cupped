@@ -23,7 +23,8 @@ export default function Progress() {
   const scrollRef = useTabScrollRef();
   const entries = useEntries() ?? [];
   const [kind, setKind] = useState<'week' | 'month'>('week');
-  const [range, setRange] = useState<TrendRange>('3m');
+  // Yeni kullanıcıda (ilk fincan bir aydan yeniyse) grafik son 1 ayla açılır; 3 ayda boş görünmesin
+  const [picked, setRange] = useState<TrendRange | null>(null);
 
   const now = new Date();
   const ws = startOfWeek(now);
@@ -41,6 +42,9 @@ export default function Progress() {
   const level = levelProgress(entries);
   const streak = currentStreak(entries, now);
   const dots = weekDots(entries, now);
+  const firstAt = entries.length ? entries.reduce((m, e) => (e.createdAt < m ? e.createdAt : m), entries[0].createdAt) : null;
+  const isNew = !firstAt || now.getTime() - Date.parse(firstAt) < 31 * 86400000;
+  const range: TrendRange = picked ?? (isNew ? '1m' : '3m');
   const trend = scoreTrend(entries, range, now);
   const trendAvg = trend.points.length ? Math.round(trend.points.reduce((s, p) => s + p.avg, 0) / trend.points.length) : 0;
   const trendMsg =
