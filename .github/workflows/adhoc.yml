@@ -11,15 +11,9 @@ on:
     paths: ['.github/workflows/adhoc.yml']
   workflow_dispatch:
 
-concurrency:
-  group: updates-branch
-  cancel-in-progress: false
-
 jobs:
   adhoc:
     runs-on: macos-latest
-    permissions:
-      contents: write
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     steps:
@@ -44,6 +38,27 @@ jobs:
           npx eas-cli@latest build --platform ios --profile adhoc --local --non-interactive \
             --refresh-ad-hoc-provisioning-profile --output "$RUNNER_TEMP/cupped-adhoc.ipa"
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cupped-adhoc
+          path: ${{ runner.temp }}/cupped-adhoc.ipa
+          retention-days: 3
+
+  # Dosyayı `updates` dalına koyan kısa iş (Linux). Sıra kilidi sadece burada: derleme sürerken anlık güncellemeler beklemesin.
+  publish:
+    needs: adhoc
+    runs-on: ubuntu-latest
+    concurrency:
+      group: updates-branch
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: cupped-adhoc
+          path: ${{ runner.temp }}
       - name: Kurulum dosyasını GitHub'a koy (updates dalı, adhoc/)
         env:
           GH_TOKEN: ${{ github.token }}
