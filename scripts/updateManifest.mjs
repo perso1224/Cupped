@@ -5,8 +5,8 @@
 //
 // Kullanım: node scripts/updateManifest.mjs <dist> <çıktı klasörü> <kanal> <runtimeVersion> <dosya tabanı URL> [expoConfig.json]
 import { createHash, randomUUID } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 
 const MIME = {
   png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp',
@@ -53,7 +53,40 @@ export function buildPlatformManifest({ platformMeta, readFile, runtimeVersion, 
   return { manifest, files };
 }
 
+/** Klasördeki tüm manifest dosyaları (manifest.json ve bir önceki: manifest.prev.json). */
+export function listManifests(dir) {
+  const out = [];
+  const walk = (d) => {
+    for (const n of readdirSync(d)) {
+      if (n === 'assets' || n === '.git') continue;
+      const p = join(d, n);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (n === 'manifest.json' || n === 'manifest.prev.json') out.push(p);
+    }
+  };
+  if (existsSync(dir)) walk(dir);
+  return out;
+}
+
+/** Hiçbir manifestin (şimdiki ya da bir önceki) kullanmadığı dosyaları siler; depo büyümesin. */
+export function pruneAssets(dir) {
+  const used = new Set();
+  for (const m of listManifests(dir)) {
+    const j = JSON.parse(readFileSync(m, 'utf8'));
+    for (const a of [j.launchAsset, ...(j.assets ?? [])]) used.add(basename(new URL(a.url).pathname));
+  }
+  const assetsDir = join(dir, 'assets');
+  let removed = 0;
+  if (existsSync(assetsDir)) for (const f of readdirSync(assetsDir)) if (!used.has(f)) { rmSync(join(assetsDir, f)); removed += 1; }
+  return { kept: used.size, removed };
+}
+
 function main() {
+  if (process.argv[2] === 'prune') {
+    const r = pruneAssets(process.argv[3]);
+    console.log(`kullanılan ${r.kept} dosya, silinen ${r.removed}`);
+    return;
+  }
   const [dist, out, channel, runtimeVersion, baseUrl, expoConfigPath] = process.argv.slice(2);
   if (!dist || !out || !channel || !runtimeVersion || !baseUrl) {
     console.error('Kullanım: node scripts/updateManifest.mjs <dist> <çıktı> <kanal> <runtimeVersion> <dosya tabanı URL> [expoConfig.json]');
@@ -76,6 +109,8 @@ function main() {
     for (const f of files) copyFileSync(join(dist, f.src), join(out, 'assets', f.name));
     const dir = join(out, channel, runtimeVersion, platform);
     mkdirSync(dir, { recursive: true });
+    // Bir önceki güncelleme saklanır: indirme ortasındaki telefonların dosyaları hemen silinmesin
+    if (existsSync(join(dir, 'manifest.json'))) renameSync(join(dir, 'manifest.json'), join(dir, 'manifest.prev.json'));
     writeFileSync(join(dir, 'manifest.json'), JSON.stringify(manifest));
     console.log(`${platform}: ${manifest.id} · ${files.length} dosya`);
   }

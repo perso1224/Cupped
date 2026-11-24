@@ -226,3 +226,11 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - The owner set the repo variable IOS_BUILDER=github-mac.
   - The first GitHub Mac build (run 45350999630) succeeded: `eas build --local` took 26 minutes, then `eas submit --path` reached "Submitted your app to Apple App Store Connect!" in 15 seconds (no EAS queue). Tag ios-fp-65e9ba5e… was pushed.
   - Builds no longer use the EAS cloud. EAS is still used for credentials storage, the submit service and OTA.
+- 24 Nov: own OTA update server in progress (owner wants off EAS Update).
+  - expo-updates needs the `expo-protocol-version` response header (verified in the native code), so GitHub Pages alone can't do it.
+  - Design: `updates` branch on GitHub (single orphan commit, force-pushed, stores manifests + assets; files served from raw.githubusercontent.com) plus a Cloudflare Worker (`updates-server/worker.js`) that reads the manifest and adds protocol headers. Requests that already have the update get a 204.
+  - `scripts/updateManifest.mjs` builds manifests from `expo export` output (sha256 base64url hash, md5 key) and prunes unused files, keeping manifest.prev.json assets.
+  - Workflows: updates-server.yml deploys the Worker (wrangler 4.158.0; secrets CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID were added by the owner). expo-update.yml now also publishes the preview channel to the `updates` branch.
+  - Cloudflare subdomain: beratyapar4.workers.dev → https://cupped-updates.beratyapar4.workers.dev.
+  - NOT yet switched: app.json updates.url still points to u.expo.dev. Next: verify the worker → change updates.url (+ requestHeaders) → native build → test on the device → stop EAS publishing.
+  - The owner pasted a Cloudflare token in chat once and rolled it afterwards.

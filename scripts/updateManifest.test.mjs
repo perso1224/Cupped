@@ -40,3 +40,22 @@ describe('güncelleme manifesti', () => {
     expect(safeName('a/b')).toBe(false);
   });
 });
+
+describe('eski dosyaların temizliği', () => {
+  it('şimdiki ve bir önceki manifestin dosyaları kalır, gerisi silinir', async () => {
+    const { mkdtempSync, mkdirSync, writeFileSync, existsSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { tmpdir } = await import('node:os');
+    const { pruneAssets } = await import('./updateManifest.mjs');
+    const d = mkdtempSync(join(tmpdir(), 'upd-'));
+    mkdirSync(join(d, 'assets'));
+    for (const f of ['a.bundle', 'b.png', 'old.bundle']) writeFileSync(join(d, 'assets', f), 'x');
+    const m = (files) => JSON.stringify({ launchAsset: { url: `https://r/assets/${files[0]}` }, assets: files.slice(1).map((f) => ({ url: `https://r/assets/${f}` })) });
+    mkdirSync(join(d, 'preview/1.0.0/ios'), { recursive: true });
+    writeFileSync(join(d, 'preview/1.0.0/ios/manifest.json'), m(['a.bundle', 'b.png']));
+    writeFileSync(join(d, 'preview/1.0.0/ios/manifest.prev.json'), m(['b.png']));
+    expect(pruneAssets(d)).toEqual({ kept: 2, removed: 1 });
+    expect(existsSync(join(d, 'assets/old.bundle'))).toBe(false);
+    expect(existsSync(join(d, 'assets/a.bundle'))).toBe(true);
+  });
+});

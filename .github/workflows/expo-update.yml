@@ -31,6 +31,8 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       build: ${{ steps.native.outputs.build }}
       fp: ${{ steps.native.outputs.fp }}
@@ -89,6 +91,36 @@ jobs:
 
       - name: Yayınla
         run: npx eas-cli@latest update --branch preview --message "$COMMIT_MESSAGE" --platform all --environment preview --non-interactive
+
+      # Kendi güncelleme sunucumuz: paket GitHub'daki `updates` dalına konur (tek commit, geçmiş tutulmaz),
+      # Cloudflare'deki sunucu (updates-server/) telefonlara oradan verir. Geçiş süresince Expo'ya da yayınlanıyor.
+      - name: Kendi güncelleme sunucumuza yayınla (GitHub `updates` dalı)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          W="$RUNNER_TEMP/upd"
+          RV=$(node -p "require('./app.json').expo.version")
+          CI=1 npx expo export --platform ios --platform android --output-dir "$RUNNER_TEMP/dist-upd"
+          npx expo config --type public --json > "$RUNNER_TEMP/expo-config.json"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads origin updates >/dev/null 2>&1; then
+            git clone --quiet --depth 1 --branch updates "$REMOTE" "$W"
+          else
+            mkdir -p "$W" && git -C "$W" init -q -b updates && git -C "$W" remote add origin "$REMOTE"
+          fi
+          node scripts/updateManifest.mjs "$RUNNER_TEMP/dist-upd" "$W" preview "$RV" \
+            "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/updates" "$RUNNER_TEMP/expo-config.json"
+          node scripts/updateManifest.mjs prune "$W"
+          cd "$W"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Tek commit: eski güncellemeler depoda birikmesin
+          git checkout -q --orphan fresh
+          git add -A
+          git commit -qm "Güncelleme: preview / $RV / ${GITHUB_SHA::7}"
+          git push -q -f origin HEAD:updates
+          echo "::notice::Kendi sunucumuza yayınlandı (preview, runtime $RV)."
 
   # Yeni iOS derlemesi: varsayılan Expo bulutu; IOS_BUILDER=github-mac ise GitHub Mac sunucusu.
   ios-build:
