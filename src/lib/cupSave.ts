@@ -72,12 +72,16 @@ export type CreateResult =
   | { ok: true; id: string; badges: string; evolvedFrom?: string; evolvedTo?: string }
   | { ok: false };
 
+/** Teşhis: kaydın şu an hangi adımda olduğu (takılırsa ekranda gösterilir). */
+export const saveStage = { current: 'başlamadı' };
+
 /** Yeni fincanı kaydeder. Başarısızsa kopyalanan fotoğraf silinir ve { ok: false } döner (fırlatmaz). */
 export async function createCup(f: CupForm): Promise<CreateResult> {
   let photoUri: string | null = null;
   let saved = false;
   try {
     // Geçmişi kaydetme anında taze oku: ekran açılır açılmaz kaydedilirse yanlış "keşif" puanı verilmesin.
+    saveStage.current = 'geçmiş okunuyor';
     const history = await loadEntries();
     const id = newId();
     const input = cupInput(f);
@@ -87,6 +91,7 @@ export async function createCup(f: CupForm): Promise<CreateResult> {
     const { total, parts } = scoreCup(input, earlier, createdAt);
     const palateTypeId = computePalateTypeId([...earlier, { ...input, createdAt }]);
     if (f.photo) {
+      saveStage.current = 'fotoğraf kaydediliyor';
       try {
         photoUri = await persistPhoto(f.photo, id, { width: f.photoWidth });
       } catch {
@@ -107,8 +112,10 @@ export async function createCup(f: CupForm): Promise<CreateResult> {
       parts,
       palateTypeId,
     };
+    saveStage.current = 'fincan yazılıyor';
     await saveEntry(newEntry);
     saved = true;
+    saveStage.current = 'rozetler';
 
     const metrics = await loadMetrics();
     // Bu fincanla yeni kazanılan rozetler (sonuç ekranında kutlanır). Daha önce kutlananlar tekrar kutlanmaz.

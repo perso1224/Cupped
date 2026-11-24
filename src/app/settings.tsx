@@ -37,6 +37,14 @@ function confirm(title: string, body: string, ok: string, onOk: () => void) {
 /** Gizli deneme bölümü bu açılışta açıldı mı (ekrandan çıkıp girince kapanmasın). */
 let betaUnlocked = false;
 
+/** Sürüm + yüklü anlık güncellemenin tarihi (hangi güncellemenin telefonda olduğu görülsün). */
+function versionLabel(): string {
+  const v = Constants.expoConfig?.version ?? '1.0.0';
+  const at = Updates.isEmbeddedLaunch ? null : Updates.createdAt;
+  if (!at) return `${v} · ${tr.settings.updateEmbedded}`;
+  return `${v} · ${at.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} ${at.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const [beta, setBeta] = useState(betaUnlocked);
@@ -255,7 +263,7 @@ export default function SettingsScreen() {
           icon="information-circle"
           tint={tint.slate}
           title={tr.settings.version}
-          value={Constants.expoConfig?.version ?? '1.0.0'}
+          value={versionLabel()}
           onPress={() => {
             versionTaps.current += 1;
             // Mağaza sürümünde deneme bölümü hiç açılmaz

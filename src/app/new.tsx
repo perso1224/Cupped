@@ -33,7 +33,7 @@ import { placeNameKey } from '../lib/scoring';
 import { getEntry, knownPlaces, loadEntries, photoUrl, updateMetrics } from '../lib/storage';
 import { brewRatio, dayKey } from '../lib/progress';
 import { whenToDate, type When } from '../lib/when';
-import { createCup, editCup, parseNum, type Where } from '../lib/cupSave';
+import { createCup, editCup, parseNum, saveStage, type Where } from '../lib/cupSave';
 import { checkCoffeePhoto, coffeeCheckAvailable } from '../lib/coffeeCheckRunner';
 import { safely } from '../lib/safe';
 import { useProfile } from '../lib/useProfile';
@@ -323,7 +323,10 @@ export default function NewCup() {
     if (!method || !where || savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
+    // Teşhis: kayıt 20 sn'de bitmezse hangi adımda takıldığı gösterilir (ilk gerçek cihaz denemesinde bir kez takıldı)
+    const slow = setTimeout(() => Alert.alert(tr.capture.saveSlow, saveStage.current), 20000);
     const r = await createCup(form(method, where));
+    clearTimeout(slow);
     savingRef.current = false;
     setSaving(false);
     if (!r.ok) {
