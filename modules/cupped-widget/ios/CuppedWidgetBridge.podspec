@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name           = 'CuppedWidget'
+  s.name           = 'CuppedWidgetBridge'
   s.version        = '1.0.0'
   s.summary        = 'Cupped ana ekran widget verisi'
   s.description    = 'Uygulamanın widget için hazırladığı özeti ortak alana (App Group) yazar.'
