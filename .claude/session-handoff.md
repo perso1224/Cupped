@@ -222,3 +222,7 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - 23 Nov 20:52: the new CI/CD was verified end to end. A Claude-dispatched run (expo-update.yml, ios_build=true, IOS_BUILDER default eas) produced EAS build 1.0.0 (3) (id b3361f35-…).
   - The build itself took about 6 minutes. The EAS submission queue took about 35 minutes.
   - Log: "Submitted your app to Apple App Store Connect!" The owner got the ASC notification.
+- 24 Nov morning: the GitHub macOS runner works now. `macos-latest` gets a runner instantly; `macos-15` stayed queued.
+  - The owner set the repo variable IOS_BUILDER=github-mac.
+  - The first GitHub Mac build (run 45350999630) succeeded: `eas build --local` took 26 minutes, then `eas submit --path` reached "Submitted your app to Apple App Store Connect!" in 15 seconds (no EAS queue). Tag ios-fp-65e9ba5e… was pushed.
+  - Builds no longer use the EAS cloud. EAS is still used for credentials storage, the submit service and OTA.
