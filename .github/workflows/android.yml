@@ -38,7 +38,7 @@ jobs:
       - name: Android projesini oluştur
         run: CI=1 npx expo prebuild --platform android --no-install
 
-      - name: APK derle (yalnızca 64-bit ARM: bugünkü telefonların hepsi, dosya küçük kalır)
+      - name: APK derle (yalnızca 64-bit ARM, bugünkü telefonların hepsi; dosya küçük kalır)
         working-directory: android
         run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
 
