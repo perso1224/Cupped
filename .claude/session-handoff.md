@@ -264,3 +264,5 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 
 ## 24 Kas — açılış temadan bağımsız
 - Splash (app.json) ve BrandIntro artık her modda turuncu #D98B2B + koyu mürekkep; splash görselsiz, hazır olunca hideAsync → aynı karede intro. Android splash cihazda test edilmedi.
+- Geri/kapat düğmeleri sabit: NavButtons'a FloatingBack/BackSpacer/FloatingClose eklendi; settings, stats, history, match, privacy, new (form) kullanıyor. Koleksiyon ve CupDetail zaten sabitti.
+- Görsel tanıma incelemesi (scratchpad eval, skimage örnekleri): EfficientNet-Lite0 int8 (5.4 MB, 1000 sınıf → indeks −1) kahve olasılığıyla temiz ayırıyor (kahve ≥0.13, diğerleri ≤0.01); şimdiki v1 "uzaktan kahve"yi kaçırıyor. Öneri: Lite0 + kural "kahve olasılığı < ~0.05 → uyarı", sahibin gerçek fotoğraflarıyla ayarlanacak. Sahip onayı bekleniyor.

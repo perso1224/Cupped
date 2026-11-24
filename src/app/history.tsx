@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { Fragment, useMemo } from 'react';
-import { BackButton } from '../components/NavButtons';
+import { BackSpacer, FloatingBack } from '../components/NavButtons';
 import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../components/CupRow';
@@ -38,6 +38,7 @@ export default function History() {
 
   return (
     // Uzun geçmişte sadece ekranda görünen günler çizilir (yüzlerce fincanda da akıcı kalsın)
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <FlatList
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 40 }}
@@ -49,7 +50,7 @@ export default function History() {
       removeClippedSubviews={Platform.OS === 'android'}
       ListHeaderComponent={
         <>
-          <BackButton label={tr.settings.back} />
+          <BackSpacer />
           <Text accessibilityRole="header" style={styles.title}>{heading}</Text>
           {filtered && list.length ? <Text style={styles.summary}>{tr.history.filterSummary(list.length, avg)}</Text> : null}
           {entries && list.length === 0 ? <EmptyState title={tr.history.empty} body={filtered ? undefined : tr.history.emptyBody} cta={!filtered} /> : null}
@@ -69,6 +70,8 @@ export default function History() {
         </FadeIn>
       )}
     />
+    <FloatingBack label={tr.settings.back} />
+    </View>
   );
 }
 

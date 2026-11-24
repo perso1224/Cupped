@@ -23,7 +23,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../components/Icon';
-import { CloseButton, goBack } from '../components/NavButtons';
+import { CLOSE_SIZE, CloseButton, FloatingClose, goBack } from '../components/NavButtons';
 import { OriginPicker } from '../components/OriginPicker';
 import { StarInput } from '../components/Stars';
 import { FadeIn, Pop, PressScale, animateLayout, haptic, reduceMotionNow } from '../components/motion';
@@ -443,7 +443,8 @@ export default function NewCup() {
         automaticallyAdjustKeyboardInsets
       >
         <View style={styles.topRow}>
-          <CloseButton onPress={closeNew} />
+          {/* Kapat düğmesi aşağıda sabit (sayfayla birlikte kaybolmasın); burada yalnızca yeri */}
+          <View style={{ width: CLOSE_SIZE, height: CLOSE_SIZE }} />
           <PressScale onPress={() => setStep('photo')} hitSlop={12} scaleTo={0.95} accessibilityLabel={photo ? tr.capture.retake : tr.capture.addPhoto}>
             {photo ? (
               <Image source={{ uri: photo }} style={styles.preview} />
@@ -666,6 +667,7 @@ export default function NewCup() {
           </FadeIn>
         ) : null}
       </ScrollView>
+      <FloatingClose onPress={closeNew} top={insets.top + 12} left={20} />
       </FadeIn>
 
       {kbOpen ? null : (

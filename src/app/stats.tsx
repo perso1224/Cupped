@@ -1,5 +1,5 @@
 import { Redirect } from 'expo-router';
-import { BackButton } from '../components/NavButtons';
+import { BackSpacer, FloatingBack } from '../components/NavButtons';
 import { IS_STORE_BUILD } from '../lib/build';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,8 +46,9 @@ function StatsScreen() {
   const s = computeStats(metrics, entries, profile?.onboardedAt ?? null);
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 40 }}>
-      <BackButton label={tr.settings.title} />
+      <BackSpacer />
       <Text accessibilityRole="header" style={styles.title}>{tr.stats.title}</Text>
       <Text style={styles.intro}>{tr.stats.intro}</Text>
 
@@ -81,6 +82,8 @@ function StatsScreen() {
         <ListRow title={tr.stats.redo} destructive onPress={redo} />
       </ListSection>
     </ScrollView>
+    <FloatingBack label={tr.settings.title} />
+    </View>
   );
 }
 

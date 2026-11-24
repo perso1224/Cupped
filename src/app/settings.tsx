@@ -1,10 +1,10 @@
 import Constants from 'expo-constants';
-import { BackButton } from '../components/NavButtons';
+import { BackSpacer, FloatingBack } from '../components/NavButtons';
 import { File } from 'expo-file-system';
 import { router } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChoice } from '../components/ChoiceSheet';
 import { ListRow, ListSection } from '../components/List';
@@ -117,12 +117,13 @@ export default function SettingsScreen() {
   }
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: 16, paddingBottom: insets.bottom + 40 }}
       keyboardShouldPersistTaps="handled"
     >
-      <BackButton label={tr.profile.title} />
+      <BackSpacer />
       <Text accessibilityRole="header" style={styles.title}>{tr.settings.title}</Text>
 
       <ListSection title={tr.settings.profile}>
@@ -280,8 +281,10 @@ export default function SettingsScreen() {
       </ListSection>
 
       <Text style={styles.signature}>{tr.settings.signature}</Text>
-      {choiceSheet}
     </ScrollView>
+    {choiceSheet}
+    <FloatingBack label={tr.profile.title} left={16} />
+    </View>
   );
 }
 
