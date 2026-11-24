@@ -248,3 +248,9 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - adhoc.yml builds on macos-latest with `--refresh-ad-hoc-provisioning-profile` (non-interactive; uses the EAS-stored ASC key) and puts adhoc/cupped.ipa + info.json on the `updates` branch.
   - The Worker serves /install (itms-services page) and /install/manifest.plist.
   - Workflows writing to the updates branch share the concurrency group `updates-branch`.
+- 24 Nov ~13:00: FIRST REAL-DEVICE RUN of a standalone build: Ad Hoc 1.0.0 (5) on the owner's iPhone.
+  - Built on the EAS cloud (GitHub macOS runners unavailable midday). scripts/setupAdhocCredentials.mjs created the AD_HOC build credentials from the APP_STORE dist cert; eas.json adhoc has enterpriseProvisioning=adhoc.
+  - Install worked via /install. iOS asked for Developer Mode.
+  - The coffee check works on the device ("Bu kahveye benzemiyor" for a plate photo; no warning for a flat surface, as designed).
+  - The first save attempt didn't respond ("Skoru gör" did nothing); after an app restart, saving worked. Cause unknown — watch for it.
+  - Not yet confirmed: OTA from our own server on the device.
