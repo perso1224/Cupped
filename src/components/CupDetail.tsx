@@ -60,7 +60,6 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
   // fotoğraf değiştiyse yeni fotoğraf yüklenene kadar paylaşımı kilitle.
   const shown = useRef<string | null>(null);
   const unlockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [scrollY] = useState(() => new Animated.Value(0));
   const [helpOpen, setHelpOpen] = useState(false);
   useFocusEffect(
     useCallback(() => {
@@ -152,7 +151,6 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
   const cardWidth = Math.min(width - layout.screenPad * 2, 420);
   const photo = photoUrl(entry.photoUri);
   const heroH = photo ? Math.min(Math.round(width * 0.92), 440) : 190;
-  const barH = (mode === 'detail' ? insets.top : 0) + 68;
   const shareReady = !sharing && animDone && imageDone;
   const when = new Date(entry.createdAt).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const place = placeLabel(entry);
@@ -165,19 +163,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, overflow: 'hidden' }}>
-      {/* Üst çubuk ve düğmeler ağaçta önce: ekran okuyucu önce Geri/Paylaş'ı okusun (zIndex ile üstte çizilir) */}
-      {/* Fotoğraf kaydırılıp geçince üstte ince bir zemin belirir: daire düğmeler yazının üstüne binmesin */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.topShade,
-          {
-            height: barH,
-            opacity: scrollY.interpolate({ inputRange: [heroH - barH - 40, heroH - barH], outputRange: [0, 1], extrapolate: 'clamp' }),
-          },
-        ]}
-      />
-
+      {/* Düğmeler ağaçta önce: ekran okuyucu önce Geri/Paylaş'ı okusun (zIndex ile üstte çizilir). Arkalarında çubuk yok; sayfa kaysa da yalnızca düğmeler kalır */}
       {/* Fotoğrafın üstünde yüzen düğmeler: solda geri (detayda), sağda paylaş */}
       <View style={[styles.topButtons, { top: (mode === 'detail' ? insets.top : 0) + 12 }]} pointerEvents="box-none">
         {mode === 'detail' ? <RoundButton icon="chevron-back" label={tr.settings.back} onPress={goBack} /> : <View />}
@@ -186,8 +172,6 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
 
       <Animated.ScrollView
         contentContainerStyle={{ paddingBottom: mode === 'result' ? insets.bottom + 110 : insets.bottom + 40 }}
-        scrollEventThrottle={16}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
       >
         {/* Fotoğraf ekranın yıldızı: üstte tam genişlik. Fotoğraf yoksa sıcak bir yer tutucu. */}
         <View style={[styles.hero, { height: heroH }]}>
@@ -432,7 +416,6 @@ const styles = StyleSheet.create({
   helpText: { ...type.footnote, color: colors.accentText, fontWeight: '700' },
   extras: { ...type.caption, textAlign: 'center', marginTop: 10 },
   section: { ...type.title2, marginTop: 28, marginBottom: 12 },
-  topShade: { position: 'absolute', zIndex: 2, elevation: 2, top: 0, left: 0, right: 0, backgroundColor: colors.bg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
   topButtons: { position: 'absolute', zIndex: 3, elevation: 3, left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between' },
   round: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.42)', alignItems: 'center', justifyContent: 'center' },
   newBadge: {
