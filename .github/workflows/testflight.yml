@@ -23,7 +23,7 @@ on:
 
 jobs:
   build-and-submit:
-    runs-on: ${{ vars.IOS_BUILDER == 'github-mac' && 'macos-15' || 'ubuntu-latest' }}
+    runs-on: ${{ vars.IOS_BUILDER == 'github-mac' && 'macos-latest' || 'ubuntu-latest' }}
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       LOCAL: ${{ vars.IOS_BUILDER == 'github-mac' && 'true' || 'false' }}

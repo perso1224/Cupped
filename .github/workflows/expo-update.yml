@@ -94,7 +94,7 @@ jobs:
   ios-build:
     needs: update
     if: needs.update.outputs.build == 'true'
-    runs-on: ${{ vars.IOS_BUILDER == 'github-mac' && 'macos-15' || 'ubuntu-latest' }}
+    runs-on: ${{ vars.IOS_BUILDER == 'github-mac' && 'macos-latest' || 'ubuntu-latest' }}
     # Aynı anda tek derleme: art arda iki gönderimde aynı hal iki kez derlenmesin (sıradaki, etiketi görüp atlar)
     concurrency:
       group: ios-build
