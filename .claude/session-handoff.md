@@ -274,3 +274,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - Bekleyen: sahibin yeni kahve modelini cihazda denemesi; GitHub Mac sunucusu öğleden sonra boşa çıkmıyor (15 dk sonra iptal) → Ad Hoc için builder=eas yedek; JS/varlık değişikliği OTA ile gider, derleme gerekmez.
 - Açık işler: Android derleme/test, Instagram Meta App ID, production kanalı, Xcode 27 (Nisan 2027), Apple/GitHub destek yanıtları, EAS Update yayınını kaldırma kararı (Android olana kadar tut önerildi).
 - Sahip token tasarrufu istiyor: kısa cevap, seyrek kontrol, gereksiz derleme yok.
+
+## 24 Kas akşam — yeni bildirimler (2, 6, 7, 9)
+- `src/lib/notifyPlan.ts` (saf, testli): günlük + seri tehlikede (22:00, seri ≥2) + haftalık özet (Pazar 19:00) + aylık özet (ayın 1'i 11:00) + geri dön (3/7/14 gün; o günün günlük hatırlatmasının yerine). Günde en fazla 2 (öncelik: özet > seri > geri dön > günlük).
+- Ayarlar'da 4 yeni anahtar (`Settings.notify*`, varsayılan açık; izin yoksa hiçbiri kurulmaz). Dokununca: /new, /, /wrapped (dönem, dokunma gününe göre offset) — `useNotificationNavigation` (_layout).
+- Yalnız JS: OTA ile gider. Cihazda test edilmedi (iPhone ve Android).

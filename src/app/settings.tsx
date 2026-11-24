@@ -12,8 +12,8 @@ import { tr } from '../i18n/tr';
 import { IS_STORE_BUILD } from '../lib/build';
 import { safely } from '../lib/safe';
 import type { PalateGoal } from '../lib/onboarding';
-import { cancelReminders, refreshReminder, setReminderEnabled } from '../lib/reminders';
-import { CAFFEINE_REFS, REMINDER_TIMES, timeLabel } from '../lib/settings';
+import { cancelReminders, ensureNotificationPermission, refreshReminder, setReminderEnabled } from '../lib/reminders';
+import { CAFFEINE_REFS, REMINDER_TIMES, timeLabel, type Settings } from '../lib/settings';
 import { shareFile } from '../lib/share';
 import { deleteAllData, exportAllData, importBackup, saveProfile, setReturnRoute, updateMetrics, updateSettings } from '../lib/storage';
 import { useMetrics } from '../lib/useMetrics';
@@ -76,6 +76,15 @@ export default function SettingsScreen() {
     if (v && !ok) Alert.alert(tr.profile.reminderDenied);
     else if (v) Alert.alert(tr.profile.reminderOn(timeLabel(settings.reminderHour, settings.reminderMinute)));
     reloadMetrics();
+  }
+
+  async function toggleNotify(key: 'notifyStreak' | 'notifyWeekly' | 'notifyMonthly' | 'notifyComeback', v: boolean) {
+    if (v && !(await ensureNotificationPermission())) {
+      Alert.alert(tr.profile.reminderDenied);
+      return;
+    }
+    await updateSettings({ [key]: v } as Partial<Settings>);
+    refreshReminder();
   }
 
   async function doExport() {
@@ -190,6 +199,13 @@ export default function SettingsScreen() {
             }
           }
         />
+      </ListSection>
+
+      <ListSection footer={tr.settings.notifyFooter}>
+        <ListRow icon="flame" tint={tint.cherry} title={tr.settings.notifyStreak} subtitle={tr.settings.notifyStreakSub} toggle={settings.notifyStreak} onToggle={(v) => toggleNotify('notifyStreak', v)} />
+        <ListRow icon="calendar" tint={tint.amber} title={tr.settings.notifyWeekly} subtitle={tr.settings.notifyWeeklySub} toggle={settings.notifyWeekly} onToggle={(v) => toggleNotify('notifyWeekly', v)} />
+        <ListRow icon="calendar-number" tint={tint.sage} title={tr.settings.notifyMonthly} subtitle={tr.settings.notifyMonthlySub} toggle={settings.notifyMonthly} onToggle={(v) => toggleNotify('notifyMonthly', v)} />
+        <ListRow icon="cafe" tint={tint.slate} title={tr.settings.notifyComeback} subtitle={tr.settings.notifyComebackSub} toggle={settings.notifyComeback} onToggle={(v) => toggleNotify('notifyComeback', v)} />
       </ListSection>
 
       <ListSection title={tr.settings.appearance} footer={themePref === 'system' ? tr.settings.appearanceFooter : tr.settings.appearanceFixed}>

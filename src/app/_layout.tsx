@@ -8,7 +8,7 @@ import * as Updates from 'expo-updates';
 import { Alert, Appearance, AppState, Platform, View } from 'react-native';
 import { BrandIntro } from '../components/BrandIntro';
 import { setIntroPlaying, useReducedMotion } from '../components/motion';
-import { refreshReminder } from '../lib/reminders';
+import { refreshReminder, useNotificationNavigation } from '../lib/reminders';
 import { consumeRecoveryNotice, consumeReturnRoute, migratePalateTypes, recordActiveDay } from '../lib/storage';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
@@ -98,6 +98,8 @@ export default function RootLayout() {
   }, []);
 
   const ready = profile !== undefined && (fontsLoaded || !!fontError);
+  // Bildirime dokununca ilgili ekran (açılış ve profil hazır olunca)
+  useNotificationNavigation(ready && !!profile);
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
