@@ -1,0 +1,5 @@
+# Cloudflare Worker ayarı. Yükleme GitHub iş akışından yapılır (.github/workflows/updates-server.yml).
+name = "cupped-updates"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
