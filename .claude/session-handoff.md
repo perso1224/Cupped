@@ -235,3 +235,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - NOT yet switched: app.json updates.url still points to u.expo.dev. Next: verify the worker → change updates.url (+ requestHeaders) → native build → test on the device → stop EAS publishing.
   - The owner pasted a Cloudflare token in chat once and rolled it afterwards.
 - 24 Nov: Apple sent ITMS-90725 for build 4. It is only a warning: the build used the iOS 26.5 SDK (Xcode 26 on the GitHub runner), and from April 2027 the iOS 27 SDK / Xcode 27 is required. The workflow picks the newest installed Xcode. Re-check before April 2027 (e.g. macos-26 label or an explicit Xcode_27 path).
+- 24 Nov ~09:10: SWITCHED, with the owner's approval. app.json updates.url = https://cupped-updates.beratyapar4.workers.dev/manifest, requestHeaders expo-channel-name=preview.
+  - The `updates` branch publish worked: the manifest is on raw.githubusercontent and the launch-asset sha256 was verified.
+  - The Worker returned 204 with protocol headers in the CI health check (this container can't reach workers.dev: proxy 403).
+  - Builds from 1.0.0 (5) onward use our server. Builds 1–4 and Expo Go still use EAS Update, so the EAS publish step stays until the new server is verified on a real device.
+  - TODO before an App Store/production build: the production channel (requestHeaders say preview; needs an override for the production profile) and a publish step for the production channel.
