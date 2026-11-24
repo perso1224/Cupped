@@ -31,6 +31,7 @@ const CREDS = `query($appId: String!) { app { byId(appId: $appId) {
     iosAppCredentials {
       id
       appleTeam { id }
+      appStoreConnectApiKeyForSubmissions { id }
       appleAppIdentifier { id bundleIdentifier }
       iosAppBuildCredentialsList {
         id iosDistributionType
@@ -87,6 +88,17 @@ const placeholder = (mainAdhoc?.provisioningProfile ?? store.provisioningProfile
 for (const extId of extensionIds) {
   // Ad Hoc (doğrudan kurulum) ve App Store (TestFlight) derlemeleri için
   for (const type of ['AD_HOC', 'APP_STORE']) await setupExtension(extId, type);
+  // Derleme, uzantının profilini Apple'da oluştururken uzantıya bağlı App Store Connect anahtarını kullanır:
+  // ana uygulamanınkiyle aynı anahtar bağlanır.
+  const mainKey = main.appStoreConnectApiKeyForSubmissions?.id;
+  const ext = (await load()).iosAppCredentials.find((c) => c.appleAppIdentifier?.bundleIdentifier === extId);
+  if (mainKey && ext && ext.appStoreConnectApiKeyForSubmissions?.id !== mainKey) {
+    await gql(
+      `mutation($id: ID!, $key: ID!) { iosAppCredentials { setAppStoreConnectApiKeyForSubmissions(id: $id, ascApiKeyId: $key) { id } } }`,
+      { id: ext.id, key: mainKey },
+    );
+    console.log(`${extId}: App Store Connect anahtarı bağlandı.`);
+  }
 }
 
 async function setupExtension(extId, type) {
