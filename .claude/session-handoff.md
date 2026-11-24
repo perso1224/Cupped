@@ -240,3 +240,5 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - The Worker returned 204 with protocol headers in the CI health check (this container can't reach workers.dev: proxy 403).
   - Builds from 1.0.0 (5) onward use our server. Builds 1–4 and Expo Go still use EAS Update, so the EAS publish step stays until the new server is verified on a real device.
   - TODO before an App Store/production build: the production channel (requestHeaders say preview; needs an override for the production profile) and a publish step for the production channel.
+- 24 Nov 09:17: 1.0.0 (5) built on the GitHub Mac (8 minutes thanks to the npm cache) and was submitted. This is the first build pointing at our own update server. The owner confirmed it reached ASC.
+  - New builds are not added to the "Team (Expo)" group automatically; add them manually or enable automatic distribution.
