@@ -12,14 +12,16 @@ on:
   workflow_dispatch:
     inputs:
       builder:
-        description: "Nerede derlensin: github-mac (ücretsiz, Mac sırası olabilir) ya da eas (Expo bulutu, ücretsiz kotadan 1 derleme)"
+        description: "Nerede derlensin: github-mac (ücretsiz, Intel Mac; önerilen), github-mac-arm (ücretsiz, Apple çipli Mac; öğleden sonra çoğu zaman verilmiyor) ya da eas (Expo bulutu, ücretsiz kotadan 1 derleme)"
         type: choice
-        options: [github-mac, eas]
+        options: [github-mac, github-mac-arm, eas]
         default: github-mac
 
 jobs:
   adhoc:
-    runs-on: ${{ inputs.builder == 'eas' && 'ubuntu-latest' || 'macos-latest' }}
+    # Mac havuzu: GitHub'ın Apple çipli Mac'leri (macos-latest) yoğun saatlerde hiç verilmiyor ("capacity constraints"),
+    # Intel Mac'ler (macos-15-intel, Xcode 26.3) hemen veriliyor. Bu yüzden github-mac = Intel; github-mac-arm = Apple çipli.
+    runs-on: ${{ inputs.builder == 'eas' && 'ubuntu-latest' || inputs.builder == 'github-mac-arm' && 'macos-latest' || 'macos-15-intel' }}
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       ON_EAS: ${{ inputs.builder == 'eas' && 'true' || 'false' }}

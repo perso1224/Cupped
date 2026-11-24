@@ -22,11 +22,13 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Mac havuzu: GitHub'ın Apple çipli Mac'leri (macos-latest) yoğun saatlerde hiç verilmiyor ("capacity constraints"),
+  # Intel Mac'ler (macos-15-intel, Xcode 26.3) hemen veriliyor. Bu yüzden github-mac = Intel; github-mac-arm = Apple çipli.
   build-and-submit:
-    runs-on: ${{ vars.IOS_BUILDER == 'github-mac' && 'macos-latest' || 'ubuntu-latest' }}
+    runs-on: ${{ vars.IOS_BUILDER == 'github-mac' && 'macos-15-intel' || vars.IOS_BUILDER == 'github-mac-arm' && 'macos-latest' || 'ubuntu-latest' }}
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      LOCAL: ${{ vars.IOS_BUILDER == 'github-mac' && 'true' || 'false' }}
+      LOCAL: ${{ (vars.IOS_BUILDER == 'github-mac' || vars.IOS_BUILDER == 'github-mac-arm') && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
 
