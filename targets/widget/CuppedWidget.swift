@@ -225,25 +225,6 @@ extension View {
 
 // MARK: - Ortak parçalar
 
-/// Cupped logosu: iki halka ve ortada nokta (uygulama simgesindeki gibi). Kodla çizilir; kilit ekranında sistem renklendirir.
-struct LogoMark: View {
-  var color: Color = .cuppedAccent
-  var dot: Color = .cuppedText
-
-  var body: some View {
-    GeometryReader { g in
-      let s = min(g.size.width, g.size.height)
-      ZStack {
-        Circle().strokeBorder(color, lineWidth: s * 0.1)
-        Circle().strokeBorder(color, lineWidth: s * 0.08).frame(width: s * 0.64, height: s * 0.64)
-        Circle().fill(dot).frame(width: s * 0.26, height: s * 0.26)
-      }
-      .frame(width: s, height: s)
-      .position(x: g.size.width / 2, y: g.size.height / 2)
-    }
-  }
-}
-
 struct StreakBlock: View {
   let s: CuppedSummary
 
@@ -632,7 +613,13 @@ struct LogoView: View {
   var body: some View {
     ZStack {
       AccessoryWidgetBackground()
-      LogoMark(color: .primary, dot: .primary).padding(9).widgetAccentable()
+      // Uygulama simgesindeki logo (Assets.xcassets/CuppedLogo, şablon): kilit ekranında sistem renklendirir
+      Image("CuppedLogo")
+        .resizable()
+        .renderingMode(.template)
+        .scaledToFit()
+        .padding(8)
+        .widgetAccentable()
     }
     .widgetURL(homeURL)
     .accessibilityLabel("Cupped'ı aç")

@@ -8,7 +8,7 @@ const { withDangerousMod, withEntitlementsPlist, withXcodeProject } = require('e
 
 const TARGET = 'CuppedWidget';
 const SOURCE_DIR = path.join(__dirname, '..', 'targets', 'widget');
-const FILES = ['CuppedWidget.swift', 'Info.plist', 'CuppedWidget.entitlements'];
+const FILES = ['CuppedWidget.swift', 'Info.plist', 'CuppedWidget.entitlements', 'Assets.xcassets'];
 const DEPLOYMENT_TARGET = '16.4';
 
 const groupId = (config) => `group.${config.ios.bundleIdentifier}`;
@@ -30,6 +30,12 @@ function withWidgetFiles(config) {
       const dest = path.join(c.modRequest.platformProjectRoot, TARGET);
       fs.mkdirSync(dest, { recursive: true });
       for (const f of FILES) {
+        if (f.endsWith('.xcassets')) {
+          // Görseller (logo): klasör olduğu gibi kopyalanır
+          fs.rmSync(path.join(dest, f), { recursive: true, force: true });
+          fs.cpSync(path.join(SOURCE_DIR, f), path.join(dest, f), { recursive: true });
+          continue;
+        }
         let text = fs.readFileSync(path.join(SOURCE_DIR, f), 'utf8');
         if (f.endsWith('.entitlements')) text = text.replace(/group\.[\w.-]+/, groupId(c));
         fs.writeFileSync(path.join(dest, f), text);
@@ -59,7 +65,7 @@ function withWidgetTarget(config) {
     // Hedef (uygulama içine gömülür: "Copy Files" → PlugIns; uygulamaya bağımlılık da addTarget ile eklenir)
     const target = project.addTarget(TARGET, 'app_extension', TARGET, bundleId);
     project.addBuildPhase(['CuppedWidget.swift'], 'PBXSourcesBuildPhase', 'Sources', target.uuid);
-    project.addBuildPhase([], 'PBXResourcesBuildPhase', 'Resources', target.uuid);
+    project.addBuildPhase(['Assets.xcassets'], 'PBXResourcesBuildPhase', 'Resources', target.uuid);
     project.addBuildPhase([], 'PBXFrameworksBuildPhase', 'Frameworks', target.uuid);
     // Uzantının sürüm/derleme numarası uygulamanınkiyle aynı olmalı (App Store şartı):
     // derlemenin sonunda uygulamanın Info.plist'inden kopyalanır.
