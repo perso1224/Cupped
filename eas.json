@@ -23,7 +23,8 @@
       "channel": "preview",
       "distribution": "internal",
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "m-medium",
+        "enterpriseProvisioning": "adhoc"
       }
     }
   },
