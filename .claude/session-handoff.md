@@ -286,3 +286,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - İmza: `scripts/setupAdhocCredentials.mjs <pid> <app> <uzantı…>` uzantı için EAS kimliği + AD_HOC/APP_STORE kaydı (geçici profil) oluşturur; adhoc.yml, testflight.yml, expo-update.yml ios-build çağırıyor. Gerçek profiller derlemede (refresh / ASC anahtarı) oluşur. Henüz hiç çalışmadı.
 - Android: `android.yml` (ubuntu, prebuild + gradlew assembleRelease arm64, debug.keystore imzası) → updates dalı android/cupped.apk; Worker `/android` yönlendirir. Android widget'ları: "Cupped · Seri" (2×2), "Cupped · Hafta" (4×2), RemoteViews.
 - Derlenmedi/cihazda denenmedi. Swift/Kotlin burada derlenemiyor; ilk derleme kayıtlarına bakılacak.
+- 24 Kas 19:03 UTC: Widget'lı Ad Hoc derleme BAŞARILI (EAS bulutu, 4. deneme; GitHub Mac sunucusu yine verilmedi). /install'da.
+  - Sahip Apple Developer'da App Group `group.com.perso1224.cupped` oluşturup iki App ID'ye bağladı (ASC anahtarıyla otomatik yapılamıyor).
+  - Köprü pod'unun adı `CuppedWidgetBridge` (hedef adı CuppedWidget ile Swift modül çakışması vardı).
+  - `scripts/easBuildLogs.mjs` + `eas-logs.yml`: Expo derleme hatalarını GitHub'da gösterir; adhoc.yml başarısızlıkta otomatik çalıştırır.
+  - Android APK derlemesi sahibin isteğiyle iptal edildi (henüz gerek yok). Cihazda widget testi bekleniyor.
