@@ -143,6 +143,9 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       FP: ${{ needs.update.outputs.fp }}
       LOCAL: ${{ (vars.IOS_BUILDER == 'github-mac' || vars.IOS_BUILDER == 'github-mac-arm') && 'true' || 'false' }}
+      # Intel Mac yavaş: fastlane'in Xcode ayarlarını okuma süresi (varsayılan 3 sn, 4 deneme) yetmiyor
+      FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: '120'
+      FASTLANE_XCODEBUILD_SETTINGS_RETRIES: '6'
     steps:
       - uses: actions/checkout@v4
 
