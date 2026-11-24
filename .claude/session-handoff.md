@@ -254,3 +254,5 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - The coffee check works on the device ("Bu kahveye benzemiyor" for a plate photo; no warning for a flat surface, as designed).
   - The first save attempt didn't respond ("Skoru gör" did nothing); after an app restart, saving worked. Cause unknown — watch for it.
   - Not yet confirmed: OTA from our own server on the device.
+- 24 Nov ~13:20: OTA FROM OUR OWN SERVER VERIFIED ON THE DEVICE. Ad Hoc 1.0.0 (5) shows "Sürüm 1.0.0 · 24 Kas 13:05" in Settings after keeping the app open about 1 minute and restarting. Cloudflare showed 12 requests.
+  - The EAS Update publish step is still in expo-update.yml (it serves Expo Go on Android and builds 1–4). Removing it is pending the owner's decision.
