@@ -256,3 +256,8 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - Not yet confirmed: OTA from our own server on the device.
 - 24 Nov ~13:20: OTA FROM OUR OWN SERVER VERIFIED ON THE DEVICE. Ad Hoc 1.0.0 (5) shows "Sürüm 1.0.0 · 24 Kas 13:05" in Settings after keeping the app open about 1 minute and restarting. Cloudflare showed 12 requests.
   - The EAS Update publish step is still in expo-update.yml (it serves Expo Go on Android and builds 1–4). Removing it is pending the owner's decision.
+- 24 Nov: splash fix (from the owner's screen recording). Before: dark native splash with white rings → blank light frame → BrandIntro.
+  - Now the native splash is background color only (light #FAF8F5 / dark #15110E, no image).
+  - _layout.tsx calls preventAutoHideAsync at module load and hideAsync when `ready`, which is the same moment BrandIntro starts.
+  - Needs a native build. The Android splash (Android 12+ icon) is untested.
+  - Remaining edge case: if the in-app theme pref differs from the system appearance, the splash color follows the system.

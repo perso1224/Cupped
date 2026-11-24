@@ -1,6 +1,7 @@
 import { Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_800ExtraBold, useFonts } from '@expo-google-fonts/fraunces';
 import { router, usePathname } from 'expo-router';
 import { Stack } from 'expo-router/stack';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
@@ -20,6 +21,10 @@ export const unstable_settings = { anchor: '(tabs)' };
 let introShown = false;
 // Logo oynarken ana sayfa giriş animasyonlarını bekletsin
 setIntroPlaying(true);
+// Telefonun açılış ekranı (yalnızca zemin rengi) uygulama hazır olana kadar kalsın; hazır olduğu an kalkar ve
+// aynı karede giriş animasyonu başlar. Böylece arada boş ekran ya da ikinci bir logo görünmez.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.setOptions({ fade: true, duration: 150 });
 
 /** Tema değişince yeniden yüklemenin güvenli olduğu ekranlar (yarım kalan giriş yok): ana sekmeler. */
 const SAFE_TO_RELOAD = new Set(['/', '/progress', '/passport', '/profile']);
@@ -93,6 +98,9 @@ export default function RootLayout() {
   }, []);
 
   const ready = profile !== undefined && (fontsLoaded || !!fontError);
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
   // Tema değişikliği için yeniden yüklendiyse kullanıcıyı kaldığı ekrana (Ayarlar) geri götür
   useEffect(() => {
     if (!ready || !profile) return;
