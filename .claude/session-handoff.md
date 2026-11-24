@@ -234,3 +234,4 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - Cloudflare subdomain: beratyapar4.workers.dev → https://cupped-updates.beratyapar4.workers.dev.
   - NOT yet switched: app.json updates.url still points to u.expo.dev. Next: verify the worker → change updates.url (+ requestHeaders) → native build → test on the device → stop EAS publishing.
   - The owner pasted a Cloudflare token in chat once and rolled it afterwards.
+- 24 Nov: Apple sent ITMS-90725 for build 4. It is only a warning: the build used the iOS 26.5 SDK (Xcode 26 on the GitHub runner), and from April 2027 the iOS 27 SDK / Xcode 27 is required. The workflow picks the newest installed Xcode. Re-check before April 2027 (e.g. macos-26 label or an explicit Xcode_27 path).
