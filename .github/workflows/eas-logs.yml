@@ -1,0 +1,25 @@
+# Expo bulutundaki son derlemenin hata kayıtlarını GitHub'da gösterir (teşhis için).
+name: Expo derleme kayıtları
+
+on:
+  push:
+    branches: ['claude/expo-setup-guide-9xz45k']
+    paths: ['.github/workflows/eas-logs.yml']
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: "Derleme kimliği (boş: en son derleme)"
+        required: false
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kayıtları getir
+        run: node scripts/easBuildLogs.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")" "${{ inputs.build_id }}"

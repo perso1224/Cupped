@@ -54,6 +54,10 @@ jobs:
           echo "İndiriliyor: $URL"
           curl -fsSL -o "$RUNNER_TEMP/cupped-adhoc.ipa" "$URL"
 
+      - name: Expo derlemesi başarısızsa hata kayıtlarını göster
+        if: failure() && env.ON_EAS == 'true'
+        run: node scripts/easBuildLogs.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")"
+
       - name: Ad Hoc derle (profil kayıtlı cihazlarla otomatik yenilenir)
         if: env.ON_EAS != 'true'
         run: |
