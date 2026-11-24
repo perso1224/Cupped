@@ -279,3 +279,10 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - `src/lib/notifyPlan.ts` (saf, testli): günlük + seri tehlikede (22:00, seri ≥2) + haftalık özet (Pazar 19:00) + aylık özet (ayın 1'i 11:00) + geri dön (3/7/14 gün; o günün günlük hatırlatmasının yerine). Günde en fazla 2 (öncelik: özet > seri > geri dön > günlük).
 - Ayarlar'da 4 yeni anahtar (`Settings.notify*`, varsayılan açık; izin yoksa hiçbiri kurulmaz). Dokununca: /new, /, /wrapped (dönem, dokunma gününe göre offset) — `useNotificationNavigation` (_layout).
 - Yalnız JS: OTA ile gider. Cihazda test edilmedi (iPhone ve Android).
+
+## 24 Kas gece — ana ekran widget'ları (Expo widget parçası YOK, sahibin isteği) + ücretsiz Android derleme
+- Yerel modül `modules/cupped-widget` (Swift + Kotlin, Expo Modules API): `setData(json)` → iOS App Group `group.com.perso1224.cupped` UserDefaults "widget" + WidgetCenter yenile; Android SharedPreferences `cupped_widget` + widget yenile. JS: `requireOptionalNativeModule` (eski derlemede null). Özet `src/lib/widgetData.ts` (14 gün, seri), `reminders.ts` doRefresh'te yazılır.
+- iOS: `targets/widget/CuppedWidget.swift` (küçük, orta, kilit ekranı ×3), `plugins/withIosWidget.js` hedefi ekler (bundle `com.perso1224.cupped.widget`, iOS 16.4+, sürüm uygulamadan kopyalanır). app.json `extra.eas.build.experimental.ios.appExtensions`.
+- İmza: `scripts/setupAdhocCredentials.mjs <pid> <app> <uzantı…>` uzantı için EAS kimliği + AD_HOC/APP_STORE kaydı (geçici profil) oluşturur; adhoc.yml, testflight.yml, expo-update.yml ios-build çağırıyor. Gerçek profiller derlemede (refresh / ASC anahtarı) oluşur. Henüz hiç çalışmadı.
+- Android: `android.yml` (ubuntu, prebuild + gradlew assembleRelease arm64, debug.keystore imzası) → updates dalı android/cupped.apk; Worker `/android` yönlendirir. Android widget'ları: "Cupped · Seri" (2×2), "Cupped · Hafta" (4×2), RemoteViews.
+- Derlenmedi/cihazda denenmedi. Swift/Kotlin burada derlenemiyor; ilk derleme kayıtlarına bakılacak.

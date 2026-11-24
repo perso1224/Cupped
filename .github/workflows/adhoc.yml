@@ -41,8 +41,8 @@ jobs:
           echo "Xcode: $X"
           sudo xcode-select -s "$X/Contents/Developer"
 
-      - name: Ad Hoc imza kaydını hazırla (mevcut sertifikayla, ilk seferde)
-        run: node scripts/setupAdhocCredentials.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")" com.perso1224.cupped
+      - name: Ad Hoc imza kayıtlarını hazırla (widget uzantısı dahil, mevcut sertifikayla)
+        run: node scripts/setupAdhocCredentials.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")" com.perso1224.cupped com.perso1224.cupped.widget
 
       - name: Expo bulutunda Ad Hoc derle ve dosyayı indir
         if: env.ON_EAS == 'true'

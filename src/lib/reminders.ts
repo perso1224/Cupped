@@ -3,7 +3,9 @@ import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
+import { CuppedWidget } from '../../modules/cupped-widget';
 import { notificationPlan, parseTarget, targetHref, type NotifyTarget } from './notifyPlan';
+import { buildWidgetData } from './widgetData';
 import { loadEntries, loadMetrics, loadSettings, updateMetrics } from './storage';
 
 /**
@@ -50,8 +52,19 @@ export function cancelReminders(): Promise<void> {
   return chain;
 }
 
+/** Ana ekran widget'ını güncel tutar (modül yoksa, ör. eski derleme ya da Expo Go: sessizce geçer). */
+function syncWidget(entries: Awaited<ReturnType<typeof loadEntries>>): void {
+  try {
+    CuppedWidget?.setData(JSON.stringify(buildWidgetData(entries)));
+  } catch {
+    // widget güncellenemezse uygulama yine çalışır
+  }
+}
+
 async function doRefresh(): Promise<void> {
   try {
+    const entries = await loadEntries();
+    syncWidget(entries);
     const m = await loadMetrics();
     await Notifications.cancelAllScheduledNotificationsAsync();
     const s = await loadSettings();
@@ -65,7 +78,6 @@ async function doRefresh(): Promise<void> {
     if (!Object.values(prefs).some(Boolean)) return;
     const perm = await Notifications.getPermissionsAsync();
     if (!perm.granted) return;
-    const entries = await loadEntries();
     await ensureAndroidChannel();
     const plan = notificationPlan(entries, prefs, new Date(), s.reminderHour, s.reminderMinute);
     for (const [i, r] of plan.entries()) {

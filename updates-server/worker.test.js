@@ -43,6 +43,14 @@ describe('güncelleme sunucusu', () => {
   });
 });
 
+describe('Android APK bağlantısı', () => {
+  it('GitHub’daki APK dosyasına yönlendirir', async () => {
+    const res = await handle(new Request('https://u.example/android'), okFetch());
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe(`${RAW_BASE}/android/cupped.apk`);
+  });
+});
+
 describe('Ad Hoc yükleme sayfası', () => {
   it('sayfa itms-services bağlantısı verir', async () => {
     const res = await handle(new Request('https://u.example/install'), okFetch());

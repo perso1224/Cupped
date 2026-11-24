@@ -163,6 +163,10 @@ jobs:
         if: steps.still.outputs.go == 'true'
         run: npm ci
 
+      - name: İmza kayıtlarını hazırla (widget uzantısı dahil, mevcut sertifikayla)
+        if: steps.still.outputs.go == 'true'
+        run: node scripts/setupAdhocCredentials.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")" com.perso1224.cupped com.perso1224.cupped.widget
+
       - name: Expo bulutunda derle ve TestFlight'a gönder
         if: steps.still.outputs.go == 'true' && env.LOCAL != 'true'
         timeout-minutes: 240

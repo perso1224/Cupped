@@ -55,6 +55,11 @@ export async function handle(request, fetchManifest) {
   if (url.pathname === '/' || url.pathname === '/health') return new Response('cupped-updates ok', { status: 200 });
   if (url.pathname === '/install') return installPage();
   if (url.pathname === '/install/manifest.plist') return installManifest(fetchManifest);
+  // Android: GitHub Linux sunucusunda derlenen APK (android.yml). Telefonda Chrome ile açılınca iner.
+  if (url.pathname === '/android') {
+    const v = url.searchParams.get('v');
+    return Response.redirect(`${RAW_BASE}/android/cupped.apk${v && SAFE.test(v) ? `?v=${v}` : ''}`, 302);
+  }
   if (url.pathname !== '/manifest') return new Response('not found', { status: 404 });
   if (request.method !== 'GET') return new Response('method not allowed', { status: 405 });
 

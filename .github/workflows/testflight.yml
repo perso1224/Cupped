@@ -68,6 +68,9 @@ jobs:
       - name: Paketleri kur
         run: npm ci
 
+      - name: İmza kayıtlarını hazırla (widget uzantısı dahil, mevcut sertifikayla)
+        run: node scripts/setupAdhocCredentials.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")" com.perso1224.cupped com.perso1224.cupped.widget
+
       - name: Testler ve tür kontrolü
         run: |
           npm test
