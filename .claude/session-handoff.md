@@ -268,3 +268,9 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - Görsel tanıma incelemesi (scratchpad eval, skimage örnekleri): EfficientNet-Lite0 int8 (5.4 MB, 1000 sınıf → indeks −1) kahve olasılığıyla temiz ayırıyor (kahve ≥0.13, diğerleri ≤0.01); şimdiki v1 "uzaktan kahve"yi kaçırıyor. Öneri: Lite0 + kural "kahve olasılığı < ~0.05 → uyarı", sahibin gerçek fotoğraflarıyla ayarlanacak. Sahip onayı bekleniyor.
 - Kahve kontrolü EfficientNet-Lite0 int8'e geçti (assets/models/coffee-check.tflite, 1000 sınıf → toImagenet1001). Kural: kahve ≥ 0.05 ya da kahve+nötr ≥ 0.2 → kahve, değilse uyarı (minOtherConfidence kaldırıldı). Sahibin 17 fotoğrafında 16/17 (kaçan: boş tabak). OTA ile gider (yalnız JS + varlık).
 - Geri düğmeleri: koleksiyon üst çubuğu ve CupDetail'deki kaydırınca beliren zemin kaldırıldı; yalnızca düğmeler yüzüyor.
+
+## Durum (24 Kas 15:05 UTC) — yeni oturum buradan başlar
+- Son Ad Hoc derleme (ccc3c00) yayında: /install. Sahip sabit geri düğmelerini OTA ile aldı, onayladı ("tam istediğim gibi").
+- Bekleyen: sahibin yeni kahve modelini cihazda denemesi; GitHub Mac sunucusu öğleden sonra boşa çıkmıyor (15 dk sonra iptal) → Ad Hoc için builder=eas yedek; JS/varlık değişikliği OTA ile gider, derleme gerekmez.
+- Açık işler: Android derleme/test, Instagram Meta App ID, production kanalı, Xcode 27 (Nisan 2027), Apple/GitHub destek yanıtları, EAS Update yayınını kaldırma kararı (Android olana kadar tut önerildi).
+- Sahip token tasarrufu istiyor: kısa cevap, seyrek kontrol, gereksiz derleme yok.
