@@ -1,0 +1,28 @@
+# Elle çalıştırılır: iPhone'u Ad Hoc yükleme için kaydettirme bağlantısı üretir (bilgisayar gerekmez).
+# Bağlantı bu iş akışının özetinde ve kaydında görünür; iPhone'da Safari ile açılır.
+name: iPhone kaydı (Ad Hoc)
+
+on:
+  # Bu dosya değişince de çalışır (yeni iş akışı ana dalda olmadan elle başlatılamıyor)
+  push:
+    branches: ['claude/expo-setup-guide-9xz45k']
+    paths: ['.github/workflows/register-device.yml', 'scripts/registerDevice.mjs']
+  workflow_dispatch:
+
+jobs:
+  link:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kayıt bağlantısı üret
+        run: |
+          OUT=$(node scripts/registerDevice.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")" 8SU4USQK9K)
+          echo "$OUT"
+          URL="${OUT#KAYIT_BAGLANTISI=}"
+          echo "::notice::iPhone'da Safari ile aç: $URL"
+          { echo "### iPhone kaydı"; echo; echo "iPhone'da **Safari** ile aç: $URL"; } >> "$GITHUB_STEP_SUMMARY"
