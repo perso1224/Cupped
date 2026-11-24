@@ -2,10 +2,17 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { BRAND } from '../config/brand';
 import { tr } from '../i18n/tr';
-import { colors, fonts } from '../theme';
+import { fonts } from '../theme';
 import { reduceMotionNow } from './motion';
 
 const LOGO = 168;
+/**
+ * Açılış, temadan bağımsız olarak uygulama ikonunun renklerinde: telefonun açılış ekranı (app.json, expo-splash-screen)
+ * da aynı turuncu. Böylece açık/koyu mod ya da uygulama içi tema ne olursa olsun açılış ekranı → animasyon geçişi
+ * kesintisiz; animasyon bitince uygulama kendi temasıyla belirir.
+ */
+export const INTRO_BG = '#D98B2B';
+const INTRO_INK = '#111111';
 // Uygulama ikonundaki halkalar (şeffaf görsel): her telefonda aynı çizilsin diye görsel kullanılıyor
 const RINGS = require('../../assets/intro-rings.png');
 
@@ -47,6 +54,7 @@ export function BrandIntro({ ready, onDone }: { ready: boolean; onDone: () => vo
       <View style={styles.logo}>
         <Animated.Image
           source={RINGS}
+          tintColor={INTRO_INK}
           style={[styles.rings, { opacity: rings, transform: [{ scale: rings.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }] }]}
           resizeMode="contain"
         />
@@ -66,10 +74,10 @@ export function BrandIntro({ ready, onDone }: { ready: boolean; onDone: () => vo
 }
 
 const styles = StyleSheet.create({
-  screen: { backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', zIndex: 100, elevation: 100 },
+  screen: { backgroundColor: INTRO_BG, alignItems: 'center', justifyContent: 'center', zIndex: 100, elevation: 100 },
   logo: { width: LOGO, height: LOGO, alignItems: 'center', justifyContent: 'center' },
   rings: { position: 'absolute', top: 0, left: 0, width: LOGO, height: LOGO },
-  dot: { width: LOGO * 0.25, height: LOGO * 0.25, borderRadius: LOGO * 0.125, backgroundColor: colors.text },
-  word: { fontFamily: fonts.heavy, fontSize: 40, color: colors.text, marginTop: 28, paddingHorizontal: 6 },
-  tag: { fontSize: 14, fontWeight: '600', color: colors.muted, marginTop: 4, letterSpacing: 0.4 },
+  dot: { width: LOGO * 0.25, height: LOGO * 0.25, borderRadius: LOGO * 0.125, backgroundColor: INTRO_INK },
+  word: { fontFamily: fonts.heavy, fontSize: 40, color: INTRO_INK, marginTop: 28, paddingHorizontal: 6 },
+  tag: { fontSize: 14, fontWeight: '600', color: 'rgba(17,17,17,0.72)', marginTop: 4, letterSpacing: 0.4 },
 });

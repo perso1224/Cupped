@@ -261,3 +261,6 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - _layout.tsx calls preventAutoHideAsync at module load and hideAsync when `ready`, which is the same moment BrandIntro starts.
   - Needs a native build. The Android splash (Android 12+ icon) is untested.
   - Remaining edge case: if the in-app theme pref differs from the system appearance, the splash color follows the system.
+
+## 24 Kas — açılış temadan bağımsız
+- Splash (app.json) ve BrandIntro artık her modda turuncu #D98B2B + koyu mürekkep; splash görselsiz, hazır olunca hideAsync → aynı karede intro. Android splash cihazda test edilmedi.
