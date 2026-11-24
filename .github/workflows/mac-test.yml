@@ -1,5 +1,5 @@
-# Teşhis: GitHub bu depoya standart Mac sunucusu veriyor mu? (1 dakikalık, sadece bilgi yazdırır)
-# Bu dosya değiştiğinde ya da elle çalıştırılınca çalışır. Sorun çözülünce silinebilir.
+# Teşhis: GitHub bu depoya hangi Mac sunucularını veriyor? (birkaç dakikalık, sadece bilgi yazdırır)
+# Bu dosya değiştiğinde ya da elle çalıştırılınca çalışır.
 name: Mac sunucu testi
 
 on:
@@ -9,8 +9,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  mac-latest:
-    runs-on: macos-latest
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        label: [macos-latest, macos-15-intel, macos-26]
+    runs-on: ${{ matrix.label }}
     timeout-minutes: 5
     steps:
-      - run: echo "Mac sunucusu verildi" && sw_vers && ls -d /Applications/Xcode_*.app
+      - run: echo "Mac sunucusu verildi (${{ matrix.label }})" && uname -m && sw_vers && ls -d /Applications/Xcode_*.app
