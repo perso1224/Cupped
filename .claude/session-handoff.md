@@ -291,3 +291,4 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - Köprü pod'unun adı `CuppedWidgetBridge` (hedef adı CuppedWidget ile Swift modül çakışması vardı).
   - `scripts/easBuildLogs.mjs` + `eas-logs.yml`: Expo derleme hatalarını GitHub'da gösterir; adhoc.yml başarısızlıkta otomatik çalıştırır.
   - Android APK derlemesi sahibin isteğiyle iptal edildi (henüz gerek yok). Cihazda widget testi bekleniyor.
+- 24 Kas akşam: widget seti 2 (yalnız iPhone): Fincan Duvarı (orta/büyük, /wall açar), Son fincanım (küçük/orta, fotoğraf `widget-last.jpg` ortak alanda, köprüde `setImage`), Kafein (küçük + kilit ekranı gösterge), kilit ekranı logo widget'ı (uygulamayı açar, logo kodla çizili), Kontrol Merkezi "Kahve ekle" (iOS 18+, AppIntent + OpenURLIntent). widgetData v2: days[...,mg], wall/wallEnd (182 gün), last, caffeineRef.

@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { CuppedWidget } from '../../modules/cupped-widget';
 import { notificationPlan, parseTarget, targetHref, type NotifyTarget } from './notifyPlan';
 import { buildWidgetData } from './widgetData';
-import { loadEntries, loadMetrics, loadSettings, updateMetrics } from './storage';
+import { loadEntries, loadMetrics, loadSettings, thumbUrl, updateMetrics } from './storage';
 
 /**
  * Bildirimler: telefonun kendi (yerel) bildirimleri, sunucu yok. Plan notifyPlan.ts'te (günlük hatırlatma,
@@ -52,10 +52,19 @@ export function cancelReminders(): Promise<void> {
   return chain;
 }
 
-/** Ana ekran widget'ını güncel tutar (modül yoksa, ör. eski derleme ya da Expo Go: sessizce geçer). */
-function syncWidget(entries: Awaited<ReturnType<typeof loadEntries>>): void {
+/** Ana ekran widget'larını güncel tutar (modül yoksa, ör. eski derleme ya da Expo Go: sessizce geçer). */
+let lastWidgetPhoto: string | null | undefined;
+function syncWidget(entries: Awaited<ReturnType<typeof loadEntries>>, caffeineRef: number): void {
+  if (!CuppedWidget) return;
   try {
-    CuppedWidget?.setData(JSON.stringify(buildWidgetData(entries)));
+    // Önce fotoğraf, sonra veri (veri yazılınca widget'lar yenilenir)
+    const last = entries.reduce<(typeof entries)[number] | null>((m, e) => (!m || e.createdAt > m.createdAt ? e : m), null);
+    const photo = last?.photoUri ?? null;
+    if (CuppedWidget.setImage && photo !== lastWidgetPhoto) {
+      CuppedWidget.setImage(thumbUrl(photo));
+      lastWidgetPhoto = photo;
+    }
+    CuppedWidget.setData(JSON.stringify(buildWidgetData(entries, new Date(), caffeineRef)));
   } catch {
     // widget güncellenemezse uygulama yine çalışır
   }
@@ -64,10 +73,10 @@ function syncWidget(entries: Awaited<ReturnType<typeof loadEntries>>): void {
 async function doRefresh(): Promise<void> {
   try {
     const entries = await loadEntries();
-    syncWidget(entries);
+    const s = await loadSettings();
+    syncWidget(entries, s.caffeineRef);
     const m = await loadMetrics();
     await Notifications.cancelAllScheduledNotificationsAsync();
-    const s = await loadSettings();
     const prefs = {
       daily: !!m.reminderEnabled,
       streak: s.notifyStreak,
