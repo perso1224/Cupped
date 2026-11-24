@@ -242,3 +242,9 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
   - TODO before an App Store/production build: the production channel (requestHeaders say preview; needs an override for the production profile) and a publish step for the production channel.
 - 24 Nov 09:17: 1.0.0 (5) built on the GitHub Mac (8 minutes thanks to the npm cache) and was submitted. This is the first build pointing at our own update server. The owner confirmed it reached ASC.
   - New builds are not added to the "Team (Expo)" group automatically; add them manually or enable automatic distribution.
+- 24 Nov ~11:30: Ad Hoc route (TestFlight-free install, because the TestFlight invites don't arrive).
+  - The owner's iPhone was registered via scripts/registerDevice.mjs + register-device.yml (EAS GraphQL createAppleDeviceRegistrationRequest → expo.dev/register-device link).
+  - eas.json has a new `adhoc` profile (internal distribution, channel preview).
+  - adhoc.yml builds on macos-latest with `--refresh-ad-hoc-provisioning-profile` (non-interactive; uses the EAS-stored ASC key) and puts adhoc/cupped.ipa + info.json on the `updates` branch.
+  - The Worker serves /install (itms-services page) and /install/manifest.plist.
+  - Workflows writing to the updates branch share the concurrency group `updates-branch`.

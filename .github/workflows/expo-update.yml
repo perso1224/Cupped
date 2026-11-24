@@ -31,6 +31,10 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    # `updates` dalına yazan işler sırayla çalışsın (Ad Hoc iş akışıyla çakışmasın)
+    concurrency:
+      group: updates-branch
+      cancel-in-progress: false
     permissions:
       contents: write
     outputs:

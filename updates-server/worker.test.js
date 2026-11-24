@@ -42,3 +42,22 @@ describe('güncelleme sunucusu', () => {
     expect(res.status).toBe(502);
   });
 });
+
+describe('Ad Hoc yükleme sayfası', () => {
+  it('sayfa itms-services bağlantısı verir', async () => {
+    const res = await handle(new Request('https://u.example/install'), okFetch());
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('itms-services://?action=download-manifest');
+  });
+  it('manifest.plist, GitHub’daki bilgiden üretilir', async () => {
+    const info = { ipaUrl: 'https://raw.example/adhoc/cupped.ipa', bundleId: 'com.perso1224.cupped', version: '1.0.0' };
+    const res = await handle(new Request('https://u.example/install/manifest.plist'), async () => new Response(JSON.stringify(info)));
+    const t = await res.text();
+    expect(t).toContain('<string>https://raw.example/adhoc/cupped.ipa</string>');
+    expect(t).toContain('com.perso1224.cupped');
+  });
+  it('derleme yoksa 404', async () => {
+    const res = await handle(new Request('https://u.example/install/manifest.plist'), async () => new Response('', { status: 404 }));
+    expect(res.status).toBe(404);
+  });
+});

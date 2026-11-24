@@ -1,0 +1,67 @@
+# Ad Hoc derleme: TestFlight'sız, kayıtlı iPhone'lara doğrudan kurulum (TestFlight daveti gelmezken test için).
+# GitHub Mac sunucusunda derler; Ad Hoc profili EAS'teki App Store Connect API anahtarıyla otomatik oluşturulur
+# (kayıtlı cihazlar: "iPhone kaydı (Ad Hoc)" iş akışı). Çıktı GitHub `updates` dalına konur,
+# kurulum sayfası: https://cupped-updates.beratyapar4.workers.dev/install (iPhone'da Safari ile).
+name: Ad Hoc derleme (doğrudan yükleme)
+
+on:
+  # İlk çalıştırma için (yeni iş akışı ana dalda olmadan elle başlatılamıyor)
+  push:
+    branches: ['claude/expo-setup-guide-9xz45k']
+    paths: ['.github/workflows/adhoc.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: updates-branch
+  cancel-in-progress: false
+
+jobs:
+  adhoc:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Paketleri kur
+        run: npm ci
+
+      - name: En yeni Xcode'u seç
+        run: |
+          X=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Xcode: $X"
+          sudo xcode-select -s "$X/Contents/Developer"
+
+      - name: Ad Hoc derle (profil kayıtlı cihazlarla otomatik yenilenir)
+        run: |
+          npx eas-cli@latest build --platform ios --profile adhoc --local --non-interactive \
+            --refresh-ad-hoc-provisioning-profile --output "$RUNNER_TEMP/cupped-adhoc.ipa"
+
+      - name: Kurulum dosyasını GitHub'a koy (updates dalı, adhoc/)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          W="$RUNNER_TEMP/upd"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git clone --quiet --depth 1 --branch updates "$REMOTE" "$W"
+          mkdir -p "$W/adhoc"
+          cp "$RUNNER_TEMP/cupped-adhoc.ipa" "$W/adhoc/cupped.ipa"
+          V=$(node -p "require('./app.json').expo.version")
+          printf '{"ipaUrl":"https://raw.githubusercontent.com/%s/updates/adhoc/cupped.ipa?v=%s","bundleId":"com.perso1224.cupped","version":"%s"}\n' \
+            "$GITHUB_REPOSITORY" "${GITHUB_SHA::7}" "$V" > "$W/adhoc/info.json"
+          cd "$W"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q --orphan fresh
+          git add -A
+          git commit -qm "Ad Hoc derleme ${GITHUB_SHA::7}"
+          git push -q -f origin HEAD:updates
+          echo "::notice::Kurulum: https://cupped-updates.beratyapar4.workers.dev/install (iPhone'da Safari)"

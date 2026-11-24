@@ -16,6 +16,36 @@ function noUpdate() {
   return new Response(null, { status: 204, headers: PROTOCOL_HEADERS });
 }
 
+// --- Ad Hoc yükleme (TestFlight'sız): kayıtlı iPhone'a doğrudan kurulum ---
+const ADHOC_INFO = `${RAW_BASE}/adhoc/info.json`;
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+function installPage() {
+  const manifestUrl = 'https://cupped-updates.beratyapar4.workers.dev/install/manifest.plist';
+  const html = `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cupped · Yükle</title><style>body{font:17px -apple-system,system-ui,sans-serif;margin:0;padding:32px 20px;background:#FAF8F5;color:#1F1A17;text-align:center}
+a.b{display:inline-block;margin-top:24px;padding:16px 28px;border-radius:14px;background:#D98B2B;color:#fff;text-decoration:none;font-weight:700}
+p{color:#6B625B;line-height:1.5}@media(prefers-color-scheme:dark){body{background:#15110E;color:#F4EEE8}p{color:#B5ABA3}}</style></head>
+<body><h1>Cupped</h1><p>Bu sayfayı iPhone'da <b>Safari</b> ile aç. Sadece kayıtlı iPhone'lara kurulur.</p>
+<a class="b" href="itms-services://?action=download-manifest&amp;url=${encodeURIComponent(manifestUrl)}">Cupped'ı yükle</a>
+<p>Yükleme bitince ana ekranda Cupped simgesine dokun.</p></body></html>`;
+  return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+}
+
+async function installManifest(fetchFile) {
+  const res = await fetchFile(ADHOC_INFO);
+  if (!res.ok) return new Response('henüz Ad Hoc derleme yok', { status: 404 });
+  const info = JSON.parse(await res.text());
+  const plist = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict><key>items</key><array><dict>
+<key>assets</key><array><dict><key>kind</key><string>software-package</string><key>url</key><string>${esc(info.ipaUrl)}</string></dict></array>
+<key>metadata</key><dict><key>bundle-identifier</key><string>${esc(info.bundleId)}</string><key>bundle-version</key><string>${esc(info.version)}</string>
+<key>kind</key><string>software</string><key>title</key><string>Cupped</string></dict>
+</dict></array></dict></plist>`;
+  return new Response(plist, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'no-store' } });
+}
+
 /**
  * @param {Request} request
  * @param {(url: string) => Promise<Response>} fetchManifest  GitHub'dan dosya okur (testte sahte verilir)
@@ -23,6 +53,8 @@ function noUpdate() {
 export async function handle(request, fetchManifest) {
   const url = new URL(request.url);
   if (url.pathname === '/' || url.pathname === '/health') return new Response('cupped-updates ok', { status: 200 });
+  if (url.pathname === '/install') return installPage();
+  if (url.pathname === '/install/manifest.plist') return installManifest(fetchManifest);
   if (url.pathname !== '/manifest') return new Response('not found', { status: 404 });
   if (request.method !== 'GET') return new Response('method not allowed', { status: 405 });
 
