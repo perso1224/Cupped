@@ -239,10 +239,12 @@ export const COFFEE_CHECK = {
     beerGlass: 442,
     goblet: 573,
   },
-  /** Kahve sınıflarının toplam olasılığı en az bu kadarsa "kahve". */
-  minCoffee: 0.08,
+  /**
+   * Kahve sınıflarının toplam olasılığı en az bu kadarsa "kahve"; altındaysa uyarı.
+   * Gerçek fotoğraflarda (EfficientNet-Lite0): kahvelerde en düşük 0.098 (bardakta buzlu kahve),
+   * kahve olmayanlarda en yüksek 0.035 (tencere). Tabak 0.32 (fincan tabağına benziyor; uyarı çıkmaz).
+   */
+  minCoffee: 0.05,
   /** Kahve + nötr sınıflar en az bu kadarsa yine uyarı yok. */
   minDrinkLike: 0.2,
-  /** Uyarı ancak model başka bir şeyden bu kadar eminse gösterilir (karanlık/bulanık fotoğrafta uyarı çıkmasın). */
-  minOtherConfidence: 0.35,
 } as const;
