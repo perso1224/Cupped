@@ -121,7 +121,9 @@ Hesap açman gerekmez. Fincanların, fotoğrafların ve ayarların yalnızca tel
 espresso,filtre,türk,kafe,barista,tadım,latte,v60,demleme,çekirdek,rozet,seri,damak,pasaport
 ```
 
-**Destek URL'si:** `https://perso1224.github.io/Cupped/gizlilik.html` (gizlilik sayfasıyla aynı; içinde iletişim e-postası var)
+**Destek URL'si:** `https://perso1224.github.io/Cupped/#destek`
+
+**Pazarlama URL'si (isteğe bağlı):** `https://perso1224.github.io/Cupped/` (tanıtım sayfası, docs/index.html)
 
 ### Kategori ve yaş
 
