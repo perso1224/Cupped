@@ -435,7 +435,8 @@ export const tr = {
     myCode: 'Senin damak kodun',
     noCode: 'İlk fincanından sonra damak kodun oluşur.',
     shareCode: 'Kodumu gönder',
-    shareMessage: (code: string) => `Cupped damak kodum: ${code}\nUygulamada Profil > Damak Uyumu'na yaz, ne kadar uyumluyuz görelim.`,
+    shareMessage: (code: string) =>
+      `Cupped damak kodum: ${code}\nNe kadar uyumluyuz? Dokun, gör: https://perso1224.github.io/Cupped/m/?c=${encodeURIComponent(code)}\n(ya da uygulamada Profil > Damak Uyumu'na kodu yaz)`,
     friendCode: 'Arkadaşının kodu',
     placeholder: 'Kodu yapıştır (ör. 975-2NQ)',
     ownCode: 'Bu senin kendi kodun. Arkadaşının kodunu yaz.',
