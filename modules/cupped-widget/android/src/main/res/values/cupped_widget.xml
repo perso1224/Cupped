@@ -5,7 +5,7 @@
   <color name="cupped_widget_muted">#7A6E66</color>
   <color name="cupped_widget_accent">#D98B2B</color>
   <color name="cupped_widget_empty">#EFE8E1</color>
-  <color name="cupped_widget_on_accent">#FFFFFF</color>
+  <color name="cupped_widget_on_accent">#1C1613</color>
   <string name="cupped_widget_streak">Cupped · Seri</string>
   <string name="cupped_widget_week">Cupped · Hafta</string>
   <string name="cupped_widget_streak_desc">Serin ve bugünkü fincanların. + ile hızlı ekle.</string>
