@@ -21,7 +21,8 @@ import java.util.Locale
 object CuppedWidgets {
   const val PREFS = "cupped_widget"
   const val KEY = "widget"
-  private val DAY_LETTERS = arrayOf("P", "S", "Ç", "P", "C", "C", "P")
+  private val DAY_LETTERS = arrayOf("Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz")
+  private val DAY_NAMES = arrayOf("Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar")
   private val DOT_IDS = intArrayOf(R.id.cw_dot0, R.id.cw_dot1, R.id.cw_dot2, R.id.cw_dot3, R.id.cw_dot4, R.id.cw_dot5, R.id.cw_dot6)
   private val LABEL_IDS = intArrayOf(R.id.cw_lbl0, R.id.cw_lbl1, R.id.cw_lbl2, R.id.cw_lbl3, R.id.cw_lbl4, R.id.cw_lbl5, R.id.cw_lbl6)
 
@@ -67,6 +68,7 @@ object CuppedWidgets {
     val v = RemoteViews(context.packageName, layout)
     v.setTextViewText(R.id.cw_streak, s.streak.toString())
     v.setTextViewText(R.id.cw_streak_label, if (s.streak > 0) "günlük seri" else "seri başlat")
+    v.setContentDescription(R.id.cw_streak, if (s.streak > 0) "${s.streak} günlük seri" else "Seri yok")
     v.setTextViewText(
       R.id.cw_today,
       if (s.today > 0) "Bugün ${s.today} fincan" else "Bugün henüz fincan yok",
@@ -81,6 +83,7 @@ object CuppedWidgets {
         }
         v.setInt(DOT_IDS[i], "setBackgroundResource", bg)
         v.setTextViewText(DOT_IDS[i], if (s.week[i]) "✓" else "")
+        v.setContentDescription(DOT_IDS[i], DAY_NAMES[i] + if (s.week[i]) ": kahve var" else ": kahve yok")
       }
       v.setTextViewText(
         R.id.cw_week,

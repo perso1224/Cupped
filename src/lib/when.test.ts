@@ -9,3 +9,11 @@ describe('ne zaman', () => {
     expect([y.getFullYear(), y.getMonth(), y.getDate(), y.getHours(), y.getMinutes()]).toEqual([2026, 1, 28, 0, 30]);
   });
 });
+
+describe('geriye ekleme (son 7 gün)', () => {
+  it('sayı: o kadar gün önce aynı saat', () => {
+    const now = new Date(2026, 10, 25, 9, 30);
+    expect(whenToDate(3, now)).toEqual(new Date(2026, 10, 22, 9, 30));
+    expect(whenToDate(6, new Date(2026, 11, 2, 8))).toEqual(new Date(2026, 10, 26, 8));
+  });
+});

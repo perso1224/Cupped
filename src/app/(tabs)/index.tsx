@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { Fragment, useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
 import { Icon } from '../../components/Icon';
@@ -17,6 +17,7 @@ import { insights } from '../../lib/insights';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
 import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, wallBanner, weekDots, weekStrip, longestStreak, noteShares, favorites } from '../../lib/progress';
 import { setReminderEnabled } from '../../lib/reminders';
+import { CuppedWidget } from '../../../modules/cupped-widget';
 import { timeLabel } from '../../lib/settings';
 import { partsSummary } from '../../lib/scoring';
 import { exportAllData, updateMetrics } from '../../lib/storage';
@@ -85,6 +86,15 @@ export default function Home() {
   const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
   // Yedek hatırlatması: 10+ fincan ve 30 gündür yedek yok (hatırlatma sorusuyla aynı anda çıkmaz)
   const askBackup = !!metrics && !askReminder && needsBackupNudge(metrics, list.length, now);
+  // Widget tanıtımı: yalnızca widget'ı olan derlemelerde, 3. fincandan sonra, bir kez (diğer sorularla aynı anda çıkmaz)
+  const showWidgetPromo = !!CuppedWidget && !!metrics && !askReminder && !askBackup && !metrics.widgetPromoDone && list.length >= 3;
+  async function closeWidgetPromo() {
+    animateLayout();
+    await updateMetrics((m) => {
+      m.widgetPromoDone = true;
+    }).catch(() => {});
+    reloadMetrics();
+  }
 
   async function answerBackup(yes: boolean) {
     animateLayout();
@@ -342,6 +352,21 @@ export default function Home() {
             </FadeIn>
           ) : null}
 
+          {showWidgetPromo ? (
+            <FadeIn index={2}>
+              <Card style={{ marginTop: 14 }}>
+                <View style={styles.inlineTitle}>
+                  <Icon name="apps" size={18} color={tint.amber} />
+                  <Text style={styles.cardTitleDark}>{tr.widgetPromo.title}</Text>
+                </View>
+                <Text style={styles.cardSub}>{Platform.OS === 'ios' ? tr.widgetPromo.ios : tr.widgetPromo.android}</Text>
+                <View style={styles.btnRow}>
+                  <PillButton label={tr.widgetPromo.ok} onPress={closeWidgetPromo} style={narrow ? styles.btnFull : styles.btnPrimary} />
+                </View>
+              </Card>
+            </FadeIn>
+          ) : null}
+
           {/* BU HAFTA */}
           <FadeIn index={3}>
             <SectionHeader title={tr.home.thisWeek} />
@@ -358,7 +383,10 @@ export default function Home() {
                   </View>
                 ) : null}
               </View>
-              <WeekChart days={weekStrip(list, now)} />
+              <WeekChart
+                days={weekStrip(list, now)}
+                avg={weekEntries.length ? weekEntries.reduce((s, e) => s + e.score, 0) / weekEntries.length : null}
+              />
               <View style={styles.goalRow}>
                 <Icon name={discoveries >= WEEKLY.discoveryGoal ? 'checkmark-circle' : 'compass-outline'} size={18} color={tint.amber} />
                 <Text style={styles.goalText}>
@@ -394,7 +422,7 @@ export default function Home() {
                 {level ? (
                   <>
                     <View style={[styles.bar, { marginTop: 14 }]}>
-                      <GrowBar style={[styles.barFill, { backgroundColor: colors.black }]} fraction={Math.max(0.04, level.fraction)} value={level.fraction} label={tr.a11y.levelBar} />
+                      <GrowBar style={[styles.barFill, { backgroundColor: colors.black }]} fraction={level.fraction > 0 ? Math.max(0.04, level.fraction) : 0} value={level.fraction} label={tr.a11y.levelBar} />
                     </View>
                     <Text style={styles.cardSub}>
                       {level.next ? tr.home.levelLine(level.level, level.xp, level.next, level.toNext) : tr.home.levelTopXp(level.level, level.xp)}

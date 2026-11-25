@@ -19,7 +19,8 @@ import { brewRatio, isDetailed, trNum } from '../lib/progress';
 import { refreshReminder } from '../lib/reminders';
 import { shareViewSafely } from '../lib/share';
 import { getPalateType } from '../lib/palate';
-import { partsSummary } from '../lib/scoring';
+import { newPlaceCapped, partsSummary } from '../lib/scoring';
+import { useEntries } from '../lib/useEntries';
 import { bumpCounter, deleteEntry, getEntry, photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
 import { colors, fonts, layout, tint, type, isDark } from '../theme';
@@ -41,6 +42,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
   const [sharing, setSharing] = useState(false);
   const busy = useRef(false);
   const isFresh = fresh === '1';
+  const allEntries = useEntries();
   // Paylaşım, skor animasyonu bitmeden ve fotoğraf yüklenmeden yapılmasın (yoksa kartta yarım skor çıkar).
   const [animDone, setAnimDone] = useState(!isFresh);
   const [imageDone, setImageDone] = useState(false);
@@ -253,6 +255,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
               <MetricTile value={signed(entry.parts.depth)} label={tr.result.breakdown.depth} fraction={entry.parts.depth / PART_MAX.depth} color={tint.espresso} icon="leaf" />
             </View>
             <Text style={styles.extras}>{extras}</Text>
+            {allEntries && newPlaceCapped(entry, allEntries) ? <Text style={styles.extras}>{tr.discoveryCapped}</Text> : null}
             <PressScale
               onPress={() => setHelpOpen(true)}
               hitSlop={10}

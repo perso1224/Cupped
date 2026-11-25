@@ -10,7 +10,7 @@ import type { CupEntry } from './types';
 export type NotifyKind = 'daily' | 'streak' | 'weekly' | 'monthly' | 'comeback';
 
 /** Bildirime dokununca açılacak yer. Özetler dönem başlangıcını taşır (dokunma günü farklı olabilir). */
-export type NotifyTarget = { route: 'new' } | { route: 'home' } | { route: 'wrapped'; period: 'week' | 'month'; start: string };
+export type NotifyTarget = { route: 'new' } | { route: 'home' } | { route: 'wrapped'; period: 'week' | 'month' | 'year'; start: string };
 
 export type PlannedNotification = { kind: NotifyKind; at: Date; title: string; body: string; target: NotifyTarget };
 
@@ -78,9 +78,12 @@ export function notificationPlan(
       });
   }
 
-  // Aylık özet: gelecek ayın 1'i, biten ayda fincan varsa.
+  // Aylık özet: gelecek ayın 1'i, biten ayda fincan varsa. Ayın 1'inde saat 11'den önce yeniden kurulursa
+  // (her açılışta plan baştan kurulur) biten ayın özeti bugün için yeniden kurulur, kaybolmaz.
   if (prefs.monthly) {
-    const start = startOfMonth(now);
+    const thisMonth = startOfMonth(now);
+    const beforeSend = now.getTime() < at(thisMonth, MONTHLY_HOUR).getTime();
+    const start = beforeSend ? new Date(thisMonth.getFullYear(), thisMonth.getMonth() - 1, 1) : thisMonth;
     const next = new Date(start.getFullYear(), start.getMonth() + 1, 1);
     const r = periodReport(entries, start, next);
     if (r.cups > 0) {
@@ -91,6 +94,22 @@ export function notificationPlan(
         title: tr.notify.monthlyTitle(month.charAt(0).toLocaleUpperCase('tr-TR') + month.slice(1)),
         body: tr.notify.monthlyBody(r.cups, r.best?.score ?? 0),
         target: { route: 'wrapped', period: 'month', start: dayKey(start) },
+      });
+    }
+  }
+
+  // Yıllık özet: 31 Aralık 19:00, o yıl fincan varsa (aylık özet ayarıyla birlikte açılır/kapanır)
+  if (prefs.monthly) {
+    const dec31 = at(new Date(now.getFullYear(), 11, 31), WEEKLY_HOUR);
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const cups = entries.filter((e) => new Date(e.createdAt) >= yearStart).length;
+    if (dec31.getTime() > now.getTime() && cups > 0 && dec31.getTime() - now.getTime() < 40 * 864e5) {
+      out.push({
+        kind: 'monthly',
+        at: dec31,
+        title: tr.notify.yearTitle(now.getFullYear()),
+        body: tr.notify.yearBody(cups),
+        target: { route: 'wrapped', period: 'year', start: dayKey(yearStart) },
       });
     }
   }
@@ -130,7 +149,10 @@ export function targetHref(t: NotifyTarget, now: Date = new Date()): string {
   const start = new Date(y, m - 1, d);
   let offset: number;
   if (t.period === 'week') offset = Math.round((startOfWeek(start).getTime() - startOfWeek(now).getTime()) / (7 * 864e5));
+  else if (t.period === 'year') offset = start.getFullYear() - now.getFullYear();
   else offset = (start.getFullYear() - now.getFullYear()) * 12 + start.getMonth() - now.getMonth();
+  // Özet ekranı yalnızca bu ve geçen dönemi gösterir; daha eski bir bildirime geç dokunulursa İlerleme açılır
+  if (offset < -1) return '/progress';
   return `/wrapped?period=${t.period}&offset=${Math.min(0, offset)}`;
 }
 
@@ -139,7 +161,7 @@ export function parseTarget(data: unknown): NotifyTarget | null {
   const t = (data && typeof data === 'object' ? (data as { target?: unknown }).target : null) as Partial<NotifyTarget> | null;
   if (!t || typeof t !== 'object') return null;
   if (t.route === 'new' || t.route === 'home') return { route: t.route };
-  if (t.route === 'wrapped' && (t.period === 'week' || t.period === 'month') && typeof t.start === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(t.start))
+  if (t.route === 'wrapped' && (t.period === 'week' || t.period === 'month' || t.period === 'year') && typeof t.start === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(t.start))
     return { route: 'wrapped', period: t.period, start: t.start };
   return null;
 }

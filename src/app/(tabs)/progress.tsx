@@ -12,7 +12,7 @@ import { Card, PillButton, Segmented } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
 import { levelProgress } from '../../lib/home';
-import { addDays, currentStreak, inRange, periodRange, periodReport, scoreTrend, startOfMonth, startOfWeek, weekDots, type TrendRange } from '../../lib/progress';
+import { addDays, currentStreak, inRange, periodRange, periodReport, scoreTrend, startOfMonth, startOfWeek, weekDots, yearWrappedFor, type TrendRange } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
 import { colors, fonts, layout, tint, type } from '../../theme';
 import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
@@ -40,13 +40,14 @@ export default function Progress() {
   const prevAvg = hasPrev ? periodReport(entries, prev.start, prev.end).avg : null;
   const diff = prevAvg !== null && report.cups ? report.avg - prevAvg : null;
   const level = levelProgress(entries);
+  const yearWrap = yearWrappedFor(entries, now);
   const streak = currentStreak(entries, now);
   const dots = weekDots(entries, now);
   const firstAt = entries.length ? entries.reduce((m, e) => (e.createdAt < m ? e.createdAt : m), entries[0].createdAt) : null;
   const isNew = !firstAt || now.getTime() - Date.parse(firstAt) < 31 * 86400000;
   const range: TrendRange = picked ?? (isNew ? '1m' : '3m');
   const trend = scoreTrend(entries, range, now);
-  const trendAvg = trend.points.length ? Math.round(trend.points.reduce((s, p) => s + p.avg, 0) / trend.points.length) : 0;
+  const trendAvg = trend.avg ?? 0;
   const trendMsg =
     // Erken yargı olmasın: en az 4 günlük veri
     trend.change === null || trend.points.length < 4 ? null : trend.change >= 2 ? tr.progress.trendUp(trend.change) : trend.change <= -2 ? tr.progress.trendDown(-trend.change) : tr.progress.trendFlat;
@@ -70,7 +71,7 @@ export default function Progress() {
               </Text>
             </View>
             <View style={styles.barTrack}>
-              <GrowBar style={styles.barFill} fraction={Math.max(0.04, level?.fraction ?? 0)} value={level?.fraction ?? 0} label={tr.a11y.levelBar} />
+              <GrowBar style={styles.barFill} fraction={(level?.fraction ?? 0) > 0 ? Math.max(0.04, level?.fraction ?? 0) : 0} value={level?.fraction ?? 0} label={tr.a11y.levelBar} />
             </View>
             {level ? <Text style={styles.xp}>{tr.progress.xp(level.xp)}</Text> : null}
             <Text style={styles.small} numberOfLines={3}>
@@ -107,7 +108,7 @@ export default function Progress() {
         </View>
         {trend.points.length >= 2 ? (
           <View style={{ marginTop: 12 }}>
-            <TrendChart key={range} points={trend.points} />
+            <TrendChart key={range} points={trend.points} weekly={range !== '1m'} />
           </View>
         ) : (
           <Text style={[styles.small, { marginVertical: 28, textAlign: 'center' }]}>{tr.progress.trendNeedMore}</Text>
@@ -192,6 +193,16 @@ export default function Progress() {
                 title={kind === 'week' ? tr.wrapped.lastWeek : tr.wrapped.lastMonth}
                 chevron
                 onPress={() => router.push({ pathname: '/wrapped', params: { period: kind, offset: '-1' } })}
+              />
+            ) : null}
+            {/* Yıllık özet: Aralık boyunca bu yıl, Ocak'ın ilk iki haftası geçen yıl */}
+            {yearWrap ? (
+              <ListRow
+                icon="sparkles"
+                tint={tint.cherry}
+                title={tr.wrapped.yearOpen(yearWrap.year)}
+                chevron
+                onPress={() => router.push({ pathname: '/wrapped', params: { period: 'year', offset: String(yearWrap.offset) } })}
               />
             ) : null}
             <ListRow icon="grid" tint={tint.espresso} title={tr.wall.open} chevron onPress={() => router.push('/wall')} />

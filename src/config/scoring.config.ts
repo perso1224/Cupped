@@ -137,6 +137,8 @@ export const PALATE_RULES = {
   nomadDistinctPlaces: 4,
   /** Tat notlarından tip: penceredeki fincanların en az bu oranında not olmalı. */
   notesShare: 0.4,
+  /** İlk tip belirlendikten sonra, tip ancak en az bu kadar fincan varken değişebilir (2. fincanda zıplamasın). */
+  minCupsToChange: 4,
 } as const;
 
 /** Haftalık Damak Skoru: çeşitliliğe dayalı kişisel skor (kendi rekorunla kıyaslanır). */

@@ -30,7 +30,11 @@ export function startOfMonth(d: Date): Date {
 }
 
 /** Dönem aralığı. offset 0 = bu hafta/ay, -1 = geçen hafta/ay. */
-export function periodRange(kind: 'week' | 'month', offset: number, now: Date = new Date()): { start: Date; end: Date } {
+export function periodRange(kind: 'week' | 'month' | 'year', offset: number, now: Date = new Date()): { start: Date; end: Date } {
+  if (kind === 'year') {
+    const start = new Date(now.getFullYear() + offset, 0, 1);
+    return { start, end: new Date(start.getFullYear() + 1, 0, 1) };
+  }
   if (kind === 'week') {
     const start = addDays(startOfWeek(now), 7 * offset);
     return { start, end: addDays(start, 7) };
@@ -364,11 +368,11 @@ export function methodStats(entries: CupEntry[], methods: readonly Method[]): Me
 
 export type TrendRange = '1m' | '3m' | '1y' | 'all';
 export type TrendPoint = { t: number; avg: number };
-export type ScoreTrend = { points: TrendPoint[]; change: number | null };
+export type ScoreTrend = { points: TrendPoint[]; change: number | null; avg: number | null };
 
 /**
  * İlerleme grafiği: seçilen aralıkta skorun gidişatı.
- * 1A/3A: gün başına ortalama; 1Y/Tümü: hafta başına ortalama (nokta sayısı makul kalsın).
+ * 1A: gün başına ortalama; 3A/1Y/Tümü: hafta başına ortalama (nokta sayısı makul, çizgi okunur kalsın).
  * change: aralığın ikinci yarısının ortalaması − ilk yarısının ortalaması (en az 2 nokta gerekir).
  */
 export function scoreTrend(entries: CupEntry[], range: TrendRange, now: Date = new Date()): ScoreTrend {
@@ -376,7 +380,7 @@ export function scoreTrend(entries: CupEntry[], range: TrendRange, now: Date = n
   const days = range === '1m' ? 30 : range === '3m' ? 91 : range === '1y' ? 365 : null;
   const start = days ? addDays(end, -days) : null;
   const list = entries.filter((e) => !start || inRange(e, start, end)).filter((e) => new Date(e.createdAt) < end);
-  const weekly = range === '1y' || range === 'all';
+  const weekly = range !== '1m';
   const buckets = new Map<number, number[]>();
   for (const e of list) {
     const d = new Date(e.createdAt);
@@ -386,10 +390,12 @@ export function scoreTrend(entries: CupEntry[], range: TrendRange, now: Date = n
   const points = [...buckets.entries()]
     .sort((a, b) => a[0] - b[0])
     .map(([t, s]) => ({ t, avg: Math.round(s.reduce((x, y) => x + y, 0) / s.length) }));
-  if (points.length < 2) return { points, change: null };
+  // Aralığın ortalaması: fincanların ortalaması (gün/hafta ortalamalarının ortalaması değil)
+  const avg = list.length ? Math.round(list.reduce((s, e) => s + e.score, 0) / list.length) : null;
+  if (points.length < 2) return { points, change: null, avg };
   const half = Math.floor(points.length / 2);
   const mean = (p: TrendPoint[]) => p.reduce((s, x) => s + x.avg, 0) / p.length;
-  return { points, change: Math.round(mean(points.slice(points.length - half)) - mean(points.slice(0, half))) };
+  return { points, change: Math.round(mean(points.slice(points.length - half)) - mean(points.slice(0, half))), avg };
 }
 
 /** Bu haftanın günleri: o gün fincan var mı (seri kartındaki işaretler). */
@@ -515,6 +521,15 @@ export function yearWall(entries: CupEntry[], year: number, today: Date = new Da
  * Fincan Duvarı afişi: Aralık boyunca "hazırlanıyor" (kalan gün), 31 Aralık–7 Ocak "tamamlandı".
  * O yıl hiç fincan yoksa gösterilmez.
  */
+/** Yıllık Damak Özeti ne zaman sunulur: Aralık boyunca bu yıl, Ocak'ın ilk 14 günü geçen yıl (o yıl fincan varsa). */
+export function yearWrappedFor(entries: CupEntry[], now: Date = new Date()): { year: number; offset: 0 | -1 } | null {
+  const m = now.getMonth();
+  const offset: 0 | -1 | null = m === 11 ? 0 : m === 0 && now.getDate() <= 14 ? -1 : null;
+  if (offset === null) return null;
+  const year = now.getFullYear() + offset;
+  return entries.some((e) => new Date(e.createdAt).getFullYear() === year) ? { year, offset } : null;
+}
+
 export function wallBanner(entries: CupEntry[], now: Date = new Date()): { kind: 'building'; daysLeft: number; year: number } | { kind: 'done'; year: number } | null {
   const m = now.getMonth();
   const d = now.getDate();

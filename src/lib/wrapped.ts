@@ -61,11 +61,15 @@ export function buildWrapped(entries: CupEntry[], start: Date, end: Date): Wrapp
   const slides: WrappedSlide[] = [
     { kind: 'intro' },
     { kind: 'cups', cups, ml },
-    { kind: 'method', method: method.item.method, count: method.count, pct: Math.round((method.count / cups) * 100) },
   ];
+  // "En sadık olduğun yöntem": ancak bir yöntem gerçekten öndeyse (eşitlikte rastgele biri seçilmesin)
+  const methodCounts = [...new Set(list.map((e) => e.method))].map((m) => list.filter((e) => e.method === m).length).sort((a, b) => b - a);
+  if (methodCounts.length === 1 || methodCounts[0] > methodCounts[1]) {
+    slides.push({ kind: 'method', method: method.item.method, count: method.count, pct: Math.round((method.count / cups) * 100) });
+  }
   if (homeCount / cups >= WRAPPED_RULES.homeShare) {
     slides.push({ kind: 'home', count: homeCount, pct: Math.round((homeCount / cups) * 100) });
-  } else if (place) {
+  } else if (place && place.count >= 2) {
     slides.push({ kind: 'place', name: matchChain(place.item.placeName!) ?? place.item.placeName!, visits: place.count });
   }
   // Keşif yoksa (0 yeni mekan, 0 yeni yöntem) slayt hiç gösterilmez.

@@ -5,8 +5,9 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { CuppedWidget } from '../../modules/cupped-widget';
 import { notificationPlan, parseTarget, targetHref, type NotifyTarget } from './notifyPlan';
+import { DEFAULT_SETTINGS } from './settings';
 import { buildWidgetData } from './widgetData';
-import { loadEntries, loadMetrics, loadSettings, thumbUrl, updateMetrics } from './storage';
+import { loadEntries, loadMetrics, loadSettings, photoUrl, updateMetrics } from './storage';
 
 /**
  * Bildirimler: telefonun kendi (yerel) bildirimleri, sunucu yok. Plan notifyPlan.ts'te (günlük hatırlatma,
@@ -43,12 +44,13 @@ export function refreshReminder(): Promise<void> {
   return chain;
 }
 
-/** Tüm hatırlatmaları iptal eder (ör. "Tüm verileri sil"). */
+/** Tüm hatırlatmaları iptal eder ve widget'ları boşaltır (ör. "Tüm verileri sil": eski fotoğraf/seri kalmasın). */
 export function cancelReminders(): Promise<void> {
-  chain = chain.then(
-    () => Notifications.cancelAllScheduledNotificationsAsync().catch(() => {}),
-    () => Notifications.cancelAllScheduledNotificationsAsync().catch(() => {}),
-  );
+  const clear = () => {
+    syncWidget([], DEFAULT_SETTINGS.caffeineRef);
+    return Notifications.cancelAllScheduledNotificationsAsync().catch(() => {});
+  };
+  chain = chain.then(clear, clear);
   return chain;
 }
 
@@ -60,9 +62,10 @@ function syncWidget(entries: Awaited<ReturnType<typeof loadEntries>>, caffeineRe
     // Önce fotoğraf, sonra veri (veri yazılınca widget'lar yenilenir)
     const last = entries.reduce<(typeof entries)[number] | null>((m, e) => (!m || e.createdAt > m.createdAt ? e : m), null);
     const photo = last?.photoUri ?? null;
+    // Tam boy (≈1080 px): widget kendisi küçültür; küçük kopya (240 px) orta boy widget'ta bulanık kalıyordu.
+    // Kopyalama başarısızsa bir sonraki yenilemede tekrar denenir.
     if (CuppedWidget.setImage && photo !== lastWidgetPhoto) {
-      CuppedWidget.setImage(thumbUrl(photo));
-      lastWidgetPhoto = photo;
+      if (CuppedWidget.setImage(photoUrl(photo))) lastWidgetPhoto = photo;
     }
     CuppedWidget.setData(JSON.stringify(buildWidgetData(entries, new Date(), caffeineRef)));
   } catch {
@@ -104,6 +107,8 @@ async function doRefresh(): Promise<void> {
 /** Bildirim izni: varsa true; yoksa bir kez sorar. */
 export async function ensureNotificationPermission(): Promise<boolean> {
   try {
+    // Android 13+: izin penceresi, en az bir bildirim kanalı varken gösterilir
+    await ensureAndroidChannel();
     const cur = await Notifications.getPermissionsAsync();
     if (cur.granted) return true;
     return (await Notifications.requestPermissionsAsync()).granted;
@@ -116,6 +121,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
 export async function setReminderEnabled(enabled: boolean): Promise<boolean> {
   if (enabled) {
     try {
+      await ensureAndroidChannel(); // Android 13+: izin penceresi için önce kanal
       const cur = await Notifications.getPermissionsAsync();
       const perm = cur.granted ? cur : await Notifications.requestPermissionsAsync();
       if (!perm.granted) {

@@ -10,8 +10,13 @@ export function upper(s: string): string {
 
 /** Dönem kelimeleri: "Bu ay tam 12 fincan", "Ayın fincanı" … */
 export type PeriodWord = { this: string; thisLower: string; best: string };
-export function periodWord(kind: 'week' | 'month', offset: number): PeriodWord {
+export function periodWord(kind: 'week' | 'month' | 'year', offset: number): PeriodWord {
   const past = offset < 0;
+  if (kind === 'year') {
+    return past
+      ? { this: 'Geçen yıl', thisLower: 'geçen yıl', best: 'Geçen yılın fincanı' }
+      : { this: 'Bu yıl', thisLower: 'bu yıl', best: 'Yılın fincanı' };
+  }
   if (kind === 'week') {
     return past
       ? { this: 'Geçen hafta', thisLower: 'geçen hafta', best: 'Geçen haftanın fincanı' }
@@ -59,6 +64,13 @@ export const tr = {
     pager: (i: number, n: number) => `Sayfa ${i} / ${n}`,
     shareCardPreview: (method: string, score: number, type: string) => `Paylaşım kartı önizlemesi: ${method}, skor ${score}, ${type}`,
   },
+  widgetPromo: {
+    title: 'Cupped ana ekranında',
+    ios: "Ana ekranda boş bir yere basılı tut › Düzenle › Widget ekle › Cupped. Serin, Fincan Duvarın ve son fincanın hep gözünün önünde. Kilit ekranına ve Kontrol Merkezi'ne de ekleyebilirsin.",
+    android: "Ana ekranda boş bir yere basılı tut › Widget'lar › Cupped. Serin ve haftan hep gözünün önünde.",
+    ok: 'Tamam',
+  },
+  discoveryCapped: 'Yeni mekan, ama bu hafta 2 yeni mekan puanı doldu. Pasaportuna yine eklendi; haftaya yeni mekanlar yeniden puan kazandırır.',
   notify: {
     streakTitle: 'Seri tehlikede 🔥',
     streakBody: (n: number) => `Serin ${n} gün. Bugün bir fincan ekle, bozulmasın.`,
@@ -66,6 +78,8 @@ export const tr = {
     weeklyBody: (cups: number, avg: number, top: string | null) =>
       `Bu hafta ${cups} fincan, ortalama skor ${avg}${top ? `. En çok: ${top}` : ''}. Haftana göz at.`,
     monthlyTitle: (month: string) => `${month} özetin hazır ☕`,
+    yearTitle: (y: number) => `${y} Damak Özetin hazır ☕`,
+    yearBody: (cups: number) => `Bu yıl ${cups} fincan. Yılının özetini izle, en sevdiğin slaytı paylaş.`,
     monthlyBody: (cups: number, best: number) => `${cups} fincan, en iyi skorun ${best}. Ayına bir bak.`,
     comebackTitle: 'Cupped',
     comebackBody: [
@@ -215,11 +229,11 @@ export const tr = {
   scoreHelp: {
     link: 'Skor nasıl hesaplanır?',
     ok: 'Anladım',
-    oneLine: 'Yıldızlar beğenin, skor kahve yolculuğun.',
+    oneLine: 'Yıldız: ne kadar beğendin. Skor: kahve yolculuğun.',
     title: 'Fincan Skoru',
     body:
       'Skor kahvenin tadını değil, kahve yolculuğunu ölçer. Kahveyi ne kadar beğendiğini yıldızlarla verirsin; yıldız skoru etkilemez.\n\n' +
-      '• Taban: her fincan 40 puanla başlar.\n' +
+      '• Başlangıç: her fincan 40 puanla başlar.\n' +
       '• Emek: evde demleme +25, bağımsız kafe +15, zincir kafe ya da ofis +10.\n' +
       '• Keşif: ilk kez gittiğin mekan +15 (haftada en fazla 2 yeni mekan), ilk kez denediğin yöntem +10. Uzun aradan sonra dönülen mekan ya da bu ay ilk kez kullanılan yöntem +5.\n' +
       '• Derinlik: 2 tat notu +5, çekirdeğin menşei +5.\n\n' +
@@ -229,7 +243,7 @@ export const tr = {
     share: 'Paylaş',
     done: 'Tamam',
     breakdown: {
-      base: 'Taban',
+      base: 'Başlangıç',
       effort: 'Emek',
       depth: 'Derinlik',
       discovery: 'Keşif',
@@ -345,7 +359,7 @@ export const tr = {
     topMethod: 'En çok',
     bestCup: 'Haftanın fincanı',
     bestCupMonth: 'Ayın fincanı',
-    periodType: 'Dönemin damak tipi',
+    periodType: 'Bu dönemin havası',
     shareWeek: 'Haftalık raporu paylaş',
     shareMonth: 'Damak Özetini paylaş',
     empty: 'Bu dönemde henüz fincan yok.',
@@ -421,9 +435,10 @@ export const tr = {
     myCode: 'Senin damak kodun',
     noCode: 'İlk fincanından sonra damak kodun oluşur.',
     shareCode: 'Kodumu gönder',
-    shareMessage: (code: string) => `Cupped damak kodum: ${code}\nUygulamada Profil > Damak Uyumu'na yaz, ne kadar uyumluyuz görelim.`,
+    shareMessage: (code: string) =>
+      `Cupped damak kodum: ${code}\nNe kadar uyumluyuz? Dokun, gör: https://perso1224.github.io/Cupped/m/?c=${encodeURIComponent(code)}\n(ya da uygulamada Profil > Damak Uyumu'na kodu yaz)`,
     friendCode: 'Arkadaşının kodu',
-    placeholder: 'Kodu yapıştır',
+    placeholder: 'Kodu yapıştır (ör. 975-2NQ)',
     ownCode: 'Bu senin kendi kodun. Arkadaşının kodunu yaz.',
     codeNote: 'Kodun zevkinle birlikte değişir; arkadaşına en güncel halini gönder.',
     find: 'Uyumu bul',
@@ -483,6 +498,8 @@ export const tr = {
     next: 'Sonraki slayt',
     monthTitle: 'Damak Özeti',
     weekTitle: 'Haftalık Damak Özeti',
+    yearTitle: 'Yıllık Damak Özeti',
+    yearOpen: (y: number) => `${y} Damak Özeti`,
     open: 'Özetini izle',
     bannerMonth: (month: string) => `${month} Damak Özetin hazır`,
     bannerMonthSoFar: (month: string) => `${month} özetin şimdiden hazır`,
@@ -574,7 +591,7 @@ export const tr = {
     notifyWeeklySub: 'Pazar 19:00',
     notifyMonthly: 'Aylık özet',
     notifyMonthlySub: 'Ayın 1\'i',
-    notifyComeback: 'Geri dön hatırlatması',
+    notifyComeback: 'Dönüş hatırlatması',
     notifyComebackSub: 'Uygulamayı 3, 7 ve 14 gün açmazsan birer kez',
     notifyFooter: 'Günde en fazla 2 bildirim. Fincan ekleyince o günün hatırlatmaları kendiliğinden iptal olur.',
     experience: 'Deneyim',

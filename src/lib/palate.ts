@@ -42,7 +42,8 @@ export function createPalateTracker(): PalateTracker {
 /** Bir fincan ilerletir. `recent`: bu fincanla biten son N fincan (tarih sırasıyla). Kararlı tipi döner. */
 export function palateStep(t: PalateTracker, recent: PalateSource[]): string {
   const c = rawPalateTypeId(recent);
-  if (t.stable === null || c === t.prev) t.stable = c;
+  // İlk fincan tipi belirler; sonra tip yalnızca yeterli fincan varken ve ham sonuç art arda iki kez aynıysa değişir
+  if (t.stable === null || (c === t.prev && recent.length >= PALATE_RULES.minCupsToChange)) t.stable = c;
   t.prev = c;
   return t.stable;
 }

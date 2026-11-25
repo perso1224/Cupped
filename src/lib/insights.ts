@@ -1,6 +1,7 @@
 import { CAFFEINE_MG } from '../config/scoring.config';
-import { addDays, coffeeTime, inRange, startOfWeek, type DayPart } from './progress';
+import { addDays, coffeeTime, dayKey, inRange, startOfWeek, type DayPart } from './progress';
 import { matchChain, placeKey } from './scoring';
+import { tr } from '../i18n/tr';
 import type { CupEntry } from './types';
 
 /** "Öne Çıkanlar" (Apple Sağlık'taki gibi): geçmişten otomatik çıkarılan kısa içgörüler. Saf, testli. */
@@ -17,14 +18,47 @@ const PART_LABEL: Record<DayPart, string> = {
 };
 const WEEKDAYS = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
 
+/** Geçen yıl (öncelikli) ya da geçen ay aynı gün içilen fincan; o gün birden fazlaysa en yüksek skorlu. */
+export function onThisDay(entries: CupEntry[], now: Date = new Date()): { entry: CupEntry; ago: 'year' | 'month' } | null {
+  const pick = (d: Date) => {
+    // Ay kısaysa (ör. 31 Mart → 31 Şubat yok) tarih kayar: o zaman anı yok
+    const k = dayKey(d);
+    return entries.filter((e) => dayKey(new Date(e.createdAt)) === k).sort((a, b) => b.score - a.score)[0] ?? null;
+  };
+  const y = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  if (y.getDate() === now.getDate()) {
+    const e = pick(y);
+    if (e) return { entry: e, ago: 'year' };
+  }
+  const m = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  if (m.getDate() === now.getDate()) {
+    const e = pick(m);
+    if (e) return { entry: e, ago: 'month' };
+  }
+  return null;
+}
+
 export function insights(entries: CupEntry[], now: Date = new Date()): Insight[] {
   const out: Insight[] = [];
   const ws = startOfWeek(now);
   const thisWeek = entries.filter((e) => inRange(e, ws, addDays(ws, 7)));
   const lastWeek = entries.filter((e) => inRange(e, addDays(ws, -7), ws));
 
-  // 1) Bu hafta vs geçen hafta
-  if (thisWeek.length && lastWeek.length) {
+  // 0) Anı: geçen yıl ya da geçen ay bugün içilen fincan (en üstte; hafızayı tazeleyen küçük bir sürpriz)
+  const memory = onThisDay(entries, now);
+  if (memory) {
+    const e = memory.entry;
+    const where = e.venueKind === 'home' ? 'evde' : e.venueKind === 'office' ? 'ofiste' : e.placeName ? (matchChain(e.placeName) ?? e.placeName) : null;
+    out.push({
+      id: 'memory',
+      icon: 'calendar',
+      title: memory.ago === 'year' ? 'Geçen yıl bugün' : 'Geçen ay bugün',
+      text: `${where ? `${where.charAt(0).toLocaleUpperCase('tr-TR')}${where.slice(1)}, ` : ''}${tr.methods[e.method]}. Skor ${e.score}.`,
+    });
+  }
+
+  // 1) Bu hafta vs geçen hafta (yarım hafta tek fincanla tam haftayla kıyaslanmasın: en az 3 fincan)
+  if (thisWeek.length >= 3 && lastWeek.length >= 2) {
     const d = Math.round(avg(thisWeek.map((e) => e.score)) - avg(lastWeek.map((e) => e.score)));
     out.push({
       id: 'trend',

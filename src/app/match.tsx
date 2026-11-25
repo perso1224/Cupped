@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { Alert, Keyboard, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bean } from '../components/coffee';
@@ -24,29 +25,39 @@ export default function MatchScreen() {
   const myType = entries.length ? computePalateTypeId(entries) : (profile?.starterTypeId ?? 'classic_master');
   const mine = tasteProfile(entries, myType);
   const myCode = mine ? encodeProfile(mine) : null;
-  const [input, setInput] = useState('');
+  // Arkadaşın paylaştığı bağlantıdan (cupped://match?code=…) gelindiyse kod hazır yazılı ve karşılaştırma kendiliğinden yapılır
+  const { code: linkCode } = useLocalSearchParams<{ code?: string }>();
+  const [input, setInput] = useState(() => (linkCode ? extractCode(String(linkCode)) ?? String(linkCode) : ''));
   // Hata yazının altında görünür (uyarı penceresi yerine)
   const [err, setErr] = useState<string | null>(null);
   const [result, setResult] = useState<{ friend: TasteProfile; match: Match; code: string } | null>(null);
   const cardRef = useRef<CardHandle>(null);
   const [sharing, setSharing] = useState(false);
 
-  function find() {
+  function find(raw: string = input) {
     Keyboard.dismiss();
-    const friend = decodeCode(input);
+    const friend = decodeCode(raw);
     if (!friend || !mine) {
       setResult(null); // eski sonuç ekranda kalıp yanıltmasın
       setErr(tr.match.invalid);
       return;
     }
-    if (myCode && canonicalCode(input) === canonicalCode(myCode)) {
+    if (myCode && canonicalCode(raw) === canonicalCode(myCode)) {
       setResult(null);
       setErr(tr.match.ownCode);
       return;
     }
     setErr(null);
-    setResult({ friend, match: compatibility(mine, friend), code: input.toUpperCase() });
+    setResult({ friend, match: compatibility(mine, friend), code: raw.toUpperCase() });
   }
+
+  // Bağlantıyla gelince: kayıtlar yüklenip kendi profilin hazır olduğunda bir kez karşılaştır
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (autoRan.current || !linkCode || !mine) return;
+    autoRan.current = true;
+    find(input);
+  });
 
   async function shareResult() {
     if (sharing) return;
@@ -108,7 +119,7 @@ export default function MatchScreen() {
             autoCapitalize="characters"
             autoCorrect={false}
             returnKeyType="done"
-            onSubmitEditing={find}
+            onSubmitEditing={() => find()}
             style={[styles.input, err ? { borderColor: colors.danger } : null]}
           />
           {err ? (
@@ -116,7 +127,7 @@ export default function MatchScreen() {
               {err}
             </Text>
           ) : null}
-          <PillButton label={tr.match.find} onPress={find} disabled={input.replace(/[\s-]/g, '').length < 6} style={{ marginTop: 12, height: 46 }} />
+          <PillButton label={tr.match.find} onPress={() => find()} disabled={input.replace(/[\s-]/g, '').length < 6} style={{ marginTop: 12, height: 46 }} />
         </View>
       ) : null}
 

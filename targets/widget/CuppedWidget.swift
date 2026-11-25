@@ -201,13 +201,17 @@ extension Color {
   static let cuppedEmpty = Color(UIColor { $0.userInterfaceStyle == .dark
     ? UIColor(red: 0x3A / 255, green: 0x2F / 255, blue: 0x28 / 255, alpha: 1)
     : UIColor(red: 0xEF / 255, green: 0xE8 / 255, blue: 0xE1 / 255, alpha: 1) })
+  /// Boş gün/iz rengi: tam renkte kart tonu; renklendirilmiş/şeffaf görünümde sönük (dolu günlerden güçlü görünmesin).
+  static func cuppedEmpty(_ mode: WidgetRenderingMode) -> Color {
+    mode == .fullColor ? .cuppedEmpty : Color.primary.opacity(0.15)
+  }
   static let cuppedWarn = Color(red: 0xC2 / 255, green: 0x4A / 255, blue: 0x2E / 255)
 }
 
 private let newCupURL = URL(string: "cupped://new")!
 private let homeURL = URL(string: "cupped:///")!
 private let wallURL = URL(string: "cupped:///wall")!
-private let dayLetters = ["P", "S", "Ç", "P", "C", "C", "P"]
+private let dayLetters = ["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"]
 
 extension View {
   /// iOS 17+: sistem arka planı (StandBy, iOS 26 cam/renkli görünümlerde sistem uyarlar). Öncesi: düz kart rengi.
@@ -230,8 +234,8 @@ struct StreakBlock: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      HStack(alignment: .firstTextBaseline, spacing: 2) {
-        Text("🔥").font(.system(size: 20))
+      HStack(alignment: .firstTextBaseline, spacing: 3) {
+        Image(systemName: "flame.fill").font(.system(size: 18)).foregroundColor(.cuppedAccent).widgetAccentable()
         Text("\(s.streak)")
           .font(.system(size: 36, weight: .bold, design: .serif))
           .foregroundColor(.cuppedAccent)
@@ -253,21 +257,28 @@ struct StreakBlock: View {
 }
 
 struct AddButton: View {
+  @Environment(\.widgetRenderingMode) var mode
+
   var body: some View {
-    Image(systemName: "plus")
-      .font(.system(size: 16, weight: .bold))
-      .foregroundColor(.white)
-      .frame(width: 32, height: 32)
-      .background(Circle().fill(Color.cuppedAccent))
-      .widgetAccentable()
-      .accessibilityLabel("Yeni fincan ekle")
+    // Yalnızca daire vurgulu: renklendirilmiş görünümde "+" daireyle aynı renge boyanıp kaybolmasın
+    ZStack {
+      Circle().fill(Color.cuppedAccent).widgetAccentable()
+      Image(systemName: "plus")
+        .font(.system(size: 16, weight: .bold))
+        .foregroundColor(mode == .fullColor ? Color(red: 0x1C / 255, green: 0x16 / 255, blue: 0x13 / 255) : .primary)
+    }
+    .frame(width: 32, height: 32)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("Yeni fincan ekle")
   }
 }
 
 struct WeekStamps: View {
+  @Environment(\.widgetRenderingMode) var mode
   let s: CuppedSummary
 
   var body: some View {
+    let days = s.week.filter { $0 }.count
     HStack(spacing: 0) {
       ForEach(0..<7, id: \.self) { i in
         VStack(spacing: 4) {
@@ -275,20 +286,24 @@ struct WeekStamps: View {
             .font(.caption2.weight(i == s.todayIndex ? .bold : .regular))
             .foregroundColor(.secondary)
           ZStack {
-            Circle().fill(s.week[i] ? Color.cuppedAccent : Color.cuppedEmpty)
+            Circle().fill(s.week[i] ? Color.cuppedAccent : Color.cuppedEmpty(mode)).widgetAccentable(s.week[i])
             if i == s.todayIndex && !s.week[i] {
-              Circle().strokeBorder(Color.cuppedAccent, lineWidth: 2)
+              Circle().strokeBorder(Color.cuppedAccent, lineWidth: 2).widgetAccentable()
             }
             if s.week[i] {
-              Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundColor(.white)
+              // Koyu tik: turuncu üzerinde beyazdan daha okunur; renklendirilmiş görünümde vurgu dışında kalır
+              Image(systemName: "checkmark")
+                .font(.system(size: 10, weight: .heavy))
+                .foregroundColor(mode == .fullColor ? Color(red: 0x1C / 255, green: 0x16 / 255, blue: 0x13 / 255) : .primary)
             }
           }
           .frame(width: 22, height: 22)
-          .widgetAccentable(s.week[i])
         }
         .frame(maxWidth: .infinity)
       }
     }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(days > 0 ? "Bu hafta \(days) gün kahve" : "Bu hafta henüz kahve yok")
   }
 }
 
@@ -310,18 +325,18 @@ struct CuppedWidgetView: View {
         }
       }
       .widgetURL(newCupURL)
-      .accessibilityLabel("\(s.streak) günlük seri")
+      .accessibilityLabel(s.streak > 0 ? "\(s.streak) günlük seri" : "Seri yok, bugün başlat")
       .cuppedBackground(accessory: true)
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 1) {
-        Label("\(s.streak) günlük seri", systemImage: "flame.fill").font(.headline)
+        Label(s.streak > 0 ? "\(s.streak) günlük seri" : "Seri başlat", systemImage: "flame.fill").font(.headline)
         Text(s.today > 0 ? "Bugün \(s.today) fincan" : "Bugün henüz fincan yok").font(.caption)
         Text(s.weekCups > 0 ? "Bu hafta \(s.weekCups) fincan" : "Bu hafta henüz yok").font(.caption).foregroundColor(.secondary)
       }
       .widgetURL(newCupURL)
       .cuppedBackground(accessory: true)
     case .accessoryInline:
-      Label("\(s.streak) gün seri · bugün \(s.today) fincan", systemImage: "flame.fill")
+      Label(s.streak > 0 ? "\(s.streak) gün seri · bugün \(s.today) fincan" : "Bugün \(s.today) fincan", systemImage: "flame.fill")
         .widgetURL(newCupURL)
         .cuppedBackground(accessory: true)
     case .systemMedium:
@@ -369,12 +384,16 @@ struct CuppedWidget: Widget {
 // MARK: - 2) Fincan Duvarı (orta, büyük)
 
 struct WallGrid: View {
+  @Environment(\.widgetRenderingMode) var mode
   let wall: [Int]
   let now: Date
+  /// Alt yazı: (kahve içilen gün, gösterilen hafta) → metin. Izgaranın altında, çizilen haftalara göre.
+  var caption: (Int, Int) -> String
+  var captionFont: Font = .caption2
 
   private func color(_ v: Int) -> Color {
     switch v {
-    case 0: return .cuppedEmpty
+    case 0: return .cuppedEmpty(mode)
     case 1: return Color.cuppedAccent.opacity(0.45)
     case 2: return Color.cuppedAccent.opacity(0.72)
     default: return .cuppedAccent
@@ -384,29 +403,43 @@ struct WallGrid: View {
   var body: some View {
     GeometryReader { g in
       let gap: CGFloat = 3
+      let captionH: CGFloat = 16
       let maxWeeks = (wall.count + 6) / 7
-      let cellH = (g.size.height - gap * 6) / 7
-      let cellW = (g.size.width - gap * CGFloat(maxWeeks - 1)) / CGFloat(maxWeeks)
-      let cell = max(4, min(cellH, max(cellW, 9)))
-      let weeks = max(1, min(maxWeeks, Int((g.size.width + gap) / (cell + gap))))
+      let cellH = max(4, (g.size.height - captionH - gap * 6) / 7)
+      // Önce yükseklikten hücre boyu, sonra genişliğe sığan hafta sayısı; genişlik hepsine yetmiyorsa hücre küçülür
+      let fit = Int((g.size.width + gap) / (cellH + gap))
+      let weeks = max(1, min(maxWeeks, fit))
+      let cell = min(cellH, (g.size.width - gap * CGFloat(weeks - 1)) / CGFloat(weeks))
       // Son sütun bu hafta (Pazartesi başlar); bugünden sonraki günler boş kalır
       let todayRow = (Shared.calendar.component(.weekday, from: now) + 5) % 7
-      HStack(alignment: .top, spacing: gap) {
-        ForEach(0..<weeks, id: \.self) { col in
-          VStack(spacing: gap) {
-            ForEach(0..<7, id: \.self) { row in
-              // Bugünden kaç gün önce
-              let back = (weeks - 1 - col) * 7 + (todayRow - row)
-              let idx = wall.count - 1 - back
-              RoundedRectangle(cornerRadius: cell * 0.25)
-                .fill(back < 0 || idx < 0 ? Color.clear : color(wall[idx]))
-                .frame(width: cell, height: cell)
-                .widgetAccentable(back >= 0 && idx >= 0 && wall[idx] > 0)
+      let shownDays = (weeks - 1) * 7 + todayRow + 1
+      let active = wall.suffix(shownDays).filter { $0 > 0 }.count
+      VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .top, spacing: gap) {
+          ForEach(0..<weeks, id: \.self) { col in
+            VStack(spacing: gap) {
+              ForEach(0..<7, id: \.self) { row in
+                // Bugünden kaç gün önce
+                let back = (weeks - 1 - col) * 7 + (todayRow - row)
+                let idx = wall.count - 1 - back
+                RoundedRectangle(cornerRadius: cell * 0.25)
+                  .fill(back < 0 || idx < 0 ? Color.clear : color(wall[idx]))
+                  .frame(width: cell, height: cell)
+                  .widgetAccentable(back >= 0 && idx >= 0 && wall[idx] > 0)
+              }
             }
           }
         }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Son \(weeks) haftada \(active) gün kahve")
+        Text(caption(active, weeks))
+          .font(captionFont)
+          .foregroundColor(.secondary)
+          .lineLimit(1)
+          .frame(height: captionH - 4)
       }
-      .frame(width: g.size.width, height: g.size.height, alignment: .trailing)
+      .frame(width: g.size.width, height: g.size.height, alignment: .top)
     }
   }
 }
@@ -417,24 +450,21 @@ struct CuppedWallView: View {
 
   var body: some View {
     let s = entry.summary
-    let shown = family == .systemLarge ? s.wall : Array(s.wall.suffix(18 * 7))
-    let activeDays = shown.filter { $0 > 0 }.count
     VStack(alignment: .leading, spacing: family == .systemLarge ? 10 : 6) {
       HStack(alignment: .firstTextBaseline) {
         Text("Fincan Duvarı")
           .font(.system(size: 15, weight: .bold, design: .serif))
           .foregroundColor(.cuppedText)
         Spacer()
-        Text("🔥 \(s.streak)")
+        Label("\(s.streak)", systemImage: "flame.fill")
           .font(.footnote.weight(.semibold))
           .foregroundColor(.cuppedAccent)
           .widgetAccentable()
+          .accessibilityLabel("\(s.streak) günlük seri")
       }
       if family == .systemLarge {
-        WallGrid(wall: shown, now: entry.date).frame(height: 96)
-        Text("Son 6 ayda \(activeDays) gün kahve")
-          .font(.caption)
-          .foregroundColor(.secondary)
+        WallGrid(wall: s.wall, now: entry.date, caption: { d, w in "Son \(w) haftada \(d) gün kahve" }, captionFont: .caption)
+          .frame(height: 112)
         Divider()
         HStack(alignment: .top, spacing: 16) {
           StreakBlock(s: s)
@@ -448,10 +478,7 @@ struct CuppedWallView: View {
           }
         }
       } else {
-        WallGrid(wall: shown, now: entry.date)
-        Text("\(activeDays) gün kahve")
-          .font(.caption2)
-          .foregroundColor(.secondary)
+        WallGrid(wall: s.wall, now: entry.date, caption: { d, w in "\(w) haftada \(d) gün kahve" })
       }
     }
     .widgetURL(wallURL)
@@ -474,6 +501,7 @@ struct CuppedWallWidget: Widget {
 
 struct LastCupView: View {
   @Environment(\.widgetFamily) var family
+  @Environment(\.widgetRenderingMode) var mode
   let entry: CuppedEntry
 
   var body: some View {
@@ -501,7 +529,8 @@ struct LastCupView: View {
         Text("İlk fincanını ekle").font(.footnote.weight(.semibold))
       }
     }
-    .foregroundColor(entry.photo != nil ? .white : .cuppedText)
+    // Renklendirilmiş/şeffaf görünümde sistem fotoğraflı arka planı kaldırır: yazı beyaz kalırsa kaybolur
+    .foregroundColor(entry.photo != nil && mode == .fullColor ? .white : mode == .fullColor ? .cuppedText : .primary)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
 
     Group {
@@ -545,6 +574,7 @@ struct CuppedLastCupWidget: Widget {
 
 struct CaffeineView: View {
   @Environment(\.widgetFamily) var family
+  @Environment(\.widgetRenderingMode) var mode
   let entry: CuppedEntry
 
   var body: some View {
@@ -576,7 +606,7 @@ struct CaffeineView: View {
       VStack(alignment: .leading, spacing: 6) {
         Text("Bugün kafein").font(.footnote.weight(.semibold)).foregroundColor(.secondary)
         ZStack {
-          Circle().stroke(Color.cuppedEmpty, lineWidth: 10)
+          Circle().stroke(Color.cuppedEmpty(mode), lineWidth: 10)
           Circle()
             .trim(from: 0, to: ratio)
             .stroke(over ? Color.cuppedWarn : Color.cuppedAccent, style: StrokeStyle(lineWidth: 10, lineCap: .round))
