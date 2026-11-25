@@ -23,8 +23,8 @@ export function insights(entries: CupEntry[], now: Date = new Date()): Insight[]
   const thisWeek = entries.filter((e) => inRange(e, ws, addDays(ws, 7)));
   const lastWeek = entries.filter((e) => inRange(e, addDays(ws, -7), ws));
 
-  // 1) Bu hafta vs geçen hafta
-  if (thisWeek.length && lastWeek.length) {
+  // 1) Bu hafta vs geçen hafta (yarım hafta tek fincanla tam haftayla kıyaslanmasın: en az 3 fincan)
+  if (thisWeek.length >= 3 && lastWeek.length >= 2) {
     const d = Math.round(avg(thisWeek.map((e) => e.score)) - avg(lastWeek.map((e) => e.score)));
     out.push({
       id: 'trend',

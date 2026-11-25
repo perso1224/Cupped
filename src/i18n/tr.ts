@@ -59,6 +59,7 @@ export const tr = {
     pager: (i: number, n: number) => `Sayfa ${i} / ${n}`,
     shareCardPreview: (method: string, score: number, type: string) => `Paylaşım kartı önizlemesi: ${method}, skor ${score}, ${type}`,
   },
+  discoveryCapped: 'Yeni mekan, ama bu hafta 2 yeni mekan puanı doldu. Pasaportuna yine eklendi; haftaya yeni mekanlar yeniden puan kazandırır.',
   notify: {
     streakTitle: 'Seri tehlikede 🔥',
     streakBody: (n: number) => `Serin ${n} gün. Bugün bir fincan ekle, bozulmasın.`,
@@ -215,11 +216,11 @@ export const tr = {
   scoreHelp: {
     link: 'Skor nasıl hesaplanır?',
     ok: 'Anladım',
-    oneLine: 'Yıldızlar beğenin, skor kahve yolculuğun.',
+    oneLine: 'Yıldız: ne kadar beğendin. Skor: kahve yolculuğun.',
     title: 'Fincan Skoru',
     body:
       'Skor kahvenin tadını değil, kahve yolculuğunu ölçer. Kahveyi ne kadar beğendiğini yıldızlarla verirsin; yıldız skoru etkilemez.\n\n' +
-      '• Taban: her fincan 40 puanla başlar.\n' +
+      '• Başlangıç: her fincan 40 puanla başlar.\n' +
       '• Emek: evde demleme +25, bağımsız kafe +15, zincir kafe ya da ofis +10.\n' +
       '• Keşif: ilk kez gittiğin mekan +15 (haftada en fazla 2 yeni mekan), ilk kez denediğin yöntem +10. Uzun aradan sonra dönülen mekan ya da bu ay ilk kez kullanılan yöntem +5.\n' +
       '• Derinlik: 2 tat notu +5, çekirdeğin menşei +5.\n\n' +
@@ -229,7 +230,7 @@ export const tr = {
     share: 'Paylaş',
     done: 'Tamam',
     breakdown: {
-      base: 'Taban',
+      base: 'Başlangıç',
       effort: 'Emek',
       depth: 'Derinlik',
       discovery: 'Keşif',
@@ -345,7 +346,7 @@ export const tr = {
     topMethod: 'En çok',
     bestCup: 'Haftanın fincanı',
     bestCupMonth: 'Ayın fincanı',
-    periodType: 'Dönemin damak tipi',
+    periodType: 'Bu dönemin havası',
     shareWeek: 'Haftalık raporu paylaş',
     shareMonth: 'Damak Özetini paylaş',
     empty: 'Bu dönemde henüz fincan yok.',
@@ -423,7 +424,7 @@ export const tr = {
     shareCode: 'Kodumu gönder',
     shareMessage: (code: string) => `Cupped damak kodum: ${code}\nUygulamada Profil > Damak Uyumu'na yaz, ne kadar uyumluyuz görelim.`,
     friendCode: 'Arkadaşının kodu',
-    placeholder: 'Kodu yapıştır',
+    placeholder: 'Kodu yapıştır (ör. 975-2NQ)',
     ownCode: 'Bu senin kendi kodun. Arkadaşının kodunu yaz.',
     codeNote: 'Kodun zevkinle birlikte değişir; arkadaşına en güncel halini gönder.',
     find: 'Uyumu bul',
@@ -574,7 +575,7 @@ export const tr = {
     notifyWeeklySub: 'Pazar 19:00',
     notifyMonthly: 'Aylık özet',
     notifyMonthlySub: 'Ayın 1\'i',
-    notifyComeback: 'Geri dön hatırlatması',
+    notifyComeback: 'Dönüş hatırlatması',
     notifyComebackSub: 'Uygulamayı 3, 7 ve 14 gün açmazsan birer kez',
     notifyFooter: 'Günde en fazla 2 bildirim. Fincan ekleyince o günün hatırlatmaları kendiliğinden iptal olur.',
     experience: 'Deneyim',

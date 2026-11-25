@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, useWindowDimensions, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +37,9 @@ export default function Evolution() {
     if ((await shareViewSafely(cardRef, 'palateCard')) === 'error') Alert.alert(tr.result.shareError);
     setSharing(false);
   }
+
+  // Bağlantıyla ya da yeniden yüklemeyle parametresiz açılırsa (aynı tip → aynı tip) anlamsız kart gösterme
+  if (!from || !to || from === to) return <Redirect href="/" />;
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 12 }]}>

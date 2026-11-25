@@ -30,9 +30,9 @@ import { FadeIn, Pop, PressScale, animateLayout, haptic, reduceMotionNow } from 
 import { Chip, PillButton } from '../components/ui';
 import { tr } from '../i18n/tr';
 import { placeNameKey } from '../lib/scoring';
-import { getEntry, knownPlaces, loadEntries, photoUrl, updateMetrics } from '../lib/storage';
+import { getEntry, knownPlaces, loadEntries, loadProfile, photoUrl, updateMetrics } from '../lib/storage';
 import { brewRatio, dayKey } from '../lib/progress';
-import { whenToDate, type When } from '../lib/when';
+import { BACKFILL_DAYS, whenToDate, type When } from '../lib/when';
 import { createCup, editCup, parseNum, saveStage, type Where } from '../lib/cupSave';
 import { checkCoffeePhoto, coffeeCheckAvailable } from '../lib/coffeeCheckRunner';
 import { safely } from '../lib/safe';
@@ -133,7 +133,18 @@ export default function NewCup() {
       setHistory(list);
       // Hızlı kayıt: yeni fincanda son kullanılan yöntem ve mekan hazır seçili gelir (değiştirmek tek dokunuş)
       const last = list[0];
-      if (editId || againId || !last) return;
+      if (editId || againId) return;
+      if (!last) {
+        // İlk fincan: tanıtımda verilen cevaplar (en sevdiğin yöntem, genelde nerede) hazır seçili gelir
+        loadProfile().then((p) => {
+          if (!p) return;
+          const w0: Where | null = p.usualPlace === 'home' ? { kind: 'home' } : p.usualPlace === 'office' ? { kind: 'office' } : null;
+          prefill.current = { method: p.favMethod, where: JSON.stringify(w0), typed: '' };
+          setMethod((m) => m ?? p.favMethod);
+          setWhere((cur) => cur ?? w0);
+        });
+        return;
+      }
       const w: Where | null =
         last.venueKind === 'home'
           ? { kind: 'home' }
@@ -536,8 +547,17 @@ export default function NewCup() {
             <Chip label={original ? tr.capture.whenToday : tr.capture.whenNow} selected={when === 'now'} onPress={() => setWhen('now')} />
           ) : null}
           {origDay !== 'yesterday' ? (
-            <Chip label={original ? tr.capture.whenYesterdayShort : tr.capture.whenYesterday} selected={when === 'yesterday'} onPress={() => setWhen('yesterday')} />
+            <Chip label={tr.capture.whenYesterdayShort} selected={when === 'yesterday'} onPress={() => setWhen('yesterday')} />
           ) : null}
+          {/* Daha eski günler: "Paz 23" gibi; düzenlenen fincanın kendi günü tekrar gösterilmez */}
+          {BACKFILL_DAYS.filter((n) => !original || dayKey(whenToDate(n)) !== dayKey(new Date(original.createdAt))).map((n) => (
+            <Chip
+              key={n}
+              label={whenToDate(n).toLocaleDateString('tr-TR', { weekday: 'short', day: 'numeric' })}
+              selected={when === n}
+              onPress={() => setWhen(n)}
+            />
+          ))}
         </View>
 
         <Text accessibilityRole="header" style={styles.label}>{tr.rating.question}</Text>

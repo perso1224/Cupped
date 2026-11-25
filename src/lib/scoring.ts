@@ -164,6 +164,26 @@ export function discoveryPoints(input: Pick<CupInput, 'placeName' | 'venueKind' 
 }
 
 /**
+ * Bu fincan yeni bir mekan olduğu halde haftalık yeni mekan sınırı yüzünden keşif puanı almadı mı?
+ * (Sonuç ekranında "neden +0" açıklaması için.) Saf, testli.
+ */
+export function newPlaceCapped(entry: Pick<CupEntry, 'placeName' | 'venueKind' | 'createdAt'>, all: Pick<CupEntry, 'placeName' | 'venueKind' | 'createdAt'>[]): boolean {
+  const key = placeKey(entry);
+  if (!key) return false;
+  const earlier = all.filter((e) => e.createdAt < entry.createdAt).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const seen = new Set<string>();
+  let newThisWeek = 0;
+  const wk = weekKey(entry.createdAt);
+  for (const e of earlier) {
+    const k = placeKey(e);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    if (weekKey(e.createdAt) === wk) newThisWeek++;
+  }
+  return !seen.has(key) && newThisWeek >= SCORING.discovery.newPlacePerWeek;
+}
+
+/**
  * Fincan Skoru (0-100, mutlak).
  * @param input  yeni fincan
  * @param history  daha önceki kayıtlar (sıra önemsiz; tarihe göre sıralanır)

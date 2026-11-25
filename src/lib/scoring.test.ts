@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyPlace, levelFor, matchChain, scoreCup } from './scoring';
+import { classifyPlace, levelFor, matchChain, newPlaceCapped, scoreCup } from './scoring';
 import type { CupEntry, CupInput } from './types';
 
 let n = 0;
@@ -149,4 +149,17 @@ describe('seviye etiketleri', () => {
     [90, 'Efsane'],
     [100, 'Efsane'],
   ])('%i → %s', (score, label) => expect(levelFor(score)).toBe(label));
+});
+
+describe('yeni mekan sınırı açıklaması', () => {
+  const c = (createdAt: string, placeName: string) => ({ createdAt, placeName, venueKind: 'independent' as const });
+  it('haftanın üçüncü yeni mekanı sınıra takılır, ilk ikisi takılmaz', () => {
+    const all = [c('2026-11-23T09:00:00.000Z', 'A'), c('2026-11-24T09:00:00.000Z', 'B'), c('2026-11-25T09:00:00.000Z', 'C')];
+    expect(newPlaceCapped(all[1], all)).toBe(false);
+    expect(newPlaceCapped(all[2], all)).toBe(true);
+  });
+  it('daha önce gidilen mekan sınır sayılmaz', () => {
+    const all = [c('2026-11-23T09:00:00.000Z', 'A'), c('2026-11-24T09:00:00.000Z', 'B'), c('2026-11-25T09:00:00.000Z', 'A')];
+    expect(newPlaceCapped(all[2], all)).toBe(false);
+  });
 });

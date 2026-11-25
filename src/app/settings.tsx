@@ -119,6 +119,11 @@ export default function SettingsScreen() {
         const r = await safely(async () => {
           await deleteAllData();
           await cancelReminders(); // gezinme kendiliğinden tanıtıma geçer
+          // Tema tercihi de silindi: koyu/açık sabitlenmişse renkler ancak yeniden yüklemeyle telefona döner
+          if (themePref !== 'system') {
+            await saveThemePref('system');
+            await Updates.reloadAsync().catch(() => {});
+          }
         });
         if (!r.ok) Alert.alert(tr.settings.deleteAllError);
       }),
