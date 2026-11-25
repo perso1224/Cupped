@@ -78,9 +78,12 @@ export function notificationPlan(
       });
   }
 
-  // Aylık özet: gelecek ayın 1'i, biten ayda fincan varsa.
+  // Aylık özet: gelecek ayın 1'i, biten ayda fincan varsa. Ayın 1'inde saat 11'den önce yeniden kurulursa
+  // (her açılışta plan baştan kurulur) biten ayın özeti bugün için yeniden kurulur, kaybolmaz.
   if (prefs.monthly) {
-    const start = startOfMonth(now);
+    const thisMonth = startOfMonth(now);
+    const beforeSend = now.getTime() < at(thisMonth, MONTHLY_HOUR).getTime();
+    const start = beforeSend ? new Date(thisMonth.getFullYear(), thisMonth.getMonth() - 1, 1) : thisMonth;
     const next = new Date(start.getFullYear(), start.getMonth() + 1, 1);
     const r = periodReport(entries, start, next);
     if (r.cups > 0) {
@@ -131,6 +134,8 @@ export function targetHref(t: NotifyTarget, now: Date = new Date()): string {
   let offset: number;
   if (t.period === 'week') offset = Math.round((startOfWeek(start).getTime() - startOfWeek(now).getTime()) / (7 * 864e5));
   else offset = (start.getFullYear() - now.getFullYear()) * 12 + start.getMonth() - now.getMonth();
+  // Özet ekranı yalnızca bu ve geçen dönemi gösterir; daha eski bir bildirime geç dokunulursa İlerleme açılır
+  if (offset < -1) return '/progress';
   return `/wrapped?period=${t.period}&offset=${Math.min(0, offset)}`;
 }
 

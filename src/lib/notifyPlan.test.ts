@@ -77,6 +77,12 @@ describe('aylık özet', () => {
     expect(r[0].body).toContain('2 fincan');
     expect(r[0].body).toContain('90');
   });
+  it("ayın 1'inde 11:00'den önce yeniden kurulunca biten ayın özeti kaybolmaz", () => {
+    const r = plan([cup(at(2026, 10, 3))], { monthly: true }, new Date(2026, 11, 1, 8));
+    expect(r).toHaveLength(1);
+    expect(r[0].at).toEqual(new Date(2026, 11, 1, 11));
+    expect(r[0].title).toBe('Kasım özetin hazır ☕');
+  });
   it('Aralık → Ocak', () => {
     const r = plan([cup(at(2026, 11, 3))], { monthly: true }, new Date(2026, 11, 20));
     expect(r[0].at).toEqual(new Date(2027, 0, 1, 11));
@@ -121,7 +127,7 @@ describe('dokununca açılacak yer', () => {
     expect(targetHref(t, new Date(2026, 10, 23, 9))).toBe('/wrapped?period=week&offset=-1');
     const m = { route: 'wrapped', period: 'month', start: '2026-11-01' } as const;
     expect(targetHref(m, new Date(2026, 11, 1, 11))).toBe('/wrapped?period=month&offset=-1');
-    expect(targetHref(m, new Date(2027, 0, 5))).toBe('/wrapped?period=month&offset=-2');
+    expect(targetHref(m, new Date(2027, 0, 5))).toBe('/progress');
     expect(targetHref({ route: 'new' })).toBe('/new');
   });
   it('bozuk veri → null', () => {
