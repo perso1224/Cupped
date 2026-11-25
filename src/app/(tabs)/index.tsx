@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { Fragment, useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
 import { Icon } from '../../components/Icon';
@@ -17,6 +17,7 @@ import { insights } from '../../lib/insights';
 import { computePalateTypeId, getPalateType } from '../../lib/palate';
 import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, startOfWeek, wallBanner, weekDots, weekStrip, longestStreak, noteShares, favorites } from '../../lib/progress';
 import { setReminderEnabled } from '../../lib/reminders';
+import { CuppedWidget } from '../../../modules/cupped-widget';
 import { timeLabel } from '../../lib/settings';
 import { partsSummary } from '../../lib/scoring';
 import { exportAllData, updateMetrics } from '../../lib/storage';
@@ -85,6 +86,15 @@ export default function Home() {
   const askReminder = !!metrics && metrics.reminderEnabled === null && list.length >= 1;
   // Yedek hatırlatması: 10+ fincan ve 30 gündür yedek yok (hatırlatma sorusuyla aynı anda çıkmaz)
   const askBackup = !!metrics && !askReminder && needsBackupNudge(metrics, list.length, now);
+  // Widget tanıtımı: yalnızca widget'ı olan derlemelerde, 3. fincandan sonra, bir kez (diğer sorularla aynı anda çıkmaz)
+  const showWidgetPromo = !!CuppedWidget && !!metrics && !askReminder && !askBackup && !metrics.widgetPromoDone && list.length >= 3;
+  async function closeWidgetPromo() {
+    animateLayout();
+    await updateMetrics((m) => {
+      m.widgetPromoDone = true;
+    }).catch(() => {});
+    reloadMetrics();
+  }
 
   async function answerBackup(yes: boolean) {
     animateLayout();
@@ -339,6 +349,21 @@ export default function Home() {
                 <PillButton label={tr.homePrompt.yes} onPress={() => answerReminder(true)} style={narrow ? styles.btnFull : styles.btnPrimary} />
               </View>
             </Card>
+            </FadeIn>
+          ) : null}
+
+          {showWidgetPromo ? (
+            <FadeIn index={2}>
+              <Card style={{ marginTop: 14 }}>
+                <View style={styles.inlineTitle}>
+                  <Icon name="apps" size={18} color={tint.amber} />
+                  <Text style={styles.cardTitleDark}>{tr.widgetPromo.title}</Text>
+                </View>
+                <Text style={styles.cardSub}>{Platform.OS === 'ios' ? tr.widgetPromo.ios : tr.widgetPromo.android}</Text>
+                <View style={styles.btnRow}>
+                  <PillButton label={tr.widgetPromo.ok} onPress={closeWidgetPromo} style={narrow ? styles.btnFull : styles.btnPrimary} />
+                </View>
+              </Card>
             </FadeIn>
           ) : null}
 

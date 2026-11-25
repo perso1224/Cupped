@@ -30,7 +30,11 @@ export function startOfMonth(d: Date): Date {
 }
 
 /** Dönem aralığı. offset 0 = bu hafta/ay, -1 = geçen hafta/ay. */
-export function periodRange(kind: 'week' | 'month', offset: number, now: Date = new Date()): { start: Date; end: Date } {
+export function periodRange(kind: 'week' | 'month' | 'year', offset: number, now: Date = new Date()): { start: Date; end: Date } {
+  if (kind === 'year') {
+    const start = new Date(now.getFullYear() + offset, 0, 1);
+    return { start, end: new Date(start.getFullYear() + 1, 0, 1) };
+  }
   if (kind === 'week') {
     const start = addDays(startOfWeek(now), 7 * offset);
     return { start, end: addDays(start, 7) };
@@ -517,6 +521,15 @@ export function yearWall(entries: CupEntry[], year: number, today: Date = new Da
  * Fincan Duvarı afişi: Aralık boyunca "hazırlanıyor" (kalan gün), 31 Aralık–7 Ocak "tamamlandı".
  * O yıl hiç fincan yoksa gösterilmez.
  */
+/** Yıllık Damak Özeti ne zaman sunulur: Aralık boyunca bu yıl, Ocak'ın ilk 14 günü geçen yıl (o yıl fincan varsa). */
+export function yearWrappedFor(entries: CupEntry[], now: Date = new Date()): { year: number; offset: 0 | -1 } | null {
+  const m = now.getMonth();
+  const offset: 0 | -1 | null = m === 11 ? 0 : m === 0 && now.getDate() <= 14 ? -1 : null;
+  if (offset === null) return null;
+  const year = now.getFullYear() + offset;
+  return entries.some((e) => new Date(e.createdAt).getFullYear() === year) ? { year, offset } : null;
+}
+
 export function wallBanner(entries: CupEntry[], now: Date = new Date()): { kind: 'building'; daysLeft: number; year: number } | { kind: 'done'; year: number } | null {
   const m = now.getMonth();
   const d = now.getDate();

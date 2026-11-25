@@ -12,7 +12,7 @@ import { Card, PillButton, Segmented } from '../../components/ui';
 import { tr } from '../../i18n/tr';
 import { getPalateType } from '../../lib/palate';
 import { levelProgress } from '../../lib/home';
-import { addDays, currentStreak, inRange, periodRange, periodReport, scoreTrend, startOfMonth, startOfWeek, weekDots, type TrendRange } from '../../lib/progress';
+import { addDays, currentStreak, inRange, periodRange, periodReport, scoreTrend, startOfMonth, startOfWeek, weekDots, yearWrappedFor, type TrendRange } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
 import { colors, fonts, layout, tint, type } from '../../theme';
 import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
@@ -40,6 +40,7 @@ export default function Progress() {
   const prevAvg = hasPrev ? periodReport(entries, prev.start, prev.end).avg : null;
   const diff = prevAvg !== null && report.cups ? report.avg - prevAvg : null;
   const level = levelProgress(entries);
+  const yearWrap = yearWrappedFor(entries, now);
   const streak = currentStreak(entries, now);
   const dots = weekDots(entries, now);
   const firstAt = entries.length ? entries.reduce((m, e) => (e.createdAt < m ? e.createdAt : m), entries[0].createdAt) : null;
@@ -192,6 +193,16 @@ export default function Progress() {
                 title={kind === 'week' ? tr.wrapped.lastWeek : tr.wrapped.lastMonth}
                 chevron
                 onPress={() => router.push({ pathname: '/wrapped', params: { period: kind, offset: '-1' } })}
+              />
+            ) : null}
+            {/* Yıllık özet: Aralık boyunca bu yıl, Ocak'ın ilk iki haftası geçen yıl */}
+            {yearWrap ? (
+              <ListRow
+                icon="sparkles"
+                tint={tint.cherry}
+                title={tr.wrapped.yearOpen(yearWrap.year)}
+                chevron
+                onPress={() => router.push({ pathname: '/wrapped', params: { period: 'year', offset: String(yearWrap.offset) } })}
               />
             ) : null}
             <ListRow icon="grid" tint={tint.espresso} title={tr.wall.open} chevron onPress={() => router.push('/wall')} />

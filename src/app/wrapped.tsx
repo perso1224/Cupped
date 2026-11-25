@@ -67,7 +67,7 @@ function close() {
 export default function Wrapped() {
   const damakCode = useDamakCode();
   const { period, offset: offsetParam } = useLocalSearchParams<{ period?: string; offset?: string }>();
-  const kind = period === 'week' ? 'week' : 'month';
+  const kind = period === 'week' ? 'week' : period === 'year' ? 'year' : 'month';
   const offset = offsetParam === '-1' ? -1 : 0;
   const pw = periodWord(kind, offset);
   const insets = useSafeAreaInsets();
@@ -79,7 +79,9 @@ export default function Wrapped() {
   const periodLabel =
     kind === 'week'
       ? `${start.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} – ${addDays(end, -1).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}`
-      : capitalize(start.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }));
+      : kind === 'year'
+        ? String(start.getFullYear())
+        : capitalize(start.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }));
 
   // Gün değişince (gece yarısı) dönem yeniden hesaplansın diye anahtar gün; aralık bu anahtardan türetilir.
   const startKey = dayKey(start);
@@ -368,7 +370,7 @@ function SlideView({
   H: number;
   enter: Animated.Value;
   periodLabel: string;
-  kind: 'week' | 'month';
+  kind: 'week' | 'month' | 'year';
   index: number;
   pw: PeriodWord;
 }) {
@@ -408,7 +410,7 @@ function SlideView({
       body = (
         <View style={[pad, { flex: 1, justifyContent: 'center' }]}>
           <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>
-            {kind === 'week' ? tr.wrapped.weekTitle : tr.wrapped.monthTitle}
+            {kind === 'week' ? tr.wrapped.weekTitle : kind === 'year' ? tr.wrapped.yearTitle : tr.wrapped.monthTitle}
           </Kicker>
           <Animated.Text allowFontScaling={false} style={[styles.huge, t, { fontSize: u * 15, lineHeight: u * 16 }, rise(0.15)]}>{periodLabel}</Animated.Text>
           <Animated.Text allowFontScaling={false} style={[styles.sub, t, { fontSize: u * 5, marginTop: u * 4 }, rise(0.35)]}>{tr.wrapped.introSub}</Animated.Text>

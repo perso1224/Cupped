@@ -10,8 +10,13 @@ export function upper(s: string): string {
 
 /** Dönem kelimeleri: "Bu ay tam 12 fincan", "Ayın fincanı" … */
 export type PeriodWord = { this: string; thisLower: string; best: string };
-export function periodWord(kind: 'week' | 'month', offset: number): PeriodWord {
+export function periodWord(kind: 'week' | 'month' | 'year', offset: number): PeriodWord {
   const past = offset < 0;
+  if (kind === 'year') {
+    return past
+      ? { this: 'Geçen yıl', thisLower: 'geçen yıl', best: 'Geçen yılın fincanı' }
+      : { this: 'Bu yıl', thisLower: 'bu yıl', best: 'Yılın fincanı' };
+  }
   if (kind === 'week') {
     return past
       ? { this: 'Geçen hafta', thisLower: 'geçen hafta', best: 'Geçen haftanın fincanı' }
@@ -59,6 +64,12 @@ export const tr = {
     pager: (i: number, n: number) => `Sayfa ${i} / ${n}`,
     shareCardPreview: (method: string, score: number, type: string) => `Paylaşım kartı önizlemesi: ${method}, skor ${score}, ${type}`,
   },
+  widgetPromo: {
+    title: 'Cupped ana ekranında',
+    ios: "Ana ekranda boş bir yere basılı tut › Düzenle › Widget ekle › Cupped. Serin, Fincan Duvarın ve son fincanın hep gözünün önünde. Kilit ekranına ve Kontrol Merkezi'ne de ekleyebilirsin.",
+    android: "Ana ekranda boş bir yere basılı tut › Widget'lar › Cupped. Serin ve haftan hep gözünün önünde.",
+    ok: 'Tamam',
+  },
   discoveryCapped: 'Yeni mekan, ama bu hafta 2 yeni mekan puanı doldu. Pasaportuna yine eklendi; haftaya yeni mekanlar yeniden puan kazandırır.',
   notify: {
     streakTitle: 'Seri tehlikede 🔥',
@@ -67,6 +78,8 @@ export const tr = {
     weeklyBody: (cups: number, avg: number, top: string | null) =>
       `Bu hafta ${cups} fincan, ortalama skor ${avg}${top ? `. En çok: ${top}` : ''}. Haftana göz at.`,
     monthlyTitle: (month: string) => `${month} özetin hazır ☕`,
+    yearTitle: (y: number) => `${y} Damak Özetin hazır ☕`,
+    yearBody: (cups: number) => `Bu yıl ${cups} fincan. Yılının özetini izle, en sevdiğin slaytı paylaş.`,
     monthlyBody: (cups: number, best: number) => `${cups} fincan, en iyi skorun ${best}. Ayına bir bak.`,
     comebackTitle: 'Cupped',
     comebackBody: [
@@ -484,6 +497,8 @@ export const tr = {
     next: 'Sonraki slayt',
     monthTitle: 'Damak Özeti',
     weekTitle: 'Haftalık Damak Özeti',
+    yearTitle: 'Yıllık Damak Özeti',
+    yearOpen: (y: number) => `${y} Damak Özeti`,
     open: 'Özetini izle',
     bannerMonth: (month: string) => `${month} Damak Özetin hazır`,
     bannerMonthSoFar: (month: string) => `${month} özetin şimdiden hazır`,

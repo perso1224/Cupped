@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { insights } from './insights';
+import { insights, onThisDay } from './insights';
 import type { CupEntry } from './types';
 
 let n = 0;
@@ -40,5 +40,21 @@ describe('öne çıkanlar', () => {
     expect(ids.time).toBe('En çok sabahları içiyorsun.');
     expect(ids.place).toBe('Kör Nokta: 2 ziyaret.');
     expect(ids.caffeine).toBe('Bu hafta günde ortalama ~51 mg.'); // (120+120+63)/6 gün = 50,5
+  });
+});
+
+describe('geçen ay / yıl bugün', () => {
+  const mk = (iso: string, score: number) => ({ id: iso, createdAt: iso, score, method: 'filter', venueKind: 'home', placeName: null, notes: [] }) as unknown as CupEntry;
+  it('geçen yıl öncelikli, yoksa geçen ay; o günün en iyisi', () => {
+    const now = new Date(2026, 10, 25, 9);
+    const a = mk(new Date(2026, 9, 25, 8).toISOString(), 60);
+    const b = mk(new Date(2026, 9, 25, 12).toISOString(), 80);
+    expect(onThisDay([a, b], now)).toEqual({ entry: b, ago: 'month' });
+    const c = mk(new Date(2025, 10, 25, 8).toISOString(), 50);
+    expect(onThisDay([a, b, c], now)?.ago).toBe('year');
+  });
+  it('kısa ayda kayan tarih anı sayılmaz', () => {
+    const e = mk(new Date(2026, 2, 3, 9).toISOString(), 70);
+    expect(onThisDay([e], new Date(2026, 2, 31, 9))).toBeNull();
   });
 });

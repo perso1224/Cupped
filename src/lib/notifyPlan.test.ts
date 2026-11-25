@@ -78,13 +78,14 @@ describe('aylık özet', () => {
     expect(r[0].body).toContain('90');
   });
   it("ayın 1'inde 11:00'den önce yeniden kurulunca biten ayın özeti kaybolmaz", () => {
-    const r = plan([cup(at(2026, 10, 3))], { monthly: true }, new Date(2026, 11, 1, 8));
+    // Aralık'ta ayrıca yıllık özet de kurulur; burada yalnızca aylık özete bakılır
+    const r = plan([cup(at(2026, 10, 3))], { monthly: true }, new Date(2026, 11, 1, 8)).filter((x) => !x.title.includes('Damak Özetin'));
     expect(r).toHaveLength(1);
     expect(r[0].at).toEqual(new Date(2026, 11, 1, 11));
     expect(r[0].title).toBe('Kasım özetin hazır ☕');
   });
   it('Aralık → Ocak', () => {
-    const r = plan([cup(at(2026, 11, 3))], { monthly: true }, new Date(2026, 11, 20));
+    const r = plan([cup(at(2026, 11, 3))], { monthly: true }, new Date(2026, 11, 20)).filter((x) => !x.title.includes('Damak Özetin'));
     expect(r[0].at).toEqual(new Date(2027, 0, 1, 11));
   });
 });
@@ -135,5 +136,20 @@ describe('dokununca açılacak yer', () => {
     expect(parseTarget({ target: { route: 'x' } })).toBeNull();
     expect(parseTarget({ target: { route: 'wrapped', period: 'week', start: 'dün' } })).toBeNull();
     expect(parseTarget({ target: { route: 'new' } })).toEqual({ route: 'new' });
+  });
+});
+
+describe('yıllık özet', () => {
+  it('31 Aralık 19:00, o yıl fincan varsa; dokununca yıllık özet', () => {
+    const r = plan([cup(at(2026, 2, 3)), cup(at(2026, 11, 2))], { monthly: true }, new Date(2026, 11, 5, 9));
+    const y = r.find((x) => x.title.includes('2026'));
+    expect(y?.at).toEqual(new Date(2026, 11, 31, 19));
+    expect(y?.target).toEqual({ route: 'wrapped', period: 'year', start: '2026-01-01' });
+    expect(targetHref(y!.target, new Date(2026, 11, 31, 20))).toBe('/wrapped?period=year&offset=0');
+    expect(targetHref(y!.target, new Date(2027, 0, 2))).toBe('/wrapped?period=year&offset=-1');
+  });
+  it('Aralık dışında kurulmaz', () => {
+    const r = plan([cup(at(2026, 5, 3))], { monthly: true }, new Date(2026, 5, 10, 9));
+    expect(r.some((x) => x.title.includes('Damak Özetin'))).toBe(false);
   });
 });
