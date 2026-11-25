@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="cupped_widget_bg">#241C17</color>
+  <color name="cupped_widget_text">#F5EEE8</color>
+  <color name="cupped_widget_muted">#A89A90</color>
+  <color name="cupped_widget_empty">#3A2F28</color>
+</resources>

@@ -6,6 +6,10 @@ export type Settings = {
   reminderMinute: number;
   caffeineRef: number; // günlük kafein referansı (mg)
   showCaffeine: boolean; // ana sayfada kafein sayfası
+  notifyStreak: boolean; // seri tehlikede bildirimi
+  notifyWeekly: boolean; // Pazar akşamı haftalık özet
+  notifyMonthly: boolean; // ayın 1'i aylık özet
+  notifyComeback: boolean; // uzun aradan sonra "geri dön"
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -15,6 +19,10 @@ export const DEFAULT_SETTINGS: Settings = {
   reminderMinute: 30,
   caffeineRef: 400,
   showCaffeine: true,
+  notifyStreak: true,
+  notifyWeekly: true,
+  notifyMonthly: true,
+  notifyComeback: true,
 };
 
 /** Ayarlar ekranındaki seçenekler. */
@@ -41,6 +49,10 @@ export function normalizeSettings(raw: unknown): Settings {
     reminderMinute: int(r.reminderMinute, DEFAULT_SETTINGS.reminderMinute, 0, 59),
     caffeineRef: int(r.caffeineRef, DEFAULT_SETTINGS.caffeineRef, 50, 1000),
     showCaffeine: bool(r.showCaffeine, DEFAULT_SETTINGS.showCaffeine),
+    notifyStreak: bool(r.notifyStreak, DEFAULT_SETTINGS.notifyStreak),
+    notifyWeekly: bool(r.notifyWeekly, DEFAULT_SETTINGS.notifyWeekly),
+    notifyMonthly: bool(r.notifyMonthly, DEFAULT_SETTINGS.notifyMonthly),
+    notifyComeback: bool(r.notifyComeback, DEFAULT_SETTINGS.notifyComeback),
   };
 }
 

@@ -207,3 +207,90 @@ Expo SDK 58 / React Native coffee-logging app, Turkish UI. The owner is non-tech
 - 23 Nov 16:57: 3 Mac dispatches (macos-latest x2, macos-15 x1) were all cancelled after exactly 15 minutes with no runner assigned. Ubuntu jobs run fine. Likely account-side: macOS runners are not being granted to this account/repo yet (the repo was made public around 15:30).
   - Next: retry tomorrow with the "Expo'ya yayınla" workflow dispatch (ios_build=true); ask the owner to check GitHub Settings > Billing and licensing (Actions).
   - Until then, native changes have NO working build path, because the owner decided against the Expo cloud. Ask the owner before any native change.
+- 23 Nov evening:
+  - PR #2 merged to main. The owner accidentally deleted the dev branch on GitHub; it was restored by pushing the local copy (same commit).
+  - GitHub Pages serves main /docs (with `.nojekyll`). The privacy page is at https://perso1224.github.io/Cupped/gizlilik.html. `docs/index.html` (a copy) is only on dev until the next PR.
+  - In App Store Connect: the Privacy Policy URL is set under App Store > App Privacy. The App Privacy label is published as Identifiers > Device ID, App Functionality, not linked, no tracking.
+  - The TestFlight "Test Information" privacy URL field gave a validation error in the ASC mobile app; it is left empty there.
+  - Support tickets are open with GitHub (macOS runners never assigned) and Apple (TestFlight invite emails not arriving). The owner added a card and set the Actions budget to $1 (it can be set back to $0).
+- 23 Nov night, CI/CD (owner's analysis request): the build target is now a GitHub repo variable `IOS_BUILDER`.
+  - Unset or `eas` is the default: EAS cloud build on ubuntu-latest, with `--auto-submit`, WAITING (no `--no-wait`) so the GitHub log shows build + submit success.
+  - `github-mac` uses the macOS runner with `eas build --local` + submit.
+  - Applies to both expo-update.yml (ios-build job) and testflight.yml.
+  - Claude starts a build by dispatching expo-update.yml with `ios_build=true` (mcp actions_run_trigger, ref = dev branch).
+  - This revises the earlier "no Expo cloud" decision because no macOS runner is available; the owner asked for a Mac-free build with no new cost.
+- 23 Nov 20:52: the new CI/CD was verified end to end. A Claude-dispatched run (expo-update.yml, ios_build=true, IOS_BUILDER default eas) produced EAS build 1.0.0 (3) (id b3361f35-…).
+  - The build itself took about 6 minutes. The EAS submission queue took about 35 minutes.
+  - Log: "Submitted your app to Apple App Store Connect!" The owner got the ASC notification.
+- 24 Nov morning: the GitHub macOS runner works now. `macos-latest` gets a runner instantly; `macos-15` stayed queued.
+  - The owner set the repo variable IOS_BUILDER=github-mac.
+  - The first GitHub Mac build (run 45350999630) succeeded: `eas build --local` took 26 minutes, then `eas submit --path` reached "Submitted your app to Apple App Store Connect!" in 15 seconds (no EAS queue). Tag ios-fp-65e9ba5e… was pushed.
+  - Builds no longer use the EAS cloud. EAS is still used for credentials storage, the submit service and OTA.
+- 24 Nov: own OTA update server in progress (owner wants off EAS Update).
+  - expo-updates needs the `expo-protocol-version` response header (verified in the native code), so GitHub Pages alone can't do it.
+  - Design: `updates` branch on GitHub (single orphan commit, force-pushed, stores manifests + assets; files served from raw.githubusercontent.com) plus a Cloudflare Worker (`updates-server/worker.js`) that reads the manifest and adds protocol headers. Requests that already have the update get a 204.
+  - `scripts/updateManifest.mjs` builds manifests from `expo export` output (sha256 base64url hash, md5 key) and prunes unused files, keeping manifest.prev.json assets.
+  - Workflows: updates-server.yml deploys the Worker (wrangler 4.158.0; secrets CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID were added by the owner). expo-update.yml now also publishes the preview channel to the `updates` branch.
+  - Cloudflare subdomain: beratyapar4.workers.dev → https://cupped-updates.beratyapar4.workers.dev.
+  - NOT yet switched: app.json updates.url still points to u.expo.dev. Next: verify the worker → change updates.url (+ requestHeaders) → native build → test on the device → stop EAS publishing.
+  - The owner pasted a Cloudflare token in chat once and rolled it afterwards.
+- 24 Nov: Apple sent ITMS-90725 for build 4. It is only a warning: the build used the iOS 26.5 SDK (Xcode 26 on the GitHub runner), and from April 2027 the iOS 27 SDK / Xcode 27 is required. The workflow picks the newest installed Xcode. Re-check before April 2027 (e.g. macos-26 label or an explicit Xcode_27 path).
+- 24 Nov ~09:10: SWITCHED, with the owner's approval. app.json updates.url = https://cupped-updates.beratyapar4.workers.dev/manifest, requestHeaders expo-channel-name=preview.
+  - The `updates` branch publish worked: the manifest is on raw.githubusercontent and the launch-asset sha256 was verified.
+  - The Worker returned 204 with protocol headers in the CI health check (this container can't reach workers.dev: proxy 403).
+  - Builds from 1.0.0 (5) onward use our server. Builds 1–4 and Expo Go still use EAS Update, so the EAS publish step stays until the new server is verified on a real device.
+  - TODO before an App Store/production build: the production channel (requestHeaders say preview; needs an override for the production profile) and a publish step for the production channel.
+- 24 Nov 09:17: 1.0.0 (5) built on the GitHub Mac (8 minutes thanks to the npm cache) and was submitted. This is the first build pointing at our own update server. The owner confirmed it reached ASC.
+  - New builds are not added to the "Team (Expo)" group automatically; add them manually or enable automatic distribution.
+- 24 Nov ~11:30: Ad Hoc route (TestFlight-free install, because the TestFlight invites don't arrive).
+  - The owner's iPhone was registered via scripts/registerDevice.mjs + register-device.yml (EAS GraphQL createAppleDeviceRegistrationRequest → expo.dev/register-device link).
+  - eas.json has a new `adhoc` profile (internal distribution, channel preview).
+  - adhoc.yml builds on macos-latest with `--refresh-ad-hoc-provisioning-profile` (non-interactive; uses the EAS-stored ASC key) and puts adhoc/cupped.ipa + info.json on the `updates` branch.
+  - The Worker serves /install (itms-services page) and /install/manifest.plist.
+  - Workflows writing to the updates branch share the concurrency group `updates-branch`.
+- 24 Nov ~13:00: FIRST REAL-DEVICE RUN of a standalone build: Ad Hoc 1.0.0 (5) on the owner's iPhone.
+  - Built on the EAS cloud (GitHub macOS runners unavailable midday). scripts/setupAdhocCredentials.mjs created the AD_HOC build credentials from the APP_STORE dist cert; eas.json adhoc has enterpriseProvisioning=adhoc.
+  - Install worked via /install. iOS asked for Developer Mode.
+  - The coffee check works on the device ("Bu kahveye benzemiyor" for a plate photo; no warning for a flat surface, as designed).
+  - The first save attempt didn't respond ("Skoru gör" did nothing); after an app restart, saving worked. Cause unknown — watch for it.
+  - Not yet confirmed: OTA from our own server on the device.
+- 24 Nov ~13:20: OTA FROM OUR OWN SERVER VERIFIED ON THE DEVICE. Ad Hoc 1.0.0 (5) shows "Sürüm 1.0.0 · 24 Kas 13:05" in Settings after keeping the app open about 1 minute and restarting. Cloudflare showed 12 requests.
+  - The EAS Update publish step is still in expo-update.yml (it serves Expo Go on Android and builds 1–4). Removing it is pending the owner's decision.
+- 24 Nov: splash fix (from the owner's screen recording). Before: dark native splash with white rings → blank light frame → BrandIntro.
+  - Now the native splash is background color only (light #FAF8F5 / dark #15110E, no image).
+  - _layout.tsx calls preventAutoHideAsync at module load and hideAsync when `ready`, which is the same moment BrandIntro starts.
+  - Needs a native build. The Android splash (Android 12+ icon) is untested.
+  - Remaining edge case: if the in-app theme pref differs from the system appearance, the splash color follows the system.
+
+## 24 Kas — açılış temadan bağımsız
+- Splash (app.json) ve BrandIntro artık her modda turuncu #D98B2B + koyu mürekkep; splash görselsiz, hazır olunca hideAsync → aynı karede intro. Android splash cihazda test edilmedi.
+- Geri/kapat düğmeleri sabit: NavButtons'a FloatingBack/BackSpacer/FloatingClose eklendi; settings, stats, history, match, privacy, new (form) kullanıyor. Koleksiyon ve CupDetail zaten sabitti.
+- Görsel tanıma incelemesi (scratchpad eval, skimage örnekleri): EfficientNet-Lite0 int8 (5.4 MB, 1000 sınıf → indeks −1) kahve olasılığıyla temiz ayırıyor (kahve ≥0.13, diğerleri ≤0.01); şimdiki v1 "uzaktan kahve"yi kaçırıyor. Öneri: Lite0 + kural "kahve olasılığı < ~0.05 → uyarı", sahibin gerçek fotoğraflarıyla ayarlanacak. Sahip onayı bekleniyor.
+- Kahve kontrolü EfficientNet-Lite0 int8'e geçti (assets/models/coffee-check.tflite, 1000 sınıf → toImagenet1001). Kural: kahve ≥ 0.05 ya da kahve+nötr ≥ 0.2 → kahve, değilse uyarı (minOtherConfidence kaldırıldı). Sahibin 17 fotoğrafında 16/17 (kaçan: boş tabak). OTA ile gider (yalnız JS + varlık).
+- Geri düğmeleri: koleksiyon üst çubuğu ve CupDetail'deki kaydırınca beliren zemin kaldırıldı; yalnızca düğmeler yüzüyor.
+
+## Durum (24 Kas 15:05 UTC) — yeni oturum buradan başlar
+- Son Ad Hoc derleme (ccc3c00) yayında: /install. Sahip sabit geri düğmelerini OTA ile aldı, onayladı ("tam istediğim gibi").
+- Bekleyen: sahibin yeni kahve modelini cihazda denemesi; GitHub Mac sunucusu öğleden sonra boşa çıkmıyor (15 dk sonra iptal) → Ad Hoc için builder=eas yedek; JS/varlık değişikliği OTA ile gider, derleme gerekmez.
+- Açık işler: Android derleme/test, Instagram Meta App ID, production kanalı, Xcode 27 (Nisan 2027), Apple/GitHub destek yanıtları, EAS Update yayınını kaldırma kararı (Android olana kadar tut önerildi).
+- Sahip token tasarrufu istiyor: kısa cevap, seyrek kontrol, gereksiz derleme yok.
+
+## 24 Kas akşam — yeni bildirimler (2, 6, 7, 9)
+- `src/lib/notifyPlan.ts` (saf, testli): günlük + seri tehlikede (22:00, seri ≥2) + haftalık özet (Pazar 19:00) + aylık özet (ayın 1'i 11:00) + geri dön (3/7/14 gün; o günün günlük hatırlatmasının yerine). Günde en fazla 2 (öncelik: özet > seri > geri dön > günlük).
+- Ayarlar'da 4 yeni anahtar (`Settings.notify*`, varsayılan açık; izin yoksa hiçbiri kurulmaz). Dokununca: /new, /, /wrapped (dönem, dokunma gününe göre offset) — `useNotificationNavigation` (_layout).
+- Yalnız JS: OTA ile gider. Cihazda test edilmedi (iPhone ve Android).
+
+## 24 Kas gece — ana ekran widget'ları (Expo widget parçası YOK, sahibin isteği) + ücretsiz Android derleme
+- Yerel modül `modules/cupped-widget` (Swift + Kotlin, Expo Modules API): `setData(json)` → iOS App Group `group.com.perso1224.cupped` UserDefaults "widget" + WidgetCenter yenile; Android SharedPreferences `cupped_widget` + widget yenile. JS: `requireOptionalNativeModule` (eski derlemede null). Özet `src/lib/widgetData.ts` (14 gün, seri), `reminders.ts` doRefresh'te yazılır.
+- iOS: `targets/widget/CuppedWidget.swift` (küçük, orta, kilit ekranı ×3), `plugins/withIosWidget.js` hedefi ekler (bundle `com.perso1224.cupped.widget`, iOS 16.4+, sürüm uygulamadan kopyalanır). app.json `extra.eas.build.experimental.ios.appExtensions`.
+- İmza: `scripts/setupAdhocCredentials.mjs <pid> <app> <uzantı…>` uzantı için EAS kimliği + AD_HOC/APP_STORE kaydı (geçici profil) oluşturur; adhoc.yml, testflight.yml, expo-update.yml ios-build çağırıyor. Gerçek profiller derlemede (refresh / ASC anahtarı) oluşur. Henüz hiç çalışmadı.
+- Android: `android.yml` (ubuntu, prebuild + gradlew assembleRelease arm64, debug.keystore imzası) → updates dalı android/cupped.apk; Worker `/android` yönlendirir. Android widget'ları: "Cupped · Seri" (2×2), "Cupped · Hafta" (4×2), RemoteViews.
+- Derlenmedi/cihazda denenmedi. Swift/Kotlin burada derlenemiyor; ilk derleme kayıtlarına bakılacak.
+- 24 Kas 19:03 UTC: Widget'lı Ad Hoc derleme BAŞARILI (EAS bulutu, 4. deneme; GitHub Mac sunucusu yine verilmedi). /install'da.
+  - Sahip Apple Developer'da App Group `group.com.perso1224.cupped` oluşturup iki App ID'ye bağladı (ASC anahtarıyla otomatik yapılamıyor).
+  - Köprü pod'unun adı `CuppedWidgetBridge` (hedef adı CuppedWidget ile Swift modül çakışması vardı).
+  - `scripts/easBuildLogs.mjs` + `eas-logs.yml`: Expo derleme hatalarını GitHub'da gösterir; adhoc.yml başarısızlıkta otomatik çalıştırır.
+  - Android APK derlemesi sahibin isteğiyle iptal edildi (henüz gerek yok). Cihazda widget testi bekleniyor.
+- 24 Kas akşam: widget seti 2 (yalnız iPhone): Fincan Duvarı (orta/büyük, /wall açar), Son fincanım (küçük/orta, fotoğraf `widget-last.jpg` ortak alanda, köprüde `setImage`), Kafein (küçük + kilit ekranı gösterge), kilit ekranı logo widget'ı (uygulamayı açar, logo kodla çizili), Kontrol Merkezi "Kahve ekle" (iOS 18+, AppIntent + OpenURLIntent). widgetData v2: days[...,mg], wall/wallEnd (182 gün), last, caffeineRef.
+- 24 Kas akşam: GitHub Apple çipli Mac'ler (macos-latest/macos-26) "capacity constraints" ile verilmiyor; Intel (`macos-15-intel`, en yeni Xcode 26.3) hemen veriliyor. Workflow'larda github-mac = Intel, github-mac-arm = Apple çipli. Xcode 26.3 expo-modules-jsi'yi derleyemiyordu ("sending 'slot' risks causing data races") → `scripts/patchDeps.mjs` (npm postinstall) Sendable tamsayı ile düzeltir.
+- 24 Kas 20:58 UTC: İLK Intel Mac derlemesi BAŞARILI (Ad Hoc, ~50 dk, ücretsiz). Gerekenler: patchDeps yaması + FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT=120. Expo bulutu artık gerekmiyor. Nisan 2027'de Xcode 27 şartı gelince Intel imajı (26.3) yetmeyebilir: yeniden değerlendir.

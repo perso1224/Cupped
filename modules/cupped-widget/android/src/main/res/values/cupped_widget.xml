@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="cupped_widget_bg">#FFFFFF</color>
+  <color name="cupped_widget_text">#1C1613</color>
+  <color name="cupped_widget_muted">#7A6E66</color>
+  <color name="cupped_widget_accent">#D98B2B</color>
+  <color name="cupped_widget_empty">#EFE8E1</color>
+  <color name="cupped_widget_on_accent">#FFFFFF</color>
+  <string name="cupped_widget_streak">Cupped · Seri</string>
+  <string name="cupped_widget_week">Cupped · Hafta</string>
+  <string name="cupped_widget_streak_desc">Serin ve bugünkü fincanların. + ile hızlı ekle.</string>
+  <string name="cupped_widget_week_desc">Haftanın damgaları, serin ve ortalama skorun.</string>
+</resources>

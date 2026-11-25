@@ -1,0 +1,113 @@
+# Ad Hoc derleme: TestFlight'sız, kayıtlı iPhone'lara doğrudan kurulum (TestFlight daveti gelmezken test için).
+# GitHub Mac sunucusunda derler; Ad Hoc profili EAS'teki App Store Connect API anahtarıyla otomatik oluşturulur
+# (kayıtlı cihazlar: "iPhone kaydı (Ad Hoc)" iş akışı). Çıktı GitHub `updates` dalına konur,
+# kurulum sayfası: https://cupped-updates.beratyapar4.workers.dev/install (iPhone'da Safari ile).
+name: Ad Hoc derleme (doğrudan yükleme)
+
+on:
+  # İlk çalıştırma için (yeni iş akışı ana dalda olmadan elle başlatılamıyor)
+  push:
+    branches: ['claude/expo-setup-guide-9xz45k']
+    paths: ['.github/workflows/adhoc.yml']
+  workflow_dispatch:
+    inputs:
+      builder:
+        description: "Nerede derlensin: github-mac (ücretsiz, Intel Mac; önerilen), github-mac-arm (ücretsiz, Apple çipli Mac; öğleden sonra çoğu zaman verilmiyor) ya da eas (Expo bulutu, ücretsiz kotadan 1 derleme)"
+        type: choice
+        options: [github-mac, github-mac-arm, eas]
+        default: github-mac
+
+jobs:
+  adhoc:
+    # Mac havuzu: GitHub'ın Apple çipli Mac'leri (macos-latest) yoğun saatlerde hiç verilmiyor ("capacity constraints"),
+    # Intel Mac'ler (macos-15-intel, Xcode 26.3) hemen veriliyor. Bu yüzden github-mac = Intel; github-mac-arm = Apple çipli.
+    runs-on: ${{ inputs.builder == 'eas' && 'ubuntu-latest' || inputs.builder == 'github-mac-arm' && 'macos-latest' || 'macos-15-intel' }}
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      ON_EAS: ${{ inputs.builder == 'eas' && 'true' || 'false' }}
+      # Intel Mac yavaş: fastlane'in Xcode ayarlarını okuma süresi (varsayılan 3 sn, 4 deneme) yetmiyor
+      FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: '120'
+      FASTLANE_XCODEBUILD_SETTINGS_RETRIES: '6'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Paketleri kur
+        run: npm ci
+
+      - name: En yeni Xcode'u seç
+        if: env.ON_EAS != 'true'
+        run: |
+          X=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          echo "Xcode: $X"
+          sudo xcode-select -s "$X/Contents/Developer"
+
+      - name: Ad Hoc imza kayıtlarını hazırla (widget uzantısı dahil, mevcut sertifikayla)
+        run: node scripts/setupAdhocCredentials.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")" com.perso1224.cupped com.perso1224.cupped.widget
+
+      - name: Expo bulutunda Ad Hoc derle ve dosyayı indir
+        if: env.ON_EAS == 'true'
+        timeout-minutes: 120
+        run: |
+          npx eas-cli@latest build --platform ios --profile adhoc --non-interactive \
+            --refresh-ad-hoc-provisioning-profile --json > "$RUNNER_TEMP/build.json"
+          URL=$(node -e "const b=require(process.argv[1]);console.log((Array.isArray(b)?b[0]:b).artifacts.buildUrl)" "$RUNNER_TEMP/build.json")
+          echo "İndiriliyor: $URL"
+          curl -fsSL -o "$RUNNER_TEMP/cupped-adhoc.ipa" "$URL"
+
+      - name: Expo derlemesi başarısızsa hata kayıtlarını göster
+        if: failure() && env.ON_EAS == 'true'
+        run: node scripts/easBuildLogs.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")"
+
+      - name: Ad Hoc derle (profil kayıtlı cihazlarla otomatik yenilenir)
+        if: env.ON_EAS != 'true'
+        run: |
+          npx eas-cli@latest build --platform ios --profile adhoc --local --non-interactive \
+            --refresh-ad-hoc-provisioning-profile --output "$RUNNER_TEMP/cupped-adhoc.ipa"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cupped-adhoc
+          path: ${{ runner.temp }}/cupped-adhoc.ipa
+          retention-days: 3
+
+  # Dosyayı `updates` dalına koyan kısa iş (Linux). Sıra kilidi sadece burada: derleme sürerken anlık güncellemeler beklemesin.
+  publish:
+    needs: adhoc
+    runs-on: ubuntu-latest
+    concurrency:
+      group: updates-branch
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: cupped-adhoc
+          path: ${{ runner.temp }}
+      - name: Kurulum dosyasını GitHub'a koy (updates dalı, adhoc/)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          W="$RUNNER_TEMP/upd"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git clone --quiet --depth 1 --branch updates "$REMOTE" "$W"
+          mkdir -p "$W/adhoc"
+          cp "$RUNNER_TEMP/cupped-adhoc.ipa" "$W/adhoc/cupped.ipa"
+          V=$(node -p "require('./app.json').expo.version")
+          printf '{"ipaUrl":"https://raw.githubusercontent.com/%s/updates/adhoc/cupped.ipa?v=%s","bundleId":"com.perso1224.cupped","version":"%s"}\n' \
+            "$GITHUB_REPOSITORY" "${GITHUB_SHA::7}" "$V" > "$W/adhoc/info.json"
+          cd "$W"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q --orphan fresh
+          git add -A
+          git commit -qm "Ad Hoc derleme ${GITHUB_SHA::7}"
+          git push -q -f origin HEAD:updates
+          echo "::notice::Kurulum: https://cupped-updates.beratyapar4.workers.dev/install (iPhone'da Safari)"

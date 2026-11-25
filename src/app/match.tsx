@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Alert, Keyboard, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bean } from '../components/coffee';
-import { BackButton } from '../components/NavButtons';
+import { BackSpacer, FloatingBack } from '../components/NavButtons';
 import type { CardHandle } from '../components/ShareCard';
 import { PillButton } from '../components/ui';
 import { BRAND } from '../config/brand';
@@ -59,12 +59,13 @@ export default function MatchScreen() {
   const cardH = (cardW * 16) / 9;
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: insets.bottom + 40 }}
       keyboardShouldPersistTaps="handled"
     >
-      <BackButton label={tr.profile.title} />
+      <BackSpacer />
       <Text accessibilityRole="header" style={styles.title}>{tr.match.title}</Text>
       <Text style={styles.sub}>{tr.match.sub}</Text>
 
@@ -130,6 +131,8 @@ export default function MatchScreen() {
         </>
       ) : null}
     </ScrollView>
+    <FloatingBack label={tr.profile.title} />
+    </View>
   );
 }
 

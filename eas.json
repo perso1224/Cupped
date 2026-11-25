@@ -18,6 +18,14 @@
       "ios": {
         "resourceClass": "m-medium"
       }
+    },
+    "adhoc": {
+      "channel": "preview",
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium",
+        "enterpriseProvisioning": "adhoc"
+      }
     }
   },
   "submit": {

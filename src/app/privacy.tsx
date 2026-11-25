@@ -1,5 +1,5 @@
-import { BackButton } from '../components/NavButtons';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { BackSpacer, FloatingBack } from '../components/NavButtons';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
 import { colors, type } from '../theme';
@@ -8,11 +8,12 @@ import { colors, type } from '../theme';
 export default function Privacy() {
   const insets = useSafeAreaInsets();
   return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: insets.bottom + 40 }}
     >
-      <BackButton label={tr.settings.title} />
+      <BackSpacer />
       <Text accessibilityRole="header" style={styles.title}>{tr.privacy.title}</Text>
       {tr.privacy.items.map(([h, b]) => (
         <Text key={h} style={styles.p}>
@@ -21,6 +22,8 @@ export default function Privacy() {
         </Text>
       ))}
     </ScrollView>
+    <FloatingBack label={tr.settings.title} />
+    </View>
   );
 }
 

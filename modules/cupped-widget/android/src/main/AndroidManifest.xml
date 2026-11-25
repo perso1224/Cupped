@@ -1,0 +1,24 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- Küçük widget: seri + bugünkü fincanlar (dokununca yeni fincan) -->
+    <receiver
+      android:name="expo.modules.cuppedwidget.CuppedStreakWidget"
+      android:label="@string/cupped_widget_streak"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/cupped_widget_streak_info" />
+    </receiver>
+    <!-- Geniş widget: seri + haftanın damgaları + ortalama -->
+    <receiver
+      android:name="expo.modules.cuppedwidget.CuppedWeekWidget"
+      android:label="@string/cupped_widget_week"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/cupped_widget_week_info" />
+    </receiver>
+  </application>
+</manifest>

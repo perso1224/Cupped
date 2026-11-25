@@ -1,0 +1,88 @@
+# Android derlemesi: GitHub'ın ücretsiz Linux sunucusunda, Expo bulutu ve kotası kullanılmadan.
+# Proje `expo prebuild` ile Android projesine çevrilir, Gradle ile APK derlenir.
+# İmza: Android şablonundaki sabit test anahtarı (debug.keystore). Her derlemede aynı olduğu için
+# telefondaki uygulamanın üzerine kurulabilir. Play Store için ileride ayrı bir anahtar gerekir.
+# Çıktı GitHub `updates` dalına konur; indirme: https://cupped-updates.beratyapar4.workers.dev/android
+# (Android telefonda Chrome ile açın; "bilinmeyen kaynaklardan yükleme" izni istenir.)
+name: Android derleme (APK)
+
+on:
+  # İlk çalıştırma için (yeni iş akışı ana dalda olmadan elle başlatılamıyor)
+  push:
+    branches: ['claude/expo-setup-guide-9xz45k']
+    paths: ['.github/workflows/android.yml']
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Paketleri kur
+        run: npm ci
+
+      - name: Android projesini oluştur
+        run: CI=1 npx expo prebuild --platform android --no-install
+
+      - name: APK derle (yalnızca 64-bit ARM, bugünkü telefonların hepsi; dosya küçük kalır)
+        working-directory: android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+
+      - name: APK'yı bul
+        run: |
+          APK=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          ls -la "$APK"
+          cp "$APK" "$RUNNER_TEMP/cupped.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cupped-android
+          path: ${{ runner.temp }}/cupped.apk
+          retention-days: 3
+
+  # Dosyayı `updates` dalına koyan kısa iş. Sıra kilidi: o dala yazan diğer iş akışlarıyla çakışmasın.
+  publish:
+    needs: apk
+    runs-on: ubuntu-latest
+    concurrency:
+      group: updates-branch
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cupped-android
+          path: ${{ runner.temp }}
+      - name: APK'yı GitHub'a koy (updates dalı, android/)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          W="$RUNNER_TEMP/upd"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git clone --quiet --depth 1 --branch updates "$REMOTE" "$W"
+          mkdir -p "$W/android"
+          cp "$RUNNER_TEMP/cupped.apk" "$W/android/cupped.apk"
+          cd "$W"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q --orphan fresh
+          git add -A
+          git commit -qm "Android derleme ${GITHUB_SHA::7}"
+          git push -q -f origin HEAD:updates
+          echo "::notice::Android indirme: https://cupped-updates.beratyapar4.workers.dev/android?v=${GITHUB_SHA::7}"

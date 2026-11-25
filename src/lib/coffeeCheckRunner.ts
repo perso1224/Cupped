@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { decode } from 'jpeg-js';
-import { dequantize, judgeCoffee, rgbaToRgb } from './coffeeCheck';
+import { dequantize, judgeCoffee, rgbaToRgb, toImagenet1001 } from './coffeeCheck';
 import type { PhotoCheck } from './types';
 
 /**
@@ -69,7 +69,7 @@ export async function checkCoffeePhoto(uri: string): Promise<Exclude<PhotoCheck,
     const input = await photoPixels(uri);
     const [out] = await model.run([input.buffer as ArrayBuffer]);
     if (!out) return null;
-    return judgeCoffee(dequantize(new Uint8Array(out)));
+    return judgeCoffee(toImagenet1001(dequantize(new Uint8Array(out))));
   } catch {
     return null;
   }

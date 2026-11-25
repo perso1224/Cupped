@@ -42,11 +42,31 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/c8c4040d-10b8-4a67-a97f-b0eb75c889b5"
+      "url": "https://cupped-updates.beratyapar4.workers.dev/manifest",
+      "requestHeaders": {
+        "expo-channel-name": "preview"
+      }
     },
     "extra": {
       "eas": {
-        "projectId": "c8c4040d-10b8-4a67-a97f-b0eb75c889b5"
+        "projectId": "c8c4040d-10b8-4a67-a97f-b0eb75c889b5",
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "CuppedWidget",
+                  "bundleIdentifier": "com.perso1224.cupped.widget",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.perso1224.cupped"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
       }
     },
     "plugins": [
@@ -71,13 +91,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 160,
-          "resizeMode": "contain",
-          "backgroundColor": "#FAF8F5",
+          "backgroundColor": "#D98B2B",
           "dark": {
-            "image": "./assets/splash-icon-dark.png",
-            "backgroundColor": "#15110E"
+            "backgroundColor": "#D98B2B"
           }
         }
       ],
@@ -92,7 +108,8 @@
             "com.instagram.android"
           ]
         }
-      ]
+      ],
+      "./plugins/withIosWidget"
     ],
     "experiments": {
       "reactCompiler": true

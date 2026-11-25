@@ -4,10 +4,13 @@
 #  2) Yerel (native) taraf değiştiyse (yeni yerel kütüphane, izin, ikon…) ve bu hali içeren bir iOS derlemesi
 #     yoksa, otomatik olarak yeni bir TestFlight derlemesi başlatılır ve bitince TestFlight'a yüklenir.
 #     Karar EAS "parmak izi" (fingerprint) ile verilir: aynı parmak izine sahip derleme varsa yeniden derlenmez.
-#     Nerede derlenir?
-#       - Depo HERKESE AÇIKSA: GitHub'ın Mac sunucusunda (açık depolarda ücretsiz), `eas build --local` ile.
-#         Expo'nun derleme kotası harcanmaz. Başarılı derlemenin parmak izi `ios-fp-<parmak izi>` etiketiyle işaretlenir.
-#       - Depo GİZLİYSE: Expo'nun bulutunda (EAS Build, ücretsiz planın aylık kotasından düşer).
+#     Nerede derlenir? GitHub depo değişkeni IOS_BUILDER (Settings > Secrets and variables > Actions > Variables):
+#       - yok ya da "eas" (varsayılan): Expo bulutunda (EAS Build). Mac gerekmez; ücretsiz planın aylık kotasından düşer.
+#         İş, derleme ve TestFlight'a gönderim bitene kadar bekler; sonuç bu iş akışının kaydında görünür.
+#       - "github-mac": GitHub'ın Mac sunucusunda `eas build --local` (açık depoda ücretsiz). 23 Kas itibarıyla GitHub
+#         bu hesaba Mac sunucusu atamıyor (destek talebi açık); düzelince bu değişkenle geçilir.
+#         Başarılı derlemenin parmak izi `ios-fp-<parmak izi>` etiketiyle işaretlenir.
+#     İmza sertifikası, provisioning profile ve App Store Connect API anahtarı her iki yolda da EAS'te kayıtlı olanlardır.
 # App Store sürümü AYRI "production" kanalını dinler; oraya güncelleme yalnızca elle gönderilir,
 # böylece her gönderim mağazaya gitmez. App Store'da yayın her seferinde Apple incelemesinden geçer.
 # Gerekli: GitHub'da EXPO_TOKEN adlı gizli anahtar. TestFlight kimlik bilgileri EAS'te kayıtlı (docs/TESTFLIGHT.md).
@@ -26,8 +29,16 @@ on:
         default: false
 
 jobs:
+  # Mac havuzu: GitHub'ın Apple çipli Mac'leri (macos-latest) yoğun saatlerde hiç verilmiyor ("capacity constraints"),
+  # Intel Mac'ler (macos-15-intel, Xcode 26.3) hemen veriliyor. Bu yüzden github-mac = Intel; github-mac-arm = Apple çipli.
   update:
     runs-on: ubuntu-latest
+    # `updates` dalına yazan işler sırayla çalışsın (Ad Hoc iş akışıyla çakışmasın)
+    concurrency:
+      group: updates-branch
+      cancel-in-progress: false
+    permissions:
+      contents: write
     outputs:
       build: ${{ steps.native.outputs.build }}
       fp: ${{ steps.native.outputs.fp }}
@@ -87,11 +98,41 @@ jobs:
       - name: Yayınla
         run: npx eas-cli@latest update --branch preview --message "$COMMIT_MESSAGE" --platform all --environment preview --non-interactive
 
-  # Yeni iOS derlemesi: açık depoda GitHub'ın Mac sunucusunda (ücretsiz), gizli depoda Expo bulutunda.
+      # Kendi güncelleme sunucumuz: paket GitHub'daki `updates` dalına konur (tek commit, geçmiş tutulmaz),
+      # Cloudflare'deki sunucu (updates-server/) telefonlara oradan verir. Geçiş süresince Expo'ya da yayınlanıyor.
+      - name: Kendi güncelleme sunucumuza yayınla (GitHub `updates` dalı)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          W="$RUNNER_TEMP/upd"
+          RV=$(node -p "require('./app.json').expo.version")
+          CI=1 npx expo export --platform ios --platform android --output-dir "$RUNNER_TEMP/dist-upd"
+          npx expo config --type public --json > "$RUNNER_TEMP/expo-config.json"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads origin updates >/dev/null 2>&1; then
+            git clone --quiet --depth 1 --branch updates "$REMOTE" "$W"
+          else
+            mkdir -p "$W" && git -C "$W" init -q -b updates && git -C "$W" remote add origin "$REMOTE"
+          fi
+          node scripts/updateManifest.mjs "$RUNNER_TEMP/dist-upd" "$W" preview "$RV" \
+            "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/updates" "$RUNNER_TEMP/expo-config.json"
+          node scripts/updateManifest.mjs prune "$W"
+          cd "$W"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Tek commit: eski güncellemeler depoda birikmesin
+          git checkout -q --orphan fresh
+          git add -A
+          git commit -qm "Güncelleme: preview / $RV / ${GITHUB_SHA::7}"
+          git push -q -f origin HEAD:updates
+          echo "::notice::Kendi sunucumuza yayınlandı (preview, runtime $RV)."
+
+  # Yeni iOS derlemesi: varsayılan Expo bulutu; IOS_BUILDER=github-mac ise GitHub Mac sunucusu.
   ios-build:
     needs: update
     if: needs.update.outputs.build == 'true'
-    runs-on: ${{ github.event.repository.private && 'ubuntu-latest' || 'macos-15' }}
+    runs-on: ${{ vars.IOS_BUILDER == 'github-mac' && 'macos-15-intel' || vars.IOS_BUILDER == 'github-mac-arm' && 'macos-latest' || 'ubuntu-latest' }}
     # Aynı anda tek derleme: art arda iki gönderimde aynı hal iki kez derlenmesin (sıradaki, etiketi görüp atlar)
     concurrency:
       group: ios-build
@@ -101,7 +142,10 @@ jobs:
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       FP: ${{ needs.update.outputs.fp }}
-      LOCAL: ${{ github.event.repository.private && 'false' || 'true' }}
+      LOCAL: ${{ (vars.IOS_BUILDER == 'github-mac' || vars.IOS_BUILDER == 'github-mac-arm') && 'true' || 'false' }}
+      # Intel Mac yavaş: fastlane'in Xcode ayarlarını okuma süresi (varsayılan 3 sn, 4 deneme) yetmiyor
+      FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: '120'
+      FASTLANE_XCODEBUILD_SETTINGS_RETRIES: '6'
     steps:
       - uses: actions/checkout@v4
 
@@ -124,13 +168,18 @@ jobs:
         if: steps.still.outputs.go == 'true'
         run: npm ci
 
-      - name: Expo bulutunda derle ve TestFlight'a gönder (gizli depo)
-        if: steps.still.outputs.go == 'true' && env.LOCAL != 'true'
-        run: |
-          echo "::notice::Yerel değişiklik var: Expo bulutunda yeni iOS derlemesi başlatılıyor, bitince TestFlight'a yüklenecek."
-          npx eas-cli@latest build --platform ios --profile testflight --auto-submit --non-interactive --no-wait
+      - name: İmza kayıtlarını hazırla (widget uzantısı dahil, mevcut sertifikayla)
+        if: steps.still.outputs.go == 'true'
+        run: node scripts/setupAdhocCredentials.mjs "$(node -p "require('./app.json').expo.extra.eas.projectId")" com.perso1224.cupped com.perso1224.cupped.widget
 
-      - name: En yeni Xcode'u seç (açık depo)
+      - name: Expo bulutunda derle ve TestFlight'a gönder
+        if: steps.still.outputs.go == 'true' && env.LOCAL != 'true'
+        timeout-minutes: 240
+        run: |
+          echo "::notice::Expo bulutunda yeni iOS derlemesi başlatılıyor; bitince TestFlight'a yüklenecek. İş, sonuç gelene kadar bekler."
+          npx eas-cli@latest build --platform ios --profile testflight --auto-submit --non-interactive
+
+      - name: En yeni Xcode'u seç (GitHub Mac)
         if: steps.still.outputs.go == 'true' && env.LOCAL == 'true'
         run: |
           X=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
@@ -138,17 +187,17 @@ jobs:
           sudo xcode-select -s "$X/Contents/Developer"
           xcodebuild -version
 
-      - name: GitHub Mac sunucusunda derle (açık depo, ücretsiz)
+      - name: GitHub Mac sunucusunda derle
         if: steps.still.outputs.go == 'true' && env.LOCAL == 'true'
         run: |
           echo "::notice::Yerel değişiklik var: GitHub Mac sunucusunda yeni iOS derlemesi yapılıyor."
           npx eas-cli@latest build --platform ios --profile testflight --local --non-interactive --output "$RUNNER_TEMP/cupped.ipa"
 
-      - name: TestFlight'a gönder (açık depo)
+      - name: TestFlight'a gönder (GitHub Mac)
         if: steps.still.outputs.go == 'true' && env.LOCAL == 'true'
         run: npx eas-cli@latest submit --platform ios --profile testflight --path "$RUNNER_TEMP/cupped.ipa" --non-interactive
 
-      - name: Bu hali "derlendi" olarak işaretle (açık depo)
+      - name: Bu hali "derlendi" olarak işaretle (GitHub Mac)
         if: steps.still.outputs.go == 'true' && env.LOCAL == 'true'
         run: |
           git tag -f "ios-fp-$FP"

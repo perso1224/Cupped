@@ -1,14 +1,16 @@
 import * as Notifications from 'expo-notifications';
 import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
-import { currentStreak, dayKey } from './progress';
-import { reminderPlan } from './reminderTime';
-import { loadEntries, loadMetrics, loadSettings, updateMetrics } from './storage';
+import { router } from 'expo-router';
+import { useEffect } from 'react';
+import { CuppedWidget } from '../../modules/cupped-widget';
+import { notificationPlan, parseTarget, targetHref, type NotifyTarget } from './notifyPlan';
+import { buildWidgetData } from './widgetData';
+import { loadEntries, loadMetrics, loadSettings, thumbUrl, updateMetrics } from './storage';
 
 /**
- * Günlük hatırlatma: telefonun kendi (yerel) bildirimi, sunucu yok.
- * Her gün en fazla 1 kez, ayarlanan saatte; o gün fincan eklendiyse bir sonraki güne kayar.
- * Uygulama açılmasa da hatırlatma kesilmesin diye sonraki 6 gün de kurulur (her açılışta yeniden hesaplanır).
+ * Bildirimler: telefonun kendi (yerel) bildirimleri, sunucu yok. Plan notifyPlan.ts'te (günlük hatırlatma,
+ * seri tehlikede, haftalık/aylık özet, geri dön). Her açılışta ve kayıtta yeniden kurulur.
  */
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -50,27 +52,63 @@ export function cancelReminders(): Promise<void> {
   return chain;
 }
 
+/** Ana ekran widget'larını güncel tutar (modül yoksa, ör. eski derleme ya da Expo Go: sessizce geçer). */
+let lastWidgetPhoto: string | null | undefined;
+function syncWidget(entries: Awaited<ReturnType<typeof loadEntries>>, caffeineRef: number): void {
+  if (!CuppedWidget) return;
+  try {
+    // Önce fotoğraf, sonra veri (veri yazılınca widget'lar yenilenir)
+    const last = entries.reduce<(typeof entries)[number] | null>((m, e) => (!m || e.createdAt > m.createdAt ? e : m), null);
+    const photo = last?.photoUri ?? null;
+    if (CuppedWidget.setImage && photo !== lastWidgetPhoto) {
+      CuppedWidget.setImage(thumbUrl(photo));
+      lastWidgetPhoto = photo;
+    }
+    CuppedWidget.setData(JSON.stringify(buildWidgetData(entries, new Date(), caffeineRef)));
+  } catch {
+    // widget güncellenemezse uygulama yine çalışır
+  }
+}
+
 async function doRefresh(): Promise<void> {
   try {
+    const entries = await loadEntries();
+    const s = await loadSettings();
+    syncWidget(entries, s.caffeineRef);
     const m = await loadMetrics();
     await Notifications.cancelAllScheduledNotificationsAsync();
-    if (!m.reminderEnabled) return;
+    const prefs = {
+      daily: !!m.reminderEnabled,
+      streak: s.notifyStreak,
+      weekly: s.notifyWeekly,
+      monthly: s.notifyMonthly,
+      comeback: s.notifyComeback,
+    };
+    if (!Object.values(prefs).some(Boolean)) return;
     const perm = await Notifications.getPermissionsAsync();
     if (!perm.granted) return;
-    const entries = await loadEntries();
-    const days = new Set(entries.map((e) => dayKey(new Date(e.createdAt))));
-    const s = await loadSettings();
     await ensureAndroidChannel();
-    const plan = reminderPlan(days, currentStreak(entries), new Date(), s.reminderHour, s.reminderMinute);
+    const plan = notificationPlan(entries, prefs, new Date(), s.reminderHour, s.reminderMinute);
     for (const [i, r] of plan.entries()) {
       await Notifications.scheduleNotificationAsync({
-        identifier: i === 0 ? REMINDER_ID : `${REMINDER_ID}-${i}`,
-        content: { title: r.title, body: r.body },
+        identifier: `${REMINDER_ID}-${r.kind}-${i}`,
+        content: { title: r.title, body: r.body, data: { target: r.target satisfies NotifyTarget } },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at, channelId: CHANNEL_ID },
       });
     }
   } catch {
     // bildirim kurulamazsa uygulama yine çalışır
+  }
+}
+
+/** Bildirim izni: varsa true; yoksa bir kez sorar. */
+export async function ensureNotificationPermission(): Promise<boolean> {
+  try {
+    const cur = await Notifications.getPermissionsAsync();
+    if (cur.granted) return true;
+    return (await Notifications.requestPermissionsAsync()).granted;
+  } catch {
+    return false;
   }
 }
 
@@ -92,3 +130,35 @@ export async function setReminderEnabled(enabled: boolean): Promise<boolean> {
   await refreshReminder();
   return true;
 }
+
+/**
+ * Bildirime dokununca ilgili ekranı açar (yeni fincan, ana sayfa, haftalık/aylık özet).
+ * Uygulama kapalıyken dokunulduysa açılış bitince (ready) gider. Aynı dokunuş iki kez işlenmez.
+ */
+export function useNotificationNavigation(ready: boolean): void {
+  useEffect(() => {
+    if (!ready || Platform.OS === 'web') return;
+    const open = (r: Notifications.NotificationResponse | null) => {
+      if (!r || r.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return;
+      const key = `${r.notification.request.identifier}@${r.notification.date}`;
+      if (handled.has(key)) return;
+      handled.add(key);
+      Notifications.clearLastNotificationResponse();
+      const t = parseTarget(r.notification.request.content.data);
+      if (!t || t.route === 'home') {
+        router.navigate('/');
+        return;
+      }
+      router.push(targetHref(t) as Parameters<typeof router.push>[0]);
+    };
+    let sub: { remove(): void } | undefined;
+    try {
+      open(Notifications.getLastNotificationResponse());
+      sub = Notifications.addNotificationResponseReceivedListener(open);
+    } catch {
+      // bildirim modülü yoksa dokunuş yalnızca uygulamayı açar
+    }
+    return () => sub?.remove();
+  }, [ready]);
+}
+const handled = new Set<string>();

@@ -1,0 +1,50 @@
+# Kendi anlık güncelleme sunucumuzu (Cloudflare Worker, ücretsiz plan) yükler.
+# updates-server/ değişince ya da elle çalıştırılınca. Gerekli GitHub gizli anahtarları:
+#   CLOUDFLARE_API_TOKEN   ("Edit Cloudflare Workers" yetkili token)
+#   CLOUDFLARE_ACCOUNT_ID
+name: Güncelleme sunucusunu yükle
+
+on:
+  push:
+    branches: ['claude/expo-setup-guide-9xz45k']
+    paths: ['updates-server/**', '.github/workflows/updates-server.yml']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Anahtar kontrolü
+        run: |
+          for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do
+            if [ -z "${!v}" ]; then echo "::error::$v eksik (Settings > Secrets and variables > Actions)."; exit 1; fi
+          done
+
+      - name: Cloudflare'e yükle
+        id: deploy
+        working-directory: updates-server
+        run: |
+          npx --yes wrangler@4.158.0 deploy 2>&1 | tee "$RUNNER_TEMP/deploy.log"
+          URL=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' "$RUNNER_TEMP/deploy.log" | head -1)
+          if [ -z "$URL" ]; then echo "::error::Sunucu adresi bulunamadı (workers.dev alt alan adı tanımlı mı?)."; exit 1; fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "::notice::Güncelleme sunucusu: $URL/manifest"
+
+      - name: Sağlık kontrolü
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          sleep 5
+          curl -fsS "$URL/health"; echo
+          # Telefonun soracağı gibi sor: protokol başlığı gelmeli (204 = henüz güncelleme yok, 200 = var)
+          curl -sS -o /dev/null -D - -H 'expo-platform: ios' -H 'expo-runtime-version: 1.0.0' -H 'expo-channel-name: preview' "$URL/manifest" | tee "$RUNNER_TEMP/h.txt"
+          grep -qi '^expo-protocol-version: 1' "$RUNNER_TEMP/h.txt" || { echo "::error::Protokol başlığı yok"; exit 1; }

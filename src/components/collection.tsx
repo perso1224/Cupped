@@ -6,27 +6,26 @@ import type { BadgeProgress } from '../lib/progress';
 import { METHODS, type Method } from '../lib/types';
 import { colors, layout, type } from '../theme';
 import { BadgeArt } from './BadgeArt';
-import { BackButton } from './NavButtons';
+import { BackSpacer, FloatingBack } from './NavButtons';
 import { Card } from './ui';
 
 export const ALL_METHODS: readonly Method[] = METHODS;
 
 /**
  * Profil > Koleksiyon altındaki sayfaların ortak iskeleti.
- * Geri düğmesi kaydırılan alanın DIŞINDA, sabit üst çubukta durur (iPhone'da kaydırma içinde uzayıp başlığı itiyordu).
+ * Geri düğmesi sayfanın üstünde tek başına yüzer (arkasında çubuk yok); sayfa kaysa da yerinde kalır.
  */
 export function CollectionScreen({ title, summary, children }: { title: string; summary?: string; children: ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.screen}>
-      <View style={[styles.topBar, { paddingTop: insets.top + layout.topPad }]}>
-        <BackButton label={tr.profile.title} />
-      </View>
-      <ScrollView style={styles.screen} contentContainerStyle={{ paddingHorizontal: layout.screenPad, paddingBottom: insets.bottom + 48 }}>
+      <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: insets.bottom + 48 }}>
+        <BackSpacer />
         <Text accessibilityRole="header" style={styles.title}>{title}</Text>
         {summary ? <Text style={styles.summary}>{summary}</Text> : null}
         {children}
       </ScrollView>
+      <FloatingBack label={tr.profile.title} />
     </View>
   );
 }
@@ -68,7 +67,6 @@ export function BadgeCard({ progress: { badge: b, current, target, earned } }: {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  topBar: { paddingHorizontal: layout.screenPad, paddingBottom: 4, backgroundColor: colors.bg, alignItems: 'flex-start' },
   title: { ...type.largeTitle, marginTop: 2 },
   summary: { ...type.headline, color: colors.accentText, marginTop: 4 },
   track: { backgroundColor: colors.line, overflow: 'hidden' },
