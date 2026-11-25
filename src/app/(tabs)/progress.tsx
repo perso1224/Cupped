@@ -46,7 +46,7 @@ export default function Progress() {
   const isNew = !firstAt || now.getTime() - Date.parse(firstAt) < 31 * 86400000;
   const range: TrendRange = picked ?? (isNew ? '1m' : '3m');
   const trend = scoreTrend(entries, range, now);
-  const trendAvg = trend.points.length ? Math.round(trend.points.reduce((s, p) => s + p.avg, 0) / trend.points.length) : 0;
+  const trendAvg = trend.avg ?? 0;
   const trendMsg =
     // Erken yargı olmasın: en az 4 günlük veri
     trend.change === null || trend.points.length < 4 ? null : trend.change >= 2 ? tr.progress.trendUp(trend.change) : trend.change <= -2 ? tr.progress.trendDown(-trend.change) : tr.progress.trendFlat;
@@ -70,7 +70,7 @@ export default function Progress() {
               </Text>
             </View>
             <View style={styles.barTrack}>
-              <GrowBar style={styles.barFill} fraction={Math.max(0.04, level?.fraction ?? 0)} value={level?.fraction ?? 0} label={tr.a11y.levelBar} />
+              <GrowBar style={styles.barFill} fraction={(level?.fraction ?? 0) > 0 ? Math.max(0.04, level?.fraction ?? 0) : 0} value={level?.fraction ?? 0} label={tr.a11y.levelBar} />
             </View>
             {level ? <Text style={styles.xp}>{tr.progress.xp(level.xp)}</Text> : null}
             <Text style={styles.small} numberOfLines={3}>
@@ -107,7 +107,7 @@ export default function Progress() {
         </View>
         {trend.points.length >= 2 ? (
           <View style={{ marginTop: 12 }}>
-            <TrendChart key={range} points={trend.points} />
+            <TrendChart key={range} points={trend.points} weekly={range !== '1m'} />
           </View>
         ) : (
           <Text style={[styles.small, { marginVertical: 28, textAlign: 'center' }]}>{tr.progress.trendNeedMore}</Text>

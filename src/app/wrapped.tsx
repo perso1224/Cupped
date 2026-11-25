@@ -490,7 +490,7 @@ function SlideView({
             </View>
           )}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(17,17,17,0.35)' }]} />
-          <View style={[pad, { flex: 1, justifyContent: 'flex-end', paddingBottom: u * 22 }]}>
+          <View style={[pad, { flex: 1, justifyContent: 'flex-end', paddingBottom: H * 0.16 + u * 18 }]}>
             <Kicker style={[styles.kicker, a, { fontSize: u * 4 }, rise(0)]}>{tr.wrapped.bestTitle(pw)}</Kicker>
             <Animated.Text allowFontScaling={false} style={[styles.mega, { color: '#FAF8F5', fontSize: u * 40, lineHeight: u * 42 }, pop]}>{slide.entry.score}</Animated.Text>
             <Animated.Text allowFontScaling={false} style={[styles.sub, { color: '#FAF8F5', fontSize: u * 5.5 }, rise(0.35)]}>

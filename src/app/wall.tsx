@@ -55,7 +55,9 @@ export default function Wall() {
   const posterH = (posterW * 16) / 9;
   const u = posterW / 100;
   const pad = u * 6;
-  const labelW = u * 7;
+  // Ay adı (3 harf) küçük ekranda (320 pt) kırılmasın: etiket genişliği yazı boyuna göre
+  const labelFont = Math.max(8, u * 2.6);
+  const labelW = Math.max(u * 7, labelFont * 2.4);
   const gap = Math.max(1, u * 0.35);
   const cell = (posterW - pad * 2 - labelW - gap * 31) / 31;
   // Kareler dikine uzun: ızgara posterin ortasını doldursun
@@ -94,7 +96,7 @@ export default function Wall() {
             <View>
               {wall.map((days, m) => (
                 <View key={m} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: gap * 3 }}>
-                  <T style={{ width: labelW, color: th.muted, fontSize: Math.max(8, u * 2.6), fontWeight: '700' }}>{MONTHS[m]}</T>
+                  <T numberOfLines={1} style={{ width: labelW, color: th.muted, fontSize: labelFont, fontWeight: '700' }}>{MONTHS[m]}</T>
                   {days.map((d) => {
                     const uri = d.best?.photoUri ? thumbUrl(d.best.photoUri) : null;
                     const base = { width: cell, height: cellH, marginRight: gap, borderRadius: cell * 0.22 };

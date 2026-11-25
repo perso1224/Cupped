@@ -8,10 +8,13 @@ import { reduceMotionNow } from './motion';
 
 const H = 120;
 
-/** Haftalık çubuk grafik: her gün en yüksek skor, kesikli çizgi = haftalık ortalama. */
-export function WeekChart({ days }: { days: StripDay[] }) {
+/**
+ * Haftalık çubuk grafik: her gün en yüksek skor, kesikli çizgi = haftalık ortalama.
+ * avg verilirse (haftanın tüm fincanlarının ortalaması) çizgi, kartın üstündeki "Ortalama" ile aynı değeri gösterir.
+ */
+export function WeekChart({ days, avg: avgProp }: { days: StripDay[]; avg?: number | null }) {
   const scores = days.map((d) => d.best).filter((x): x is number => x !== null);
-  const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+  const avg = avgProp !== undefined ? avgProp : scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
   const scoresKey = scores.join(',');
   const [grow] = useState(() => new Animated.Value(0));
   useEffect(() => {

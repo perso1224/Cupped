@@ -364,11 +364,11 @@ export function methodStats(entries: CupEntry[], methods: readonly Method[]): Me
 
 export type TrendRange = '1m' | '3m' | '1y' | 'all';
 export type TrendPoint = { t: number; avg: number };
-export type ScoreTrend = { points: TrendPoint[]; change: number | null };
+export type ScoreTrend = { points: TrendPoint[]; change: number | null; avg: number | null };
 
 /**
  * İlerleme grafiği: seçilen aralıkta skorun gidişatı.
- * 1A/3A: gün başına ortalama; 1Y/Tümü: hafta başına ortalama (nokta sayısı makul kalsın).
+ * 1A: gün başına ortalama; 3A/1Y/Tümü: hafta başına ortalama (nokta sayısı makul, çizgi okunur kalsın).
  * change: aralığın ikinci yarısının ortalaması − ilk yarısının ortalaması (en az 2 nokta gerekir).
  */
 export function scoreTrend(entries: CupEntry[], range: TrendRange, now: Date = new Date()): ScoreTrend {
@@ -376,7 +376,7 @@ export function scoreTrend(entries: CupEntry[], range: TrendRange, now: Date = n
   const days = range === '1m' ? 30 : range === '3m' ? 91 : range === '1y' ? 365 : null;
   const start = days ? addDays(end, -days) : null;
   const list = entries.filter((e) => !start || inRange(e, start, end)).filter((e) => new Date(e.createdAt) < end);
-  const weekly = range === '1y' || range === 'all';
+  const weekly = range !== '1m';
   const buckets = new Map<number, number[]>();
   for (const e of list) {
     const d = new Date(e.createdAt);
@@ -386,10 +386,12 @@ export function scoreTrend(entries: CupEntry[], range: TrendRange, now: Date = n
   const points = [...buckets.entries()]
     .sort((a, b) => a[0] - b[0])
     .map(([t, s]) => ({ t, avg: Math.round(s.reduce((x, y) => x + y, 0) / s.length) }));
-  if (points.length < 2) return { points, change: null };
+  // Aralığın ortalaması: fincanların ortalaması (gün/hafta ortalamalarının ortalaması değil)
+  const avg = list.length ? Math.round(list.reduce((s, e) => s + e.score, 0) / list.length) : null;
+  if (points.length < 2) return { points, change: null, avg };
   const half = Math.floor(points.length / 2);
   const mean = (p: TrendPoint[]) => p.reduce((s, x) => s + x.avg, 0) / p.length;
-  return { points, change: Math.round(mean(points.slice(points.length - half)) - mean(points.slice(0, half))) };
+  return { points, change: Math.round(mean(points.slice(points.length - half)) - mean(points.slice(0, half))), avg };
 }
 
 /** Bu haftanın günleri: o gün fincan var mı (seri kartındaki işaretler). */

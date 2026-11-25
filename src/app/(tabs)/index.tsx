@@ -358,7 +358,10 @@ export default function Home() {
                   </View>
                 ) : null}
               </View>
-              <WeekChart days={weekStrip(list, now)} />
+              <WeekChart
+                days={weekStrip(list, now)}
+                avg={weekEntries.length ? weekEntries.reduce((s, e) => s + e.score, 0) / weekEntries.length : null}
+              />
               <View style={styles.goalRow}>
                 <Icon name={discoveries >= WEEKLY.discoveryGoal ? 'checkmark-circle' : 'compass-outline'} size={18} color={tint.amber} />
                 <Text style={styles.goalText}>
@@ -394,7 +397,7 @@ export default function Home() {
                 {level ? (
                   <>
                     <View style={[styles.bar, { marginTop: 14 }]}>
-                      <GrowBar style={[styles.barFill, { backgroundColor: colors.black }]} fraction={Math.max(0.04, level.fraction)} value={level.fraction} label={tr.a11y.levelBar} />
+                      <GrowBar style={[styles.barFill, { backgroundColor: colors.black }]} fraction={level.fraction > 0 ? Math.max(0.04, level.fraction) : 0} value={level.fraction} label={tr.a11y.levelBar} />
                     </View>
                     <Text style={styles.cardSub}>
                       {level.next ? tr.home.levelLine(level.level, level.xp, level.next, level.toNext) : tr.home.levelTopXp(level.level, level.xp)}

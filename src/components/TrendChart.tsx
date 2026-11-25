@@ -8,14 +8,22 @@ import { haptic } from './motion';
 
 const H = 170;
 const PAD_L = 28; // soldaki skor etiketleri
-const PAD_T = 34; // seçili noktanın balonu için üst boşluk
+const PAD_T = 46; // seçili noktanın balonu için üst boşluk (balon en üstteki skor etiketini örtmesin)
 const PAD_B = 22; // alttaki tarih etiketleri
 
 const fmt = (t: number, withYear: boolean) =>
   new Date(t).toLocaleDateString('tr-TR', withYear ? { day: 'numeric', month: 'short', year: 'numeric' } : { day: 'numeric', month: 'short' });
 
+/** Haftalık noktanın balonu: "23–29 Kas" (ay değişiyorsa "30 Kas – 6 Ara"). */
+function weekLabel(t: number): string {
+  const a = new Date(t);
+  const b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6);
+  const mon = (d: Date) => d.toLocaleDateString('tr-TR', { month: 'short' });
+  return a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()} ${mon(b)}` : `${a.getDate()} ${mon(a)} – ${b.getDate()} ${mon(b)}`;
+}
+
 /** Skor gidişatı çizgisi: altı yumuşak dolgulu, kesikli yatay çizgiler, dokunulan noktada balon. */
-export function TrendChart({ points }: { points: TrendPoint[] }) {
+export function TrendChart({ points, weekly = false }: { points: TrendPoint[]; weekly?: boolean }) {
   const [w, setW] = useState(0);
   const [sel, setSel] = useState<number | null>(null);
   const selected = sel !== null && sel < points.length ? sel : points.length - 1;
@@ -23,9 +31,10 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
   const vals = points.map((p) => p.avg);
   const minV = vals.reduce((m, v) => (v < m ? v : m), Infinity);
   const maxV = vals.reduce((m, v) => (v > m ? v : m), -Infinity);
-  const lo = Math.max(0, Math.floor((minV - 5) / 10) * 10);
-  const hi = Math.min(100, Math.ceil((maxV + 5) / 10) * 10);
-  const span = Math.max(10, hi - lo);
+  // Yuvarlak eksen değerleri (ör. 40 / 60 / 80): alt ve üst sınır 20'nin katı
+  const lo = Math.max(0, Math.floor((minV - 5) / 20) * 20);
+  const hi = Math.min(100, Math.max(lo + 20, Math.ceil((maxV + 5) / 20) * 20));
+  const span = Math.max(20, hi - lo);
   const t0 = points[0].t;
   const t1 = points[points.length - 1].t;
   const plotW = Math.max(1, w - PAD_L - 8);
@@ -33,8 +42,20 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
   const x = (t: number) => PAD_L + (t1 === t0 ? plotW / 2 : ((t - t0) / (t1 - t0)) * plotW);
   const y = (v: number) => PAD_T + (1 - (v - lo) / span) * plotH;
 
-  const line = points.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.avg).toFixed(1)}`).join(' ');
-  const area = `${line} L${x(t1).toFixed(1)},${PAD_T + plotH} L${x(t0).toFixed(1)},${PAD_T + plotH} Z`;
+  // Uzun aralar (hiç fincan olmayan dönemler) düz bir çizgiyle birleştirilmez: çizgi orada kopar
+  const steps = points.slice(1).map((p, i) => p.t - points[i].t).sort((a, b) => a - b);
+  const typical = steps.length ? steps[Math.floor(steps.length / 2)] : 0;
+  const segments: TrendPoint[][] = [];
+  points.forEach((p, i) => {
+    if (i === 0 || (typical > 0 && p.t - points[i - 1].t > typical * 3)) segments.push([p]);
+    else segments[segments.length - 1].push(p);
+  });
+  const segLine = (seg: TrendPoint[]) => seg.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.avg).toFixed(1)}`).join(' ');
+  const line = segments.map(segLine).join(' ');
+  const area = segments
+    .filter((seg) => seg.length > 1)
+    .map((seg) => `${segLine(seg)} L${x(seg[seg.length - 1].t).toFixed(1)},${PAD_T + plotH} L${x(seg[0].t).toFixed(1)},${PAD_T + plotH} Z`)
+    .join(' ');
   const grid = [lo, lo + span / 2, lo + span].map((v) => Math.round(v));
   const sp = points[selected];
   const withYear = new Date(t0).getFullYear() !== new Date(t1).getFullYear();
@@ -46,7 +67,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
     setSel(best);
   }
 
-  const bubbleW = 92;
+  const bubbleW = weekly ? 112 : 92;
   const bx = sp ? Math.max(0, Math.min(w - bubbleW, x(sp.t) - bubbleW / 2)) : 0;
 
   return (
@@ -71,6 +92,12 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
             ))}
             <Path d={area} fill="url(#trendFill)" />
             <Path d={line} stroke={colors.text} strokeWidth={2.5} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+            {/* Tek noktalık parçalar (öncesi ve sonrası uzun ara) çizgisiz kalmasın */}
+            {segments
+              .filter((seg) => seg.length === 1)
+              .map((seg) => (
+                <Circle key={seg[0].t} cx={x(seg[0].t)} cy={y(seg[0].avg)} r={3} fill={colors.text} />
+              ))}
             {sp ? (
               <>
                 <Line x1={x(sp.t)} x2={x(sp.t)} y1={y(sp.avg)} y2={PAD_T + plotH} stroke={colors.accent} strokeWidth={1.5} />
@@ -88,7 +115,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           {sp ? (
             <View style={[styles.bubble, { left: bx, width: bubbleW }]} pointerEvents="none">
               <Text style={styles.bubbleValue}>ort. {sp.avg}</Text>
-              <Text style={styles.bubbleDate}>{fmt(sp.t, withYear)}</Text>
+              <Text style={styles.bubbleDate}>{weekly ? weekLabel(sp.t) : fmt(sp.t, withYear)}</Text>
             </View>
           ) : null}
         </>
