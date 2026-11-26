@@ -241,7 +241,6 @@ export default function SettingsScreen() {
       </ListSection>
 
       <ListSection title={tr.settings.experience} footer={tr.settings.motionFooter}>
-        <ListRow icon="phone-portrait" tint={tint.sky} title={tr.settings.haptics} toggle={settings.haptics} onToggle={(v) => updateSettings({ haptics: v })} />
         <ListRow icon="sparkles" tint={tint.espresso} title={tr.settings.reduceMotion} toggle={settings.reduceMotion} onToggle={(v) => updateSettings({ reduceMotion: v })} />
       </ListSection>
 

@@ -24,15 +24,15 @@ import {
  * Hepsi React Native Animated ile ve mümkün olduğunca native driver'da (akıcı, Expo Go uyumlu).
  */
 
-// Hareket azaltma: telefonun sistem ayarı VEYA uygulamadaki ayar. Titreşim de uygulama ayarına uyar.
+// Hareket azaltma: telefonun sistem ayarı VEYA uygulamadaki ayar.
+// Titreşim herkes için açık (sahibin kararı: Ayarlar'daki anahtar kaldırıldı; telefonun kendi titreşim ayarları geçerli).
 let systemReduce = false;
 let reduceMotion = false;
-let hapticsOn = true;
+const hapticsOn = true;
 const motionListeners = new Set<(v: boolean) => void>();
 const recompute = () => {
   const s = cachedSettings();
   const next = systemReduce || s.reduceMotion;
-  hapticsOn = s.haptics;
   if (next !== reduceMotion) {
     reduceMotion = next;
     motionListeners.forEach((fn) => fn(next));
