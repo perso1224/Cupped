@@ -113,7 +113,7 @@ export default function MatchScreen() {
           <>
             {/* QR: telefonun kendi kamerasıyla okutulunca Cupped açılır ve uyum hemen hesaplanır */}
             <View style={styles.qrWrap}>
-              <QRCode value={`cupped://match?code=${myCode}`} size={176} />
+              <QRCode value={`cupped://match?code=${myCode}`} size={176} logo />
             </View>
             <Text style={styles.code} selectable>
               {myCode}
