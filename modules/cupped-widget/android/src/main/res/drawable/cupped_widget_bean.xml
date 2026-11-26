@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Uygulamadaki seri simgesi (Bean): 35° eğik kahve çekirdeği ve ortasındaki yarık -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+  android:width="24dp"
+  android:height="24dp"
+  android:viewportWidth="24"
+  android:viewportHeight="24">
+  <group android:rotation="35" android:pivotX="12" android:pivotY="12">
+    <path
+      android:fillColor="@color/cupped_widget_accent"
+      android:pathData="M12,2 A7,10 0 1,1 12,22 A7,10 0 1,1 12,2 Z" />
+    <path
+      android:strokeColor="@color/cupped_widget_bg"
+      android:strokeWidth="1.8"
+      android:strokeLineCap="round"
+      android:pathData="M12,2.5 C8.5,7 15.5,11 12,15.5 C10.5,17.5 11,20 12,21.5" />
+  </group>
+</vector>

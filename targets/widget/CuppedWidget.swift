@@ -229,13 +229,21 @@ extension View {
 
 // MARK: - Ortak parçalar
 
+/// Uygulamadaki seri simgesi: kahve çekirdeği (Assets.xcassets/CuppedBean, şablon; uygulamadaki Bean çiziminin aynısı).
+struct BeanIcon: View {
+  var size: CGFloat
+  var body: some View {
+    Image("CuppedBean").resizable().renderingMode(.template).scaledToFit().frame(width: size, height: size)
+  }
+}
+
 struct StreakBlock: View {
   let s: CuppedSummary
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
       HStack(alignment: .firstTextBaseline, spacing: 3) {
-        Image(systemName: "flame.fill").font(.system(size: 18)).foregroundColor(.cuppedAccent).widgetAccentable()
+        BeanIcon(size: 20).foregroundColor(.cuppedAccent).widgetAccentable()
         Text("\(s.streak)")
           .font(.system(size: 36, weight: .bold, design: .serif))
           .foregroundColor(.cuppedAccent)
@@ -320,7 +328,7 @@ struct CuppedWidgetView: View {
       ZStack {
         AccessoryWidgetBackground()
         VStack(spacing: 0) {
-          Image(systemName: "flame.fill").font(.system(size: 12))
+          BeanIcon(size: 13)
           Text("\(s.streak)").font(.system(size: 20, weight: .bold, design: .rounded))
         }
       }
@@ -329,14 +337,14 @@ struct CuppedWidgetView: View {
       .cuppedBackground(accessory: true)
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 1) {
-        Label(s.streak > 0 ? "\(s.streak) günlük seri" : "Seri başlat", systemImage: "flame.fill").font(.headline)
+        Label { Text(s.streak > 0 ? "\(s.streak) günlük seri" : "Seri başlat") } icon: { BeanIcon(size: 15) }.font(.headline)
         Text(s.today > 0 ? "Bugün \(s.today) fincan" : "Bugün henüz fincan yok").font(.caption)
         Text(s.weekCups > 0 ? "Bu hafta \(s.weekCups) fincan" : "Bu hafta henüz yok").font(.caption).foregroundColor(.secondary)
       }
       .widgetURL(newCupURL)
       .cuppedBackground(accessory: true)
     case .accessoryInline:
-      Label(s.streak > 0 ? "\(s.streak) gün seri · bugün \(s.today) fincan" : "Bugün \(s.today) fincan", systemImage: "flame.fill")
+      Label(s.streak > 0 ? "\(s.streak) gün seri · bugün \(s.today) fincan" : "Bugün \(s.today) fincan", image: "CuppedBean")
         .widgetURL(newCupURL)
         .cuppedBackground(accessory: true)
     case .systemMedium:
@@ -456,7 +464,7 @@ struct CuppedWallView: View {
           .font(.system(size: 15, weight: .bold, design: .serif))
           .foregroundColor(.cuppedText)
         Spacer()
-        Label("\(s.streak)", systemImage: "flame.fill")
+        Label { Text("\(s.streak)") } icon: { BeanIcon(size: 14) }
           .font(.footnote.weight(.semibold))
           .foregroundColor(.cuppedAccent)
           .widgetAccentable()
