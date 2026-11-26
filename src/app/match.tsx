@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams } from 'expo-router';
-import { Alert, Keyboard, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View, type TextProps } from 'react-native';
+import { QRCode } from '../components/QRCode';
+import { Alert, Keyboard, Platform, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bean } from '../components/coffee';
 import { BackSpacer, FloatingBack } from '../components/NavButtons';
@@ -33,6 +35,31 @@ export default function MatchScreen() {
   const [result, setResult] = useState<{ friend: TasteProfile; match: Match; code: string } | null>(null);
   const cardRef = useRef<CardHandle>(null);
   const [sharing, setSharing] = useState(false);
+  // QR okutma: tam ekran kamera; ilk okunan geçerli kod alınır
+  const [scanning, setScanning] = useState(false);
+  const [camPerm, requestCamPerm] = useCameraPermissions();
+  const scanned = useRef(false);
+  async function openScanner() {
+    const p = camPerm?.granted ? camPerm : await requestCamPerm();
+    if (!p.granted) {
+      Alert.alert(tr.match.scanNoPermission);
+      return;
+    }
+    scanned.current = false;
+    setScanning(true);
+  }
+  function onScanned(data: string) {
+    if (scanned.current) return;
+    const code = extractCode(data);
+    if (!code) {
+      setErr(tr.match.scanInvalid);
+      return;
+    }
+    scanned.current = true;
+    setScanning(false);
+    setInput(code);
+    find(code);
+  }
 
   function find(raw: string = input) {
     Keyboard.dismiss();
@@ -84,9 +111,14 @@ export default function MatchScreen() {
         <Text style={styles.label}>{tr.match.myCode}</Text>
         {myCode ? (
           <>
+            {/* QR: telefonun kendi kamerasıyla okutulunca Cupped açılır ve uyum hemen hesaplanır */}
+            <View style={styles.qrWrap}>
+              <QRCode value={`cupped://match?code=${myCode}`} size={176} logo />
+            </View>
             <Text style={styles.code} selectable>
               {myCode}
             </Text>
+            <Text style={styles.codeNote}>{tr.match.qrHint}</Text>
             <Text style={styles.codeNote}>{tr.match.codeNote}</Text>
             <PillButton
               label={tr.match.shareCode}
@@ -128,6 +160,9 @@ export default function MatchScreen() {
             </Text>
           ) : null}
           <PillButton label={tr.match.find} onPress={() => find()} disabled={input.replace(/[\s-]/g, '').length < 6} style={{ marginTop: 12, height: 46 }} />
+          {Platform.OS !== 'web' ? (
+            <PillButton label={tr.match.scan} icon="qr-code-outline" variant="light" onPress={openScanner} style={{ marginTop: 10, height: 46 }} />
+          ) : null}
         </View>
       ) : null}
 
@@ -143,6 +178,23 @@ export default function MatchScreen() {
       ) : null}
     </ScrollView>
     <FloatingBack label={tr.profile.title} />
+    {scanning ? (
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]}>
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing="back"
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={(e) => onScanned(e.data)}
+        />
+        <View style={[styles.scanTop, { paddingTop: insets.top + 16 }]}>
+          <Text style={styles.scanTitle}>{tr.match.scanTitle}</Text>
+        </View>
+        <View style={styles.scanFrame} pointerEvents="none" />
+        <View style={[styles.scanBottom, { paddingBottom: insets.bottom + 24 }]}>
+          <PillButton label={tr.match.scanClose} variant="light" onPress={() => setScanning(false)} style={{ height: 46, minWidth: 160 }} />
+        </View>
+      </View>
+    ) : null}
     </View>
   );
 }
@@ -227,6 +279,11 @@ const styles = StyleSheet.create({
   label: { ...type.footnote, fontWeight: '600' },
   err: { ...type.footnote, color: colors.danger, marginTop: 6, fontWeight: '600' },
   codeNote: { ...type.footnote, marginTop: 6 },
+  qrWrap: { alignSelf: 'center', padding: 10, borderRadius: 16, backgroundColor: '#FFFFFF', marginTop: 10 },
+  scanTop: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 24, alignItems: 'center' },
+  scanTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: '700', textAlign: 'center' },
+  scanFrame: { position: 'absolute', top: '30%', alignSelf: 'center', width: 240, height: 240, borderRadius: 24, borderWidth: 3, borderColor: '#FFFFFF' },
+  scanBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center' },
   code: { fontSize: 40, fontFamily: fonts.heavy, color: colors.text, marginTop: 6, paddingRight: 6 },
   muted: { ...type.subhead, marginTop: 6 },
   input: {
