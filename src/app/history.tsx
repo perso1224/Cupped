@@ -63,7 +63,7 @@ export default function History() {
             {g.items.map((e, i) => (
               <Fragment key={e.id}>
                 {i > 0 ? <View style={styles.separator} /> : null}
-                <CupRow entry={e} timeOnly showParts plain />
+                <CupRow entry={e} timeOnly plain />
               </Fragment>
             ))}
           </View>

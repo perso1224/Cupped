@@ -92,7 +92,7 @@ export function currentStreak(entries: CupEntry[], today: Date = new Date()): nu
   return streak;
 }
 
-export type StripDay = { date: Date; key: string; best: number | null; isToday: boolean; isFuture: boolean };
+export type StripDay = { date: Date; key: string; best: number | null; avg: number | null; isToday: boolean; isFuture: boolean };
 
 /** Bu haftanın 7 günü (Pzt-Paz), her gün için en yüksek skor. */
 export function weekStrip(entries: CupEntry[], today: Date = new Date()): StripDay[] {
@@ -106,6 +106,7 @@ export function weekStrip(entries: CupEntry[], today: Date = new Date()): StripD
       date,
       key,
       best: scores.length ? Math.max(...scores) : null,
+      avg: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null,
       isToday: key === todayKey,
       isFuture: date.getTime() > startOfDay(today).getTime(),
     };

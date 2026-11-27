@@ -146,9 +146,11 @@ export const type = {
 /** iOS Ayarlar tarzı simge kutusu renkleri (marka paletinden). */
 export const tint = {
   amber: '#D98B2B',
-  espresso: isDark ? '#8A5A3B' : '#2B1A12', // koyu temada daha açık kavrum, zeminde kaybolmasın
+  // Koyu temada dolu yüzeyler (artı düğmesi, seri, dolu günler) çamurlu kahverengi değil, kehribar olur
+  espresso: isDark ? '#D98B2B' : '#2B1A12',
   cherry: '#B5402F',
   sage: '#5E7D5A',
-  slate: '#5B6470',
-  sky: '#3E7CB1',
+  // Marka dışı mavi/gri yerine sıcak tonlar (eski adlar korunuyor)
+  slate: '#8A7868', // sıcak taş
+  sky: '#A0673A', // karamel
 };

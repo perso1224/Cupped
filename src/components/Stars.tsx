@@ -12,7 +12,8 @@ export function Stars({ value, size = 14 }: { value: number | null | undefined; 
   return (
     <View style={{ flexDirection: 'row', gap: 1 }} accessible accessibilityLabel={tr.rating.label(value)}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <Icon key={i} name={i <= value ? 'star' : 'star-outline'} size={size} color={i <= value ? STAR : colors.tertiary} />
+        // Boş yıldız: ince kontur yerine sönük dolu yıldız (daha temiz)
+        <Icon key={i} name="star" size={size} color={i <= value ? STAR : colors.line} />
       ))}
     </View>
   );

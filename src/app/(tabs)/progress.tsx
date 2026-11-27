@@ -169,7 +169,7 @@ export default function Progress() {
       {report.best ? (
         <FadeIn index={1} key={`best-${kind}`}>
           <Text accessibilityRole="header" style={styles.section}>{kind === 'week' ? tr.progress.bestCup : tr.progress.bestCupMonth}</Text>
-          <CupRow entry={report.best} showParts />
+          <CupRow entry={report.best} />
         </FadeIn>
       ) : null}
 

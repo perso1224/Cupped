@@ -19,7 +19,6 @@ import { addDays, currentStreak, dayKey, discoveriesIn, inRange, periodRange, st
 import { setReminderEnabled } from '../../lib/reminders';
 import { CuppedWidget } from '../../../modules/cupped-widget';
 import { timeLabel } from '../../lib/settings';
-import { partsSummary } from '../../lib/scoring';
 import { exportAllData, updateMetrics } from '../../lib/storage';
 import { shareFile } from '../../lib/share';
 import { needsBackupNudge } from '../../lib/metrics';
@@ -162,7 +161,7 @@ export default function Home() {
         <View style={{ flex: 1, marginLeft: 16 }}>
           <Text style={styles.boardKicker}>{upper(todays.length > 1 ? tr.home.todayBest : tr.home.todayScore)}</Text>
           <Text style={styles.boardScore}>{todays.length ? todayScore : '–'}</Text>
-          <Text style={styles.boardSub}>{bestToday ? partsSummary(bestToday.parts, tr.result.breakdown) : tr.home.noCupToday}</Text>
+          {bestToday ? null : <Text style={styles.boardSub}>{tr.home.noCupToday}</Text>}
         </View>
       </View>
       <View style={styles.boardRule} />
@@ -487,14 +486,14 @@ export default function Home() {
               <SectionHeader title={tr.home.highlights} />
                 <View style={styles.group}>
                   {nudge ? (
-                    <HighlightRow icon="bulb" color={tint.amber} title={tr.home.nudgeTitle} text={nudge.text} />
+                    <HighlightRow icon="bulb" color={colors.accent} title={tr.home.nudgeTitle} text={nudge.text} />
                   ) : null}
                   {highlights.map((h, i) => (
                     <Fragment key={h.id}>
                       {nudge || i > 0 ? <View style={styles.separator} /> : null}
                       <HighlightRow
                         icon={h.icon}
-                        color={h.icon === 'trending-down' ? tint.cherry : h.icon === 'trending-up' ? tint.sage : tint.slate}
+                        color={colors.muted}
                         title={h.title}
                         text={h.text}
                       />
@@ -519,7 +518,7 @@ export default function Home() {
               {list.slice(0, 5).map((e, i) => (
                 <Fragment key={e.id}>
                   {i > 0 ? <View style={[styles.separator, { marginLeft: 92 }]} /> : null}
-                  <CupRow entry={e} showParts plain />
+                  <CupRow entry={e} plain />
                 </Fragment>
               ))}
             </View>
@@ -566,8 +565,9 @@ function SectionHeader({ title }: { title: string }) {
 function HighlightRow({ icon, color, title, text }: { icon: Parameters<typeof Icon>[0]['name']; color: string; title: string; text: string }) {
   return (
     <View style={styles.hlRow}>
-      <View style={[styles.hlIcon, { backgroundColor: color }]}>
-        <Icon name={icon} size={16} color="#fff" />
+      {/* Sade kutu: renk yalnızca simgede (kırmızı "düşüş" kutusu alarm gibi görünmesin) */}
+      <View style={styles.hlIcon}>
+        <Icon name={icon} size={17} color={color} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.hlTitle}>{title}</Text>
@@ -604,8 +604,6 @@ const styles = StyleSheet.create({
     backgroundColor: BOARD.bg,
     borderRadius: 24,
     padding: 18,
-    borderWidth: isDark ? 1 : 0, // koyu temada zeminden ayrılsın
-    borderColor: 'rgba(246,235,221,0.12)',
     flex: 1, // kaydırmalı sayfalar aynı yükseklikte
     minHeight: 300,
     shadowColor: '#2B1A12',
@@ -670,7 +668,7 @@ const styles = StyleSheet.create({
   group: { backgroundColor: colors.card, borderRadius: 18, overflow: 'hidden' },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line, marginLeft: 56 },
   hlRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14, gap: 12 },
-  hlIcon: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  hlIcon: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
   hlTitle: { ...type.footnote, fontWeight: '600' },
   hlText: { ...type.subhead, color: colors.text, marginTop: 1, lineHeight: 20 },
   ctaCard: { backgroundColor: colors.black },
