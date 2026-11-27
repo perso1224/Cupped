@@ -3,6 +3,7 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { BRAND } from '../config/brand';
 import { tr } from '../i18n/tr';
 import { fonts } from '../theme';
+import { LogoMark } from './LogoMark';
 import { reduceMotionNow } from './motion';
 
 const LOGO = 96;
@@ -15,8 +16,6 @@ const GAP = 14;
 export const INTRO_BG = '#D98B2B';
 const INTRO_INK = '#111111';
 const INTRO_WORD = '#FFF6EA';
-// Uygulama ikonundaki halkalar (şeffaf görsel): her telefonda aynı çizilsin diye görsel kullanılıyor
-const RINGS = require('../../assets/intro-rings.png');
 
 /**
  * Açılış (~1,8 sn): logodaki halkalar damlanın dalgası gibi açılır, ortaya nokta düşer.
@@ -60,12 +59,9 @@ export function BrandIntro({ ready, onDone }: { ready: boolean; onDone: () => vo
         {/* Logo: önce ekranın ortasında, sonra sola kayar */}
         <Animated.View style={{ transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [shift, 0] }) }] }}>
           <View style={styles.logo}>
-            <Animated.Image
-              source={RINGS}
-              tintColor={INTRO_INK}
-              style={[styles.rings, { opacity: rings, transform: [{ scale: rings.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }] }]}
-              resizeMode="contain"
-            />
+            <Animated.View style={[styles.rings, { opacity: rings, transform: [{ scale: rings.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }] }]}>
+              <LogoMark size={LOGO} color={INTRO_INK} dot={false} />
+            </Animated.View>
             <Animated.View
               style={[
                 styles.dot,

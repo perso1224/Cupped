@@ -1,6 +1,7 @@
 import makeQR from 'qrcode-generator';
 import { useMemo } from 'react';
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
+import { LogoMark } from './LogoMark';
 import Svg, { Path, Rect } from 'react-native-svg';
 
 /**
@@ -49,7 +50,7 @@ export function QRCode({
             backgroundColor: background,
           }}
         >
-          <Image source={require('../../assets/icon.png')} style={{ width: logoSize, height: logoSize, borderRadius: logoSize * 0.22 }} />
+          <LogoMark size={logoSize} background="#D98B2B" radius={logoSize * 0.22} />
         </View>
       ) : null}
     </View>

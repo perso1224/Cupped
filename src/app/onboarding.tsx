@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import { Icon } from '../components/Icon';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Easing, Image, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Animated, Easing, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressScale, haptic, reduceMotionNow, screenReaderNow } from '../components/motion';
+import { LogoMark } from '../components/LogoMark';
 import { Chip, PillButton } from '../components/ui';
 import { BRAND } from '../config/brand';
 import { tr, upper } from '../i18n/tr';
@@ -21,8 +22,6 @@ import { colors, fonts } from '../theme';
 import { Emblem, monogram } from '../components/Emblem';
 import { cardTheme } from '../config/palateThemes';
 
-// Açılış logosundaki halkalar (şeffaf görsel)
-const RINGS = require('../../assets/intro-rings.png');
 
 const CUPS: CupsPerDay[] = ['one', 'few', 'many'];
 const PLACES: UsualPlace[] = ['home', 'cafe', 'office', 'mixed'];
@@ -124,7 +123,9 @@ export default function Onboarding() {
       <View style={{ flex: 1, justifyContent: 'center' }}>
         {/* Açılış logosundaki halkalar: tanıtım da uygulamanın kahve kimliğiyle başlasın */}
         <View style={styles.hero}>
-          <Image source={RINGS} style={styles.heroRings} resizeMode="contain" />
+          <View style={styles.heroRings}>
+            <LogoMark size={120} color="#D98B2B" dot={false} />
+          </View>
           <View style={styles.heroDot} />
         </View>
         <Text style={styles.brand}>{BRAND.name}</Text>
