@@ -11,8 +11,8 @@
       android:pathData="M12,2 A7,10 0 1,1 12,22 A7,10 0 1,1 12,2 Z" />
     <path
       android:strokeColor="@color/cupped_widget_bg"
-      android:strokeWidth="1.8"
+      android:strokeWidth="1.7"
       android:strokeLineCap="round"
-      android:pathData="M12,2.5 C8.5,7 15.5,11 12,15.5 C10.5,17.5 11,20 12,21.5" />
+      android:pathData="M12.6,4.6 C9.6,8.4 14.6,11.6 11.8,15.4 C10.9,16.8 11,18.2 11.6,19.4" />
   </group>
 </vector>
