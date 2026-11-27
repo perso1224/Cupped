@@ -5,7 +5,8 @@ import { ListRow, ListSection } from '../../components/List';
 import { tr } from '../../i18n/tr';
 import { methodStats } from '../../lib/progress';
 import { useEntries } from '../../lib/useEntries';
-import { METHOD_ICON, METHOD_INK } from '../../config/methodStyle';
+import { METHOD_INK } from '../../config/methodStyle';
+import { METHOD_GLYPH } from '../../components/Glyph';
 import { colors } from '../../theme';
 
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
@@ -24,7 +25,7 @@ export default function Methods() {
           {tried.map((s) => (
             <ListRow
               key={s.method}
-              icon={METHOD_ICON[s.method]}
+              glyph={METHOD_GLYPH[s.method]}
               tint={METHOD_INK[s.method]}
               title={tr.methods[s.method]}
               subtitle={`${tr.collection.methodSub(s.cups, s.avg)}${s.lastAt ? `\n${tr.collection.lastCup(shortDate(s.lastAt))}` : ''}`}
@@ -38,7 +39,7 @@ export default function Methods() {
       {untried.length ? (
         <ListSection title={tr.collection.untried}>
           {untried.map((s) => (
-            <ListRow key={s.method} icon="lock-closed" tint={colors.tertiary} title={tr.methods[s.method]} subtitle={tr.collection.untriedSub} />
+            <ListRow key={s.method} glyph={METHOD_GLYPH[s.method]} tint={colors.tertiary} title={tr.methods[s.method]} subtitle={tr.collection.untriedSub} />
           ))}
         </ListSection>
       ) : null}

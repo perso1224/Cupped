@@ -2,6 +2,7 @@ import { Children, Fragment, type ReactNode } from 'react';
 import { Platform, StyleSheet, Switch, Text, View, type ColorValue } from 'react-native';
 import { upper } from '../i18n/tr';
 import { colors, isDark, type } from '../theme';
+import { Glyph, type GlyphName } from './Glyph';
 import { Icon, type IconName } from './Icon';
 import { haptic, PressScale } from './motion';
 
@@ -31,6 +32,7 @@ export function ListSection({ title, footer, children }: { title?: string; foote
 /** Liste satırı: renkli simge kutusu, başlık, (alt başlık), sağda değer / ok / anahtar. */
 export function ListRow({
   icon,
+  glyph,
   tint = colors.accent,
   title,
   subtitle,
@@ -43,6 +45,8 @@ export function ListRow({
   right,
 }: {
   icon?: IconName;
+  /** Cupped'ın kendi simgesi (icon yerine) */
+  glyph?: GlyphName;
   tint?: ColorValue;
   title: string;
   subtitle?: string;
@@ -59,9 +63,9 @@ export function ListRow({
   const sub = subtitle ?? (valueBelow ? value : undefined);
   const content = (
     <View style={styles.row}>
-      {icon ? (
+      {icon || glyph ? (
         <View style={[styles.iconBox, { backgroundColor: tint }]}>
-          <Icon name={icon} size={17} color="#fff" />
+          {glyph ? <Glyph name={glyph} size={18} color="#fff" /> : icon ? <Icon name={icon} size={17} color="#fff" /> : null}
         </View>
       ) : null}
       {/* Kısa değerler (saat, sayı) hep tam görünür; uzun değer başlıktan önce kısalır. Dar ekranda başlık da kısalabilir. */}

@@ -1,23 +1,16 @@
-import type { IconName } from '../components/Icon';
 import type { Method } from '../lib/types';
-import { isDark, tint } from '../theme';
+import { isDark } from '../theme';
 
-/** Her yöntemin simgesi ve mürekkep rengi (Pasaport damgaları, fincan listeleri, yöntem sayfası). */
-export const METHOD_ICON: Record<Method, IconName> = {
-  espresso: 'cafe',
-  filter: 'funnel',
-  coldbrew: 'snow',
-  milk: 'water',
-  turkish: 'flame',
-};
-
-// Koyu temada koyu kahve ve arduvaz mürekkep zeminde kaybolur: daha açık tonlar
+/**
+ * Her yöntemin rengi (Yöntemler sayfasındaki simge kutusu). Yalnızca marka ailesi: kehribar, kavrum,
+ * adaçayı, karamel, vişne. Simgeler `components/Glyph` içinde (METHOD_GLYPH).
+ */
 export const METHOD_INK: Record<Method, string> = {
-  espresso: isDark ? '#C08A62' : tint.espresso,
-  filter: tint.amber,
-  coldbrew: isDark ? '#6FA3D1' : tint.sky,
-  milk: isDark ? '#A3ACB8' : tint.slate,
-  turkish: isDark ? '#D6705C' : tint.cherry,
+  espresso: isDark ? '#C08A62' : '#2B1A12',
+  filter: '#D98B2B',
+  coldbrew: isDark ? '#8FB08A' : '#5E7D5A',
+  milk: isDark ? '#C98E5E' : '#A0673A',
+  turkish: isDark ? '#D6705C' : '#B5402F',
 };
 
 /** "#RRGGBB" + opaklık → rgba (yumuşak zeminler için). */

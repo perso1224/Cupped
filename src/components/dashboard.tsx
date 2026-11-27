@@ -2,7 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View, type ColorValue, type ScrollViewInstance } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, fonts } from '../theme';
-import { Icon, type IconName } from './Icon';
+import { Glyph, type GlyphName } from './Glyph';
 import { GrowBar, haptic } from './motion';
 import { tr } from '../i18n/tr';
 
@@ -61,7 +61,7 @@ export function MetricTile({
   label: string;
   fraction: number;
   color: ColorValue;
-  icon: IconName;
+  icon: GlyphName;
 }) {
   const f = Math.max(0, Math.min(1, fraction));
   return (
@@ -70,7 +70,7 @@ export function MetricTile({
         <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
           {value}
         </Text>
-        <Icon name={icon} size={18} color={color} />
+        <Glyph name={icon} size={18} color={colors.muted} />
       </View>
       <Text style={styles.tileLabel} numberOfLines={2}>
         {label}

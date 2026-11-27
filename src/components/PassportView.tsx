@@ -6,8 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ALL_METHODS, BadgeCard } from './collection';
 import { FadeIn, Pop, PressScale } from './motion';
 import { PillButton } from './ui';
-import { Icon } from './Icon';
-import { METHOD_ICON, METHOD_INK } from '../config/methodStyle';
+import { MethodGlyph } from './Glyph';
 import { PALATE_TYPES } from '../config/scoring.config';
 import { tr } from '../i18n/tr';
 import { badgeProgress, passport } from '../lib/progress';
@@ -27,6 +26,8 @@ export function PassportView({ header }: { header: ReactNode }) {
   const p = passport(entries);
   const cupsBy: Partial<Record<Method, number>> = {};
   for (const e of entries) cupsBy[e.method] = (cupsBy[e.method] ?? 0) + 1;
+  // En çok içilen yöntem kehribar mürekkeple öne çıkar; diğerleri tek renk
+  const topMethod = ALL_METHODS.reduce<Method | null>((best, m) => ((cupsBy[m] ?? 0) > (best ? (cupsBy[best] ?? 0) : 0) ? m : best), null);
 
   return (
     <ScrollView
@@ -50,7 +51,7 @@ export function PassportView({ header }: { header: ReactNode }) {
       <View style={styles.page}>
         <View style={styles.stampRow}>
           {ALL_METHODS.map((m, i) => (
-            <MethodStamp key={m} method={m} cups={cupsBy[m] ?? 0} index={i} />
+            <MethodStamp key={m} method={m} cups={cupsBy[m] ?? 0} index={i} top={m === topMethod} />
           ))}
         </View>
       </View>
@@ -99,21 +100,25 @@ export function PassportView({ header }: { header: ReactNode }) {
 
 /** Her damganın hafif farklı eğikliği (elle basılmış gibi; her açılışta aynı). */
 const TILT = [-8, 5, -3, 7, -5, 4, -7, 3, -4, 6, -2, 8, -6];
-const RING = 72;
+const RING = 58;
+const STAMP_TILT = [-3, 2, -2, 3, -1];
 const VISA_INK = [tint.cherry, tint.espresso, tint.sage, tint.amber, tint.sky, tint.slate];
 
-/** Yöntem damgası: yuvarlak, çift çizgili mürekkep damga; içinde simge ve fincan sayısı. Kazanılmadıysa soluk boş yer. */
-function MethodStamp({ method, cups, index }: { method: Method; cups: number; index: number }) {
+/** Yöntem damgası: yuvarlak çift çizgili damga; içinde simge ve fincan sayısı. Kazanılmadıysa ince çizgili boş yer. */
+function MethodStamp({ method, cups, index, top }: { method: Method; cups: number; index: number; top: boolean }) {
   const earned = cups > 0;
-  const ink = METHOD_INK[method];
+  const ink = top ? colors.accent : colors.text;
   const label = tr.methods[method];
   if (!earned) {
     return (
       <View style={styles.methodCell} accessible accessibilityLabel={`${label}, ${tr.passport.locked}`}>
-        <View style={[styles.methodRing, styles.emptyRing]}>
-          <Icon name={METHOD_ICON[method]} size={22} color={colors.tertiary} />
+        <View style={styles.methodRing}>
+          <Svg width={RING} height={RING} style={StyleSheet.absoluteFill}>
+            <Circle cx={RING / 2} cy={RING / 2} r={RING / 2 - 1.5} stroke={colors.line} strokeWidth={1.5} fill="none" />
+          </Svg>
+          <MethodGlyph method={method} size={22} color={colors.tertiary} strokeWidth={1.75} />
         </View>
-        <Text style={[styles.methodLabel, { color: colors.muted }]} numberOfLines={2}>
+        <Text style={[styles.methodLabel, { color: colors.muted, fontWeight: '500' }]} numberOfLines={2}>
           {label}
         </Text>
       </View>
@@ -125,11 +130,11 @@ function MethodStamp({ method, cups, index }: { method: Method; cups: number; in
         {/* Çerçeve SVG ile çizilir: iPhone'da eğik/kenarlı kutular tırtıklı görünür, SVG çizgisi pürüzsüz kalır */}
         <View style={styles.methodRing}>
           <Svg width={RING} height={RING} style={StyleSheet.absoluteFill}>
-            <Circle cx={RING / 2} cy={RING / 2} r={RING / 2 - 2} stroke={ink} strokeWidth={2.5} fill="none" />
-            <Circle cx={RING / 2} cy={RING / 2} r={RING / 2 - 6.5} stroke={ink} strokeWidth={1} fill="none" />
+            <Circle cx={RING / 2} cy={RING / 2} r={RING / 2 - 1.5} stroke={ink} strokeWidth={1.75} fill="none" />
+            <Circle cx={RING / 2} cy={RING / 2} r={RING / 2 - 5} stroke={ink} strokeWidth={0.75} fill="none" opacity={0.6} />
           </Svg>
-          <View style={{ alignItems: 'center', transform: [{ rotate: `${TILT[index % TILT.length]}deg` }] }}>
-            <Icon name={METHOD_ICON[method]} size={22} color={ink} />
+          <View style={{ alignItems: 'center', transform: [{ rotate: `${STAMP_TILT[index % STAMP_TILT.length]}deg` }] }}>
+            <MethodGlyph method={method} size={20} color={ink} strokeWidth={1.75} />
             <Text style={[styles.methodCount, { color: ink }]}>{cups}</Text>
           </View>
         </View>
@@ -192,12 +197,11 @@ const styles = StyleSheet.create({
   stamps: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   // Pasaport sayfası: kâğıt gibi sade kart
   page: { backgroundColor: colors.card, borderRadius: 20, paddingVertical: 18, paddingHorizontal: 10 },
-  stampRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', rowGap: 14 },
-  methodCell: { width: '33.33%', alignItems: 'center' },
+  stampRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  methodCell: { width: '20%', alignItems: 'center' },
   methodRing: { width: RING, height: RING, borderRadius: RING / 2, alignItems: 'center', justifyContent: 'center' },
-  emptyRing: { borderColor: colors.tertiary, borderStyle: 'dashed', borderWidth: 1.5 },
-  methodCount: { fontFamily: fonts.heavy, fontSize: 15, marginTop: 1 },
-  methodLabel: { ...type.caption, fontWeight: '700', color: colors.text, marginTop: 8, textAlign: 'center', paddingHorizontal: 4 },
+  methodCount: { fontFamily: fonts.heavy, fontSize: 13, marginTop: 0 },
+  methodLabel: { ...type.caption, fontSize: 11, fontWeight: '700', color: colors.text, marginTop: 8, textAlign: 'center', paddingHorizontal: 2 },
   visaRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, paddingHorizontal: 4 },
   visaWrap: { width: '47%' },
   visa: { width: '100%', minHeight: 66, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 12 },

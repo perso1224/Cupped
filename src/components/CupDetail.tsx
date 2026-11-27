@@ -250,9 +250,9 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
           {/* Skor nereden geldi: üç küçük kutu (ana sayfadakiyle aynı renkler) */}
           <FadeIn disabled={!isFresh} index={2}>
             <View style={styles.tiles}>
-              <MetricTile value={signed(entry.parts.effort)} label={tr.result.breakdown.effort} fraction={entry.parts.effort / PART_MAX.effort} color={tint.amber} icon="hand-left" />
-              <MetricTile value={signed(entry.parts.discovery)} label={tr.result.breakdown.discovery} fraction={entry.parts.discovery / PART_MAX.discovery} color={tint.cherry} icon="compass" />
-              <MetricTile value={signed(entry.parts.depth)} label={tr.result.breakdown.depth} fraction={entry.parts.depth / PART_MAX.depth} color={tint.espresso} icon="leaf" />
+              <MetricTile value={signed(entry.parts.effort)} label={tr.result.breakdown.effort} fraction={entry.parts.effort / PART_MAX.effort} color={tint.amber} icon="effort" />
+              <MetricTile value={signed(entry.parts.discovery)} label={tr.result.breakdown.discovery} fraction={entry.parts.discovery / PART_MAX.discovery} color={tint.cherry} icon="discovery" />
+              <MetricTile value={signed(entry.parts.depth)} label={tr.result.breakdown.depth} fraction={entry.parts.depth / PART_MAX.depth} color={tint.sage} icon="depth" />
             </View>
             <Text style={styles.extras}>{extras}</Text>
             {allEntries && newPlaceCapped(entry, allEntries) ? <Text style={styles.extras}>{tr.discoveryCapped}</Text> : null}

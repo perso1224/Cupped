@@ -1,8 +1,7 @@
 import { router } from 'expo-router';
 import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { METHOD_ICON, METHOD_INK } from '../config/methodStyle';
 import { Stars } from './Stars';
-import { Icon } from './Icon';
+import { MethodGlyph } from './Glyph';
 import { PressScale } from './motion';
 import { tr } from '../i18n/tr';
 import { thumbUrl } from '../lib/storage';
@@ -28,16 +27,15 @@ export function CupRow({ entry, timeOnly, plain }: { entry: CupEntry; timeOnly?:
   const { width } = useWindowDimensions();
   const narrow = width < 360; // küçük ekranda daha küçük görsel, satır uzamasın
   const size = narrow ? 48 : 64;
-  const ink = METHOD_INK[entry.method];
   return (
     <PressScale onPress={() => router.push(`/cup/${entry.id}`)} scaleTo={0.97}>
       <Wrap style={plain ? styles.plainRow : styles.row}>
         {thumb ? (
           <Image source={{ uri: thumb }} style={[styles.thumb, { width: size, height: size }]} />
         ) : (
-          // Fotoğrafsız fincan: yöntemin kendi simgesi ve rengi (hepsi aynı fincan simgesi olmasın)
+          // Fotoğrafsız fincan: yöntemin kendi simgesi, sade zeminde
           <View style={[styles.thumb, styles.thumbEmpty, { width: size, height: size, backgroundColor: colors.surface }]}>
-            <Icon name={METHOD_ICON[entry.method]} size={narrow ? 20 : 26} color={ink} />
+            <MethodGlyph method={entry.method} size={narrow ? 22 : 28} color={colors.muted} strokeWidth={1.75} />
           </View>
         )}
         <View style={{ flex: 1, marginLeft: narrow ? 10 : 14 }}>
