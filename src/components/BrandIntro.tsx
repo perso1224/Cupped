@@ -109,6 +109,9 @@ const styles = StyleSheet.create({
     // Sağda pay: iPhone Fraunces'in son harfini (d) ve gölgesini kesmesin
     paddingLeft: 4,
     paddingRight: 14,
+    // Altta/üstte pay: p harflerinin kuyruğundaki gölge kesilmesin
+    paddingVertical: 8,
+    lineHeight: 68,
     // Hafif gölge: krem yazı turuncu zeminden ayrılsın
     textShadowColor: 'rgba(60,30,5,0.35)',
     textShadowOffset: { width: 0, height: 2 },
