@@ -117,6 +117,15 @@ const styles = StyleSheet.create({
   rings: { position: 'absolute', top: 0, left: 0, width: LOGO, height: LOGO },
   dot: { width: LOGO * 0.25, height: LOGO * 0.25, borderRadius: LOGO * 0.125, backgroundColor: INTRO_INK },
   // Ad krem: logo (koyu) ile aynı renkte düz durmasın
-  word: { fontFamily: fonts.heavy, fontSize: 52, color: INTRO_WORD, paddingHorizontal: 2 },
+  word: {
+    fontFamily: fonts.heavy,
+    fontSize: 52,
+    color: INTRO_WORD,
+    paddingHorizontal: 2,
+    // Hafif gölge: krem yazı turuncu zeminden ayrılsın
+    textShadowColor: 'rgba(60,30,5,0.35)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
   tag: { fontSize: 12, fontWeight: '700', color: 'rgba(17,17,17,0.7)', marginTop: 18, letterSpacing: 3 },
 });
