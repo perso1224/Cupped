@@ -19,6 +19,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { PressScale, haptic, reduceMotionNow, useScreenReader } from '../components/motion';
 import { Icon } from '../components/Icon';
+import { Bean } from '../components/coffee';
+import { MethodGlyph } from '../components/Glyph';
 import { GLASS, GlassSurface } from '../components/Glass';
 import { CloseButton } from '../components/NavButtons';
 import { placeLabel, type CardHandle } from '../components/ShareCard';
@@ -339,13 +341,13 @@ function hexA(hex: string, a: number) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 
-/** Fincan izi motifi: iç içe halkalar. */
+/** Fincan izi motifi: iç içe ince halkalar, yalnızca üst köşede ve çok sönük (yazıların altında doku gibi). */
 function Rings({ color, size, style }: { color: string; size: number; style: object }) {
   const c = size / 2;
   return (
-    <Svg width={size} height={size} style={[{ position: 'absolute' }, style]}>
-      {[0.48, 0.38, 0.28].map((r, i) => (
-        <Circle key={i} cx={c} cy={c} r={size * r} stroke={color} strokeWidth={size * 0.03} fill="none" opacity={0.35 - i * 0.08} />
+    <Svg width={size} height={size} style={[{ position: 'absolute' }, style]} pointerEvents="none">
+      {[0.48, 0.4, 0.32].map((r, i) => (
+        <Circle key={i} cx={c} cy={c} r={size * r} stroke={color} strokeWidth={size * (i === 0 ? 0.014 : 0.008)} fill="none" opacity={0.12 - i * 0.025} />
       ))}
     </Svg>
   );
@@ -385,16 +387,17 @@ function SlideView({
   };
   const t = { color: theme.fg };
   const a = { color: theme.accent };
-  const ringSize = W * 1.1;
-  const ringPos = [
-    { top: -ringSize * 0.35, right: -ringSize * 0.35 },
-    { bottom: -ringSize * 0.3, left: -ringSize * 0.4 },
-    { top: H * 0.25, right: -ringSize * 0.55 },
-  ][index % 3];
+  const ringSize = W * 0.95;
+  // Halkalar hep bir üst köşede (yazı alanının dışında); slayttan slayta köşe değişir
+  const ringPos = index % 2 ? { top: -ringSize * 0.5, left: -ringSize * 0.5 } : { top: -ringSize * 0.5, right: -ringSize * 0.5 };
 
   const footer = (
     <View style={[styles.footer, { paddingHorizontal: u * 7, paddingBottom: H * 0.16 }]}>
-      <Text allowFontScaling={false} style={[styles.footerBrand, t, { fontSize: u * 5.5 }]}>{BRAND.name}</Text>
+      {/* Marka imzası: çekirdek + yazı (Duvar ve Damak kartıyla aynı) */}
+      <View style={styles.footerLock}>
+        <Bean size={u * 5} color={theme.accent} line={theme.bg} />
+        <Text allowFontScaling={false} style={[styles.footerBrand, t, { fontSize: u * 5.5 }]}>{BRAND.name}</Text>
+      </View>
       <Text allowFontScaling={false} style={[styles.footerQ, { color: hexA(theme.fg, 0.7), fontSize: u * 3.4, textAlign: 'right' }]}>
         {tr.card.question}
         {code ? `\n${tr.match.cardCode(code)}` : ''}
@@ -488,7 +491,8 @@ function SlideView({
             <Image source={{ uri: photoUrl(slide.entry.photoUri)! }} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
             <View style={[StyleSheet.absoluteFill, { alignItems: 'center', paddingTop: H * 0.14 }]}>
-              <Icon name="cafe" size={u * 30} color={theme.accent} />
+              {/* Fotoğrafsız: yöntemin ince çizgili büyük simgesi */}
+              <MethodGlyph method={slide.entry.method} size={u * 34} color={theme.accent} strokeWidth={1.1} />
             </View>
           )}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(17,17,17,0.35)' }]} />
@@ -567,7 +571,7 @@ function SlideView({
 
   return (
     <View style={{ flex: 1 }}>
-      {slide.kind !== 'best' ? <Rings color={theme.accent} size={ringSize} style={ringPos} /> : null}
+      {slide.kind !== 'best' ? <Rings color={theme.fg} size={ringSize} style={ringPos} /> : null}
       {body}
       {footer}
     </View>
@@ -603,6 +607,7 @@ const styles = StyleSheet.create({
   statRow: { flexDirection: 'row' },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   footerBrand: { fontFamily: fonts.heavy },
+  footerLock: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   footerQ: { fontWeight: '600' },
   shareBtn: {
     backgroundColor: '#FAF8F5',

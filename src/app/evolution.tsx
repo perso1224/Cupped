@@ -65,8 +65,8 @@ export default function Evolution() {
               </View>
             </View>
             {/* Geçiş oku */}
-            <View style={[styles.arrow, { width: u * 16, height: u * 16, borderRadius: u * 8, marginLeft: -u * 8, marginTop: -u * 8, backgroundColor: tb.accent, borderColor: ta.bg }]}>
-              <Icon name="arrow-down" size={u * 8} color={tb.bg} />
+            <View style={[styles.arrow, { width: u * 13, height: u * 13, borderRadius: u * 6.5, marginLeft: -u * 6.5, marginTop: -u * 6.5, backgroundColor: tb.accent }]}>
+              <Icon name="arrow-down" size={u * 6.5} color={tb.bg} />
             </View>
             {/* Yeni tip */}
             <View style={{ flex: 1.3, backgroundColor: tb.bg, padding: u * 7, justifyContent: 'space-between' }}>
@@ -105,5 +105,5 @@ const styles = StyleSheet.create({
   hint: { ...type.footnote, fontWeight: '600' },
   shareBtn: { height: 36, paddingHorizontal: 16 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  arrow: { position: 'absolute', left: '50%', top: '43.5%', zIndex: 2, alignItems: 'center', justifyContent: 'center', borderWidth: 4 },
+  arrow: { position: 'absolute', left: '50%', top: '43.5%', zIndex: 2, alignItems: 'center', justifyContent: 'center' },
 });

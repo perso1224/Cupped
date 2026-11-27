@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { reduceMotionNow, useReducedMotion } from './motion';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -84,6 +84,6 @@ export function ScoreRing({
 }
 
 const styles = StyleSheet.create({
-  number: { fontWeight: '900', color: colors.text, letterSpacing: -1 },
+  number: { fontFamily: fonts.heavy, color: colors.text }, // diğer skorlarla aynı yazı (Fraunces)
   caption: { fontSize: 13, fontWeight: '600', color: colors.muted, marginTop: -2 },
 });

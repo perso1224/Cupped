@@ -60,8 +60,8 @@ export default function Wall() {
   const labelW = Math.max(u * 7, labelFont * 2.4);
   const gap = Math.max(1, u * 0.35);
   const cell = (posterW - pad * 2 - labelW - gap * 31) / 31;
-  // Kareler dikine uzun: ızgara posterin ortasını doldursun
-  const cellH = cell * 1.9;
+  // Kareler hafif dikine: ızgara posterin ortasını doldurur ama ince şerit gibi görünmez
+  const cellH = cell * 1.45;
 
   async function share() {
     if (sharing) return;
@@ -101,8 +101,10 @@ export default function Wall() {
                     const uri = d.best?.photoUri ? thumbUrl(d.best.photoUri) : null;
                     const base = { width: cell, height: cellH, marginRight: gap, borderRadius: cell * 0.22 };
                     if (uri) return <Image key={d.key} source={{ uri }} style={base} />;
-                    if (d.best) return <View key={d.key} style={[base, { backgroundColor: th.accent, opacity: 0.45 + (d.best.score / 100) * 0.55 }]} />;
-                    return <View key={d.key} style={[base, d.future ? { borderWidth: StyleSheet.hairlineWidth, borderColor: th.muted, opacity: 0.35 } : { backgroundColor: th.fg, opacity: 0.08 }]} />;
+                    // Skora göre üç ton (düşük / orta / yüksek)
+                    if (d.best) return <View key={d.key} style={[base, { backgroundColor: th.accent, opacity: d.best.score >= 80 ? 1 : d.best.score >= 60 ? 0.7 : 0.42 }]} />;
+                    // Gelecek günler çizilmez (yer tutar); geçmiş boş gün çok sönük
+                    return <View key={d.key} style={[base, d.future ? null : { backgroundColor: th.fg, opacity: 0.07 }]} />;
                   })}
                 </View>
               ))}

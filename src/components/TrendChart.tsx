@@ -10,6 +10,7 @@ const H = 170;
 const PAD_L = 28; // soldaki skor etiketleri
 const PAD_T = 46; // seçili noktanın balonu için üst boşluk (balon en üstteki skor etiketini örtmesin)
 const PAD_B = 22; // alttaki tarih etiketleri
+const BUBBLE_H = 38;
 
 const fmt = (t: number, withYear: boolean) =>
   new Date(t).toLocaleDateString('tr-TR', withYear ? { day: 'numeric', month: 'short', year: 'numeric' } : { day: 'numeric', month: 'short' });
@@ -20,6 +21,44 @@ function weekLabel(t: number): string {
   const b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6);
   const mon = (d: Date) => d.toLocaleDateString('tr-TR', { month: 'short' });
   return a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()} ${mon(b)}` : `${a.getDate()} ${mon(a)} – ${b.getDate()} ${mon(b)}`;
+}
+
+/**
+ * Noktalardan geçen yumuşak eğri (monoton kübik): kırık çizgi gibi köşeli değil, noktalar arasında
+ * taşma/aşırı salınım da yapmaz (eğri iki komşu noktanın arasında kalır).
+ */
+export function smoothPath(pts: { x: number; y: number }[]): string {
+  const n = pts.length;
+  if (!n) return '';
+  const f = (v: number) => v.toFixed(1);
+  if (n < 3) return pts.map((p, i) => `${i ? 'L' : 'M'}${f(p.x)},${f(p.y)}`).join(' ');
+  const d: number[] = [];
+  const m: number[] = [];
+  for (let i = 0; i < n - 1; i++) d.push((pts[i + 1].y - pts[i].y) / (pts[i + 1].x - pts[i].x || 1));
+  m.push(d[0]);
+  for (let i = 1; i < n - 1; i++) m.push(d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2);
+  m.push(d[n - 2]);
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+      continue;
+    }
+    const a = m[i] / d[i];
+    const b = m[i + 1] / d[i];
+    const h = a * a + b * b;
+    if (h > 9) {
+      const t = 3 / Math.sqrt(h);
+      m[i] = t * a * d[i];
+      m[i + 1] = t * b * d[i];
+    }
+  }
+  let out = `M${f(pts[0].x)},${f(pts[0].y)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const dx = (pts[i + 1].x - pts[i].x) / 3;
+    out += ` C${f(pts[i].x + dx)},${f(pts[i].y + m[i] * dx)} ${f(pts[i + 1].x - dx)},${f(pts[i + 1].y - m[i + 1] * dx)} ${f(pts[i + 1].x)},${f(pts[i + 1].y)}`;
+  }
+  return out;
 }
 
 /** Skor gidişatı çizgisi: altı yumuşak dolgulu, kesikli yatay çizgiler, dokunulan noktada balon. */
@@ -50,7 +89,7 @@ export function TrendChart({ points, weekly = false }: { points: TrendPoint[]; w
     if (i === 0 || (typical > 0 && p.t - points[i - 1].t > typical * 3)) segments.push([p]);
     else segments[segments.length - 1].push(p);
   });
-  const segLine = (seg: TrendPoint[]) => seg.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.avg).toFixed(1)}`).join(' ');
+  const segLine = (seg: TrendPoint[]) => smoothPath(seg.map((p) => ({ x: x(p.t), y: y(p.avg) })));
   const line = segments.map(segLine).join(' ');
   const area = segments
     .filter((seg) => seg.length > 1)
@@ -91,7 +130,7 @@ export function TrendChart({ points, weekly = false }: { points: TrendPoint[]; w
               <Line key={v} x1={PAD_L} x2={w - 8} y1={y(v)} y2={y(v)} stroke={colors.line} strokeDasharray="3 5" strokeWidth={1} />
             ))}
             <Path d={area} fill="url(#trendFill)" />
-            <Path d={line} stroke={colors.text} strokeWidth={2.5} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+            <Path d={line} stroke={colors.text} strokeWidth={2} fill="none" strokeLinejoin="round" strokeLinecap="round" />
             {/* Tek noktalık parçalar (öncesi ve sonrası uzun ara) çizgisiz kalmasın */}
             {segments
               .filter((seg) => seg.length === 1)
@@ -100,7 +139,8 @@ export function TrendChart({ points, weekly = false }: { points: TrendPoint[]; w
               ))}
             {sp ? (
               <>
-                <Line x1={x(sp.t)} x2={x(sp.t)} y1={y(sp.avg)} y2={PAD_T + plotH} stroke={colors.accent} strokeWidth={1.5} />
+                {/* Balondan noktaya ince kılavuz: balon noktaya bağlı görünsün */}
+                <Line x1={x(sp.t)} x2={x(sp.t)} y1={BUBBLE_H} y2={PAD_T + plotH} stroke={colors.accent} strokeWidth={1} strokeDasharray="2 3" />
                 <Circle cx={x(sp.t)} cy={y(sp.avg)} r={6} fill={colors.card} stroke={colors.accent} strokeWidth={3} />
               </>
             ) : null}
@@ -111,6 +151,10 @@ export function TrendChart({ points, weekly = false }: { points: TrendPoint[]; w
             </Text>
           ))}
           <Text style={[styles.axis, { position: 'absolute', left: PAD_L, bottom: 0 }]}>{fmt(t0, withYear)}</Text>
+          {/* Ortada bir tarih daha: zaman ekseni iki uçtan ibaret olmasın */}
+          {t1 - t0 > 86400000 * 6 && plotW > 200 ? (
+            <Text style={[styles.axis, { position: 'absolute', left: PAD_L + plotW / 2 - 40, width: 80, textAlign: 'center', bottom: 0 }]}>{fmt((t0 + t1) / 2, false)}</Text>
+          ) : null}
           <Text style={[styles.axis, { position: 'absolute', right: 8, bottom: 0 }]}>{fmt(t1, withYear)}</Text>
           {sp ? (
             <View style={[styles.bubble, { left: bx, width: bubbleW }]} pointerEvents="none">
@@ -126,7 +170,7 @@ export function TrendChart({ points, weekly = false }: { points: TrendPoint[]; w
 
 const styles = StyleSheet.create({
   axis: { ...type.caption, fontSize: 11 },
-  bubble: { position: 'absolute', top: 0, backgroundColor: colors.black, borderRadius: 10, paddingVertical: 4, alignItems: 'center' },
+  bubble: { position: 'absolute', top: 0, height: BUBBLE_H, justifyContent: 'center', backgroundColor: colors.black, borderRadius: 10, alignItems: 'center' },
   bubbleValue: { color: colors.white, fontSize: 13, fontWeight: '700' },
   bubbleDate: { color: colors.mutedOnDark, fontSize: 11 },
 });

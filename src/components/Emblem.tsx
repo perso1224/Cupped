@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import Svg, { Circle, Defs, Path, Text as SvgText, TextPath } from 'react-native-svg';
+import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
 import { BRAND } from '../config/brand';
 import type { CardTheme } from '../config/palateThemes';
 import { tr } from '../i18n/tr';
@@ -23,18 +23,42 @@ export function Emblem({ size, seed, cups, notes, theme: th, monogram: mono }: {
   const c = size / 2;
   const rings = fingerprintRings({ seed, cups, notes, radius: size * 0.36, cx: c, cy: c });
   const textR = size * 0.45;
-  const stamp = `${BRAND.name.toLocaleUpperCase('tr-TR')} · ${tr.palateCard.stamp} · `;
+  const stamp = `${BRAND.name.toLocaleUpperCase('tr-TR')} · ${tr.palateCard.stamp} · `.repeat(2);
+  const fs = size * 0.05;
+  // Damga yazısı harf harf çemberin tamamına eşit dağılır (boşluk kalmaz, birleşme yeri görünmez)
+  const chars = [...stamp];
+  const weight = (ch: string) => (ch === ' ' ? 0.45 : ch === '·' ? 0.55 : 1);
+  const total = chars.reduce((a, ch) => a + weight(ch), 0);
+  let acc = 0;
+  const placed = chars.map((ch) => {
+    const w = weight(ch);
+    const deg = ((acc + w / 2) / total) * 360;
+    acc += w;
+    return { ch, deg };
+  });
   return (
     <View style={{ alignSelf: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Svg width={size} height={size}>
-        <Defs>
-          <Path id="stampCircle" d={`M ${c - textR},${c} a ${textR},${textR} 0 1,1 ${textR * 2},0 a ${textR},${textR} 0 1,1 ${-textR * 2},0`} />
-        </Defs>
         <Circle cx={c} cy={c} r={size * 0.49} stroke={th.accent} strokeWidth={1.5} fill="none" opacity={0.6} />
         <Circle cx={c} cy={c} r={size * 0.41} stroke={th.accent} strokeWidth={1} fill="none" opacity={0.4} />
-        <SvgText fill={th.accent} fontSize={size * 0.052} fontWeight="700" letterSpacing={size * 0.012}>
-          <TextPath href="#stampCircle">{stamp.repeat(2)}</TextPath>
-        </SvgText>
+        <G>
+          {placed.map((p, i) =>
+            p.ch === ' ' ? null : (
+              <SvgText
+                key={i}
+                x={c}
+                y={c - textR + fs * 0.36}
+                fill={th.accent}
+                fontSize={fs}
+                fontWeight="700"
+                textAnchor="middle"
+                transform={`rotate(${p.deg.toFixed(2)} ${c} ${c})`}
+              >
+                {p.ch}
+              </SvgText>
+            ),
+          )}
+        </G>
         {rings.map((r, i) => (
           <Path key={i} d={r.d} stroke={th.fg} strokeWidth={r.width} opacity={r.opacity} fill="none" />
         ))}

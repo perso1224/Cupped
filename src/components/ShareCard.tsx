@@ -6,7 +6,8 @@ import { getPalateType } from '../lib/palate';
 import { photoUrl } from '../lib/storage';
 import type { CupEntry } from '../lib/types';
 import { colors, fonts } from '../theme';
-import { Icon } from './Icon';
+import Svg, { Circle } from 'react-native-svg';
+import { MethodGlyph } from './Glyph';
 import { ScoreRing } from './ScoreRing';
 import { useDamakCode } from '../lib/useDamakCode';
 
@@ -60,11 +61,17 @@ export function ShareCard({
           {photo ? (
             <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} resizeMode="cover" onLoadEnd={onImageLoaded} />
           ) : (
+            // Fotoğrafsız: fincan izi halkaları ortasında yöntemin simgesi
             <View style={styles.noPhoto}>
-              <Icon name="cafe" size={u * 20} color={colors.accent} />
+              <Svg width={u * 70} height={u * 70} style={{ position: 'absolute' }}>
+                {[0.48, 0.38, 0.28].map((k, i) => (
+                  <Circle key={k} cx={u * 35} cy={u * 35} r={u * 70 * k} stroke={colors.accent} strokeWidth={i === 0 ? 2 : 1} opacity={0.35 - i * 0.08} fill="none" />
+                ))}
+              </Svg>
+              <MethodGlyph method={entry.method} size={u * 22} color={colors.accent} strokeWidth={1.4} />
             </View>
           )}
-          <View style={[styles.badge, { top: height * 0.13 }]}>
+          <View style={[styles.badge, { top: height * 0.13, left: u * 5 }]}>
             <Text allowFontScaling={false} style={[styles.badgeText, { fontSize: u * 3.6 }]} numberOfLines={1}>
               {tr.methods[entry.method]} · {placeLabel(entry)}
             </Text>
@@ -98,7 +105,7 @@ export function ShareCard({
           <Text allowFontScaling={false} style={[styles.question, { fontSize: u * 4.8 }]}>
             {tr.card.question}
           </Text>
-          <Text allowFontScaling={false} style={[styles.brandLine, { fontSize: u * 3.2 }]}>
+          <Text allowFontScaling={false} style={[styles.brandLine, { fontSize: u * 3.6 }]}>
             <Text style={styles.brand}>{BRAND.name}</Text>
             {'  ·  '}
             {code ? tr.card.inviteCode(code) : tr.card.explainer}
@@ -111,10 +118,9 @@ export function ShareCard({
 
 const styles = StyleSheet.create({
   card: { backgroundColor: colors.bg, overflow: 'hidden' },
-  noPhoto: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  noPhoto: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   badge: {
     position: 'absolute',
-    left: 16,
     backgroundColor: 'rgba(17,17,17,0.78)',
     paddingHorizontal: 12,
     paddingVertical: 6,
