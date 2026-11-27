@@ -79,7 +79,7 @@ export function PassportView({ header }: { header: ReactNode }) {
         {p.places.map((pl, i) => (
           <FadeIn key={pl.key} index={i} style={styles.placeWrap}>
           <PressScale
-            style={styles.placeStamp}
+            style={[styles.placeStamp, i === 0 && styles.placeStampTop]}
             scaleTo={0.96}
             onPress={() => router.push({ pathname: '/history', params: { place: pl.key, title: pl.name } })}
           >
@@ -98,11 +98,10 @@ export function PassportView({ header }: { header: ReactNode }) {
   );
 }
 
-/** Her damganın hafif farklı eğikliği (elle basılmış gibi; her açılışta aynı). */
-const TILT = [-8, 5, -3, 7, -5, 4, -7, 3, -4, 6, -2, 8, -6];
 const RING = 58;
+/** Her damganın hafif farklı eğikliği (elle basılmış gibi; her açılışta aynı; en fazla ±3°). */
 const STAMP_TILT = [-3, 2, -2, 3, -1];
-const VISA_INK = [tint.cherry, tint.espresso, tint.sage, tint.amber, tint.sky, tint.slate];
+const VISA_INK = [tint.cherry, colors.text, tint.sage, tint.amber];
 
 /** Yöntem damgası: yuvarlak çift çizgili damga; içinde simge ve fincan sayısı. Kazanılmadıysa ince çizgili boş yer. */
 function MethodStamp({ method, cups, index, top }: { method: Method; cups: number; index: number; top: boolean }) {
@@ -151,13 +150,13 @@ function VisaStamp({ label, earned, index }: { label: string; earned: boolean; i
   if (!earned) {
     return (
       <View style={[styles.visa, styles.visaEmpty]} accessible accessibilityLabel={`${label}, ${tr.passport.locked}`}>
-        <Text style={[styles.visaName, { color: colors.muted }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
+        <Text style={styles.visaNameEmpty} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
           {label}
         </Text>
       </View>
     );
   }
-  return <EarnedVisa label={label} ink={VISA_INK[index % VISA_INK.length]} tilt={TILT[(index + 3) % TILT.length] / 2} index={index} />;
+  return <EarnedVisa label={label} ink={VISA_INK[index % VISA_INK.length]} tilt={STAMP_TILT[index % STAMP_TILT.length]} index={index} />;
 }
 
 /** Kazanılmış vize: çift çerçeve SVG'de döndürülür (pürüzsüz), yazı da aynı açıyla. */
@@ -175,8 +174,8 @@ function EarnedVisa({ label, ink, tilt, index }: { label: string; ink: string; t
         {w ? (
           <Svg width={w} height={h} style={StyleSheet.absoluteFill}>
             <G rotation={tilt} origin={`${w / 2}, ${h / 2}`}>
-              <Rect x={4} y={4} width={w - 8} height={h - 8} rx={8} stroke={ink} strokeWidth={2} fill="none" />
-              <Rect x={8.5} y={8.5} width={w - 17} height={h - 17} rx={5} stroke={ink} strokeWidth={1} fill="none" />
+              <Rect x={5} y={5} width={w - 10} height={h - 10} rx={8} stroke={ink} strokeWidth={1.75} fill="none" />
+              <Rect x={9} y={9} width={w - 18} height={h - 18} rx={5} stroke={ink} strokeWidth={0.75} fill="none" opacity={0.6} />
             </G>
           </Svg>
         ) : null}
@@ -205,7 +204,9 @@ const styles = StyleSheet.create({
   visaRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, paddingHorizontal: 4 },
   visaWrap: { width: '47%' },
   visa: { width: '100%', minHeight: 66, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 12 },
-  visaEmpty: { width: '47%', minHeight: 62, borderRadius: 8, borderColor: colors.tertiary, borderStyle: 'dashed', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', padding: 8 },
+  // Kazanılmamış vize: ince düz çizgi, sönük ve normal kalınlıkta yazı (kazanılanlarla yarışmasın)
+  visaEmpty: { width: '47%', minHeight: 66, borderRadius: 8, borderColor: colors.line, borderWidth: 1, alignItems: 'center', justifyContent: 'center', padding: 8 },
+  visaNameEmpty: { fontSize: 13, fontWeight: '500', color: colors.muted, textAlign: 'center' },
   visaKicker: { fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
   visaName: { fontFamily: fonts.display, fontSize: 14, textAlign: 'center', marginTop: 2 },
   emptyCard: { backgroundColor: colors.card, borderRadius: 20, padding: 18, marginTop: 16 },
@@ -216,10 +217,11 @@ const styles = StyleSheet.create({
   placeStamp: {
     borderRadius: 18,
     padding: 14,
-    backgroundColor: colors.accentSoft,
-    borderWidth: 2,
-    borderColor: colors.accent,
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
   },
+  placeStampTop: { borderWidth: 1.5, borderColor: colors.accent },
   placeName: { ...type.headline, fontSize: 15 },
   placeMeta: { ...type.caption, marginTop: 2 },
 });
