@@ -19,14 +19,13 @@ const INTRO_WORD = '#FFF6EA';
 const RINGS = require('../../assets/intro-rings.png');
 
 /**
- * Açılış (~1,8 sn): logodaki halkalar damlanın dalgası gibi açılır, ortaya nokta düşer ve hafif bir dalga yayılır.
+ * Açılış (~1,8 sn): logodaki halkalar damlanın dalgası gibi açılır, ortaya nokta düşer.
  * Sonra logo sola kayar, krem renkli "Cupped" yanından süzülür; altında ince harf aralıklı slogan.
  * "Hareketi azalt"ta kısa ve sade. Yalnızca uygulama açılışında gösterilir.
  */
 export function BrandIntro({ ready, onDone }: { ready: boolean; onDone: () => void }) {
   const [rings] = useState(() => new Animated.Value(0));
   const [dot] = useState(() => new Animated.Value(0));
-  const [ripple] = useState(() => new Animated.Value(0));
   const [slide] = useState(() => new Animated.Value(0));
   const [tag] = useState(() => new Animated.Value(0));
   const [out] = useState(() => new Animated.Value(1));
@@ -45,10 +44,7 @@ export function BrandIntro({ ready, onDone }: { ready: boolean; onDone: () => vo
     const ease = Easing.out(Easing.cubic);
     const anim = Animated.sequence([
       Animated.timing(rings, { toValue: 1, duration: 420, easing: ease, useNativeDriver: true }),
-      Animated.parallel([
-        Animated.timing(dot, { toValue: 1, duration: 220, easing: Easing.out(Easing.back(2)), useNativeDriver: true }),
-        Animated.sequence([Animated.delay(100), Animated.timing(ripple, { toValue: 1, duration: 460, easing: ease, useNativeDriver: true })]),
-      ]),
+      Animated.timing(dot, { toValue: 1, duration: 220, easing: Easing.out(Easing.back(2)), useNativeDriver: true }),
       Animated.timing(slide, { toValue: 1, duration: 340, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
       Animated.timing(tag, { toValue: 1, duration: 200, easing: ease, useNativeDriver: true }),
       Animated.delay(220),
@@ -56,23 +52,13 @@ export function BrandIntro({ ready, onDone }: { ready: boolean; onDone: () => vo
     ]);
     anim.start(() => onDone());
     return () => anim.stop();
-  }, [ready, rings, dot, ripple, slide, tag, out, onDone]);
+  }, [ready, rings, dot, slide, tag, out, onDone]);
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.screen, { opacity: out }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <View style={styles.lockup}>
         {/* Logo: önce ekranın ortasında, sonra sola kayar */}
         <Animated.View style={{ transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [shift, 0] }) }] }}>
-          {/* Damlanın yüzeyde yaydığı dalga */}
-          <Animated.View
-            style={[
-              styles.ripple,
-              {
-                opacity: ripple.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.5, 0] }),
-                transform: [{ scale: ripple.interpolate({ inputRange: [0, 1], outputRange: [1, 1.9] }) }],
-              },
-            ]}
-          />
           <View style={styles.logo}>
             <Animated.Image
               source={RINGS}
@@ -111,9 +97,8 @@ export function BrandIntro({ ready, onDone }: { ready: boolean; onDone: () => vo
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: INTRO_BG, alignItems: 'center', justifyContent: 'center', zIndex: 100, elevation: 100 },
-  lockup: { flexDirection: 'row', alignItems: 'center', gap: GAP },
+  lockup: { flexDirection: 'row', alignItems: 'center', gap: GAP, paddingLeft: 10 }, // yazının sağ payını dengeler (ortada dursun)
   logo: { width: LOGO, height: LOGO, alignItems: 'center', justifyContent: 'center' },
-  ripple: { position: 'absolute', width: LOGO, height: LOGO, borderRadius: LOGO / 2, borderWidth: 2, borderColor: INTRO_INK },
   rings: { position: 'absolute', top: 0, left: 0, width: LOGO, height: LOGO },
   dot: { width: LOGO * 0.25, height: LOGO * 0.25, borderRadius: LOGO * 0.125, backgroundColor: INTRO_INK },
   // Ad krem: logo (koyu) ile aynı renkte düz durmasın
@@ -121,7 +106,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.heavy,
     fontSize: 52,
     color: INTRO_WORD,
-    paddingHorizontal: 2,
+    // Sağda pay: iPhone Fraunces'in son harfini (d) ve gölgesini kesmesin
+    paddingLeft: 4,
+    paddingRight: 14,
     // Hafif gölge: krem yazı turuncu zeminden ayrılsın
     textShadowColor: 'rgba(60,30,5,0.35)',
     textShadowOffset: { width: 0, height: 2 },
