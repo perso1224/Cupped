@@ -5,7 +5,8 @@ import { tr } from '../i18n/tr';
 import { fonts } from '../theme';
 import { reduceMotionNow } from './motion';
 
-const LOGO = 168;
+const LOGO = 96;
+const GAP = 14;
 /**
  * Açılış, temadan bağımsız olarak uygulama ikonunun renklerinde: telefonun açılış ekranı (app.json, expo-splash-screen)
  * da aynı turuncu. Böylece açık/koyu mod ya da uygulama içi tema ne olursa olsun açılış ekranı → animasyon geçişi
@@ -13,71 +14,109 @@ const LOGO = 168;
  */
 export const INTRO_BG = '#D98B2B';
 const INTRO_INK = '#111111';
+const INTRO_WORD = '#FFF6EA';
 // Uygulama ikonundaki halkalar (şeffaf görsel): her telefonda aynı çizilsin diye görsel kullanılıyor
 const RINGS = require('../../assets/intro-rings.png');
 
 /**
- * Açılış: logodaki halkalar fincana düşen damlanın dalgası gibi büyüyerek belirir, ortaya nokta düşer,
- * marka adı belirir; toplam ~1,2 sn sonra ekran kendiliğinden kaybolur. "Hareketi azalt"ta kısa ve sade.
- * Yalnızca uygulama açılışında gösterilir.
+ * Açılış (~1,8 sn): logodaki halkalar damlanın dalgası gibi açılır, ortaya nokta düşer ve hafif bir dalga yayılır.
+ * Sonra logo sola kayar, krem renkli "Cupped" yanından süzülür; altında ince harf aralıklı slogan.
+ * "Hareketi azalt"ta kısa ve sade. Yalnızca uygulama açılışında gösterilir.
  */
 export function BrandIntro({ ready, onDone }: { ready: boolean; onDone: () => void }) {
   const [rings] = useState(() => new Animated.Value(0));
   const [dot] = useState(() => new Animated.Value(0));
-  const [word] = useState(() => new Animated.Value(0));
+  const [ripple] = useState(() => new Animated.Value(0));
+  const [slide] = useState(() => new Animated.Value(0));
+  const [tag] = useState(() => new Animated.Value(0));
   const [out] = useState(() => new Animated.Value(1));
+  // "Cupped" yazısının genişliği ölçülünce logo ne kadar sola kayacak belli olur (ölçülene kadar tahmin)
+  const [wordW, setWordW] = useState(168);
+  const shift = (wordW + GAP) / 2;
 
   useEffect(() => {
     if (!ready) return;
-    const fadeOut = Animated.timing(out, { toValue: 0, duration: 220, easing: Easing.in(Easing.quad), useNativeDriver: true });
+    const fadeOut = Animated.timing(out, { toValue: 0, duration: 240, easing: Easing.in(Easing.quad), useNativeDriver: true });
     if (reduceMotionNow()) {
-      [rings, dot, word].forEach((v) => v.setValue(1));
-      const t = setTimeout(() => fadeOut.start(() => onDone()), 450);
+      [rings, dot, slide, tag].forEach((v) => v.setValue(1));
+      const t = setTimeout(() => fadeOut.start(() => onDone()), 500);
       return () => clearTimeout(t);
     }
     const ease = Easing.out(Easing.cubic);
     const anim = Animated.sequence([
       Animated.timing(rings, { toValue: 1, duration: 420, easing: ease, useNativeDriver: true }),
       Animated.parallel([
-        Animated.timing(dot, { toValue: 1, duration: 260, easing: Easing.out(Easing.back(2)), useNativeDriver: true }),
-        Animated.timing(word, { toValue: 1, duration: 260, easing: ease, useNativeDriver: true }),
+        Animated.timing(dot, { toValue: 1, duration: 220, easing: Easing.out(Easing.back(2)), useNativeDriver: true }),
+        Animated.sequence([Animated.delay(100), Animated.timing(ripple, { toValue: 1, duration: 460, easing: ease, useNativeDriver: true })]),
       ]),
-      Animated.delay(200),
+      Animated.timing(slide, { toValue: 1, duration: 340, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(tag, { toValue: 1, duration: 200, easing: ease, useNativeDriver: true }),
+      Animated.delay(220),
       fadeOut,
     ]);
     anim.start(() => onDone());
     return () => anim.stop();
-  }, [ready, rings, dot, word, out, onDone]);
+  }, [ready, rings, dot, ripple, slide, tag, out, onDone]);
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.screen, { opacity: out }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <View style={styles.logo}>
-        <Animated.Image
-          source={RINGS}
-          tintColor={INTRO_INK}
-          style={[styles.rings, { opacity: rings, transform: [{ scale: rings.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }] }]}
-          resizeMode="contain"
-        />
-        <Animated.View
+      <View style={styles.lockup}>
+        {/* Logo: önce ekranın ortasında, sonra sola kayar */}
+        <Animated.View style={{ transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [shift, 0] }) }] }}>
+          {/* Damlanın yüzeyde yaydığı dalga */}
+          <Animated.View
+            style={[
+              styles.ripple,
+              {
+                opacity: ripple.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.5, 0] }),
+                transform: [{ scale: ripple.interpolate({ inputRange: [0, 1], outputRange: [1, 1.9] }) }],
+              },
+            ]}
+          />
+          <View style={styles.logo}>
+            <Animated.Image
+              source={RINGS}
+              tintColor={INTRO_INK}
+              style={[styles.rings, { opacity: rings, transform: [{ scale: rings.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }] }]}
+              resizeMode="contain"
+            />
+            <Animated.View
+              style={[
+                styles.dot,
+                { opacity: dot, transform: [{ translateY: dot.interpolate({ inputRange: [0, 1], outputRange: [-LOGO * 0.45, 0] }) }, { scale: dot }] },
+              ]}
+            />
+          </View>
+        </Animated.View>
+        {/* Ad: logonun yanından süzülür */}
+        <Animated.Text
+          onLayout={(e) => setWordW(e.nativeEvent.layout.width)}
           style={[
-            styles.dot,
-            { opacity: dot, transform: [{ translateY: dot.interpolate({ inputRange: [0, 1], outputRange: [-LOGO * 0.5, 0] }) }, { scale: dot }] },
+            styles.word,
+            {
+              opacity: slide,
+              transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [shift + 18, 0] }) }],
+            },
           ]}
-        />
+        >
+          {BRAND.name}
+        </Animated.Text>
       </View>
-      <Animated.Text style={[styles.word, { opacity: word, transform: [{ translateY: word.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
-        {BRAND.name}
+      <Animated.Text style={[styles.tag, { opacity: tag, transform: [{ translateY: tag.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }] }]}>
+        {tr.intro.tagline.toLocaleUpperCase('tr-TR')}
       </Animated.Text>
-      <Animated.Text style={[styles.tag, { opacity: word }]}>{tr.intro.tagline}</Animated.Text>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: INTRO_BG, alignItems: 'center', justifyContent: 'center', zIndex: 100, elevation: 100 },
+  lockup: { flexDirection: 'row', alignItems: 'center', gap: GAP },
   logo: { width: LOGO, height: LOGO, alignItems: 'center', justifyContent: 'center' },
+  ripple: { position: 'absolute', width: LOGO, height: LOGO, borderRadius: LOGO / 2, borderWidth: 2, borderColor: INTRO_INK },
   rings: { position: 'absolute', top: 0, left: 0, width: LOGO, height: LOGO },
   dot: { width: LOGO * 0.25, height: LOGO * 0.25, borderRadius: LOGO * 0.125, backgroundColor: INTRO_INK },
-  word: { fontFamily: fonts.heavy, fontSize: 40, color: INTRO_INK, marginTop: 28, paddingHorizontal: 6 },
-  tag: { fontSize: 14, fontWeight: '600', color: 'rgba(17,17,17,0.72)', marginTop: 4, letterSpacing: 0.4 },
+  // Ad krem: logo (koyu) ile aynı renkte düz durmasın
+  word: { fontFamily: fonts.heavy, fontSize: 52, color: INTRO_WORD, paddingHorizontal: 2 },
+  tag: { fontSize: 12, fontWeight: '700', color: 'rgba(17,17,17,0.7)', marginTop: 18, letterSpacing: 3 },
 });
