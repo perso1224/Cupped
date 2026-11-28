@@ -14,6 +14,7 @@
         "RCTAsyncStorageExcludeFromBackup": false,
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDevelopmentRegion": "tr",
+        "UISupportedInterfaceOrientations~ipad": ["UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"],
         "NSPhotoLibraryAddUsageDescription": "Paylaşım kartını fotoğraflarına kaydedebilmen için gerekiyor.",
         "CFBundleLocalizations": [
           "tr"
