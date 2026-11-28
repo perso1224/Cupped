@@ -1,7 +1,8 @@
 import * as Brightness from 'expo-brightness';
+import { useContentSize } from '../lib/contentWidth';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Platform, StyleSheet, Text, useWindowDimensions, View, type TextProps } from 'react-native';
+import { Alert, AppState, Platform, StyleSheet, Text, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CardHandle } from '../components/ShareCard';
 import { BRAND } from '../config/brand';
@@ -24,7 +25,7 @@ import { colors, fonts, type } from '../theme';
 export default function PalateCard() {
   useKeepAwake();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useContentSize();
   const entries = useEntries();
   const cardRef = useRef<CardHandle>(null);
   const [sharing, setSharing] = useState(false);

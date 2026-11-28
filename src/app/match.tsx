@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useContentSize } from '../lib/contentWidth';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams } from 'expo-router';
 import { QRCode } from '../components/QRCode';
-import { Alert, Keyboard, Platform, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View, type TextProps } from 'react-native';
+import { Alert, Keyboard, Platform, ScrollView, Share, StyleSheet, Text, TextInput, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bean } from '../components/coffee';
 import { BackSpacer, FloatingBack } from '../components/NavButtons';
@@ -21,7 +22,7 @@ import { colors, fonts, layout, type } from '../theme';
 /** Damak Uyumu: kendi kodun + arkadaşının kodu → telefonda hesaplanan uyum kartı (sunucu yok). */
 export default function MatchScreen() {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width } = useContentSize();
   const entries = useEntries() ?? [];
   const profile = useProfile();
   const myType = entries.length ? computePalateTypeId(entries) : (profile?.starterTypeId ?? 'classic_master');

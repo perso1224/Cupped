@@ -5,7 +5,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
-import { Alert, Appearance, AppState, Platform, View } from 'react-native';
+import { Alert, Appearance, AppState, Platform, useWindowDimensions, View } from 'react-native';
+import { sidePad } from '../lib/contentWidth';
 import { BrandIntro } from '../components/BrandIntro';
 import { setIntroPlaying, useReducedMotion } from '../components/motion';
 import { refreshReminder, useNotificationNavigation } from '../lib/reminders';
@@ -109,6 +110,7 @@ export default function RootLayout() {
     consumeReturnRoute().then((r) => r && router.push(r));
   }, [ready, profile]);
   const intro = showIntro ? <BrandIntro ready={ready} onDone={endIntro} /> : null;
+  const pad = sidePad(useWindowDimensions().width);
 
   if (!ready)
     return (
@@ -121,7 +123,8 @@ export default function RootLayout() {
     <>
       <StatusBar style="auto" />
       {/* "Hareketi azalt" açıksa (telefon ya da uygulama ayarı) ekran geçişleri kayma yerine solma */}
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, ...(reduceMotion ? { animation: 'fade' as const } : {}) }}>
+      {/* iPad: her ekranın içeriği ortada, en fazla CONTENT_MAX genişlikte (telefonda yan boşluk 0) */}
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg, paddingHorizontal: pad }, ...(reduceMotion ? { animation: 'fade' as const } : {}) }}>
         {/* Profil varsa uygulama, yoksa tanıtım. Profil silinince/oluşunca yığın temizce değişir. */}
         <Stack.Protected guard={!!profile}>
           <Stack.Screen name="(tabs)" />
@@ -135,16 +138,16 @@ export default function RootLayout() {
           <Stack.Screen name="privacy" {...single} />
           <Stack.Screen name="stats" {...single} />
           <Stack.Screen name="match" {...single} />
-          {/* Modallar */}
+          {/* Modallar (fincan sonucu iPad'de zaten dar bir sayfa olarak açılır: yan boşluk yok) */}
           <Stack.Screen name="new" {...single} options={{ presentation: 'fullScreenModal' }} />
-          <Stack.Screen name="result/[id]" {...single} options={{ presentation: 'modal', sheetGrabberVisible: true }} />
+          <Stack.Screen name="result/[id]" {...single} options={{ presentation: 'modal', sheetGrabberVisible: true, contentStyle: { backgroundColor: colors.bg } }} />
           <Stack.Screen name="card" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="wall" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="evolution" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen
             name="wrapped"
             {...single}
-            options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#000' } }}
+            options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#000', paddingHorizontal: pad } }}
           />
         </Stack.Protected>
         <Stack.Protected guard={!profile}>

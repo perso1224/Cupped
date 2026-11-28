@@ -1,6 +1,7 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useContentSize } from '../lib/contentWidth';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Image, Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Animated, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { placeLabel, ShareCard, type CardHandle } from './ShareCard';
 import { CupGauge } from './coffee';
@@ -36,7 +37,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
     .map((b) => BADGES.find((x) => x.id === b))
     .filter((b): b is NonNullable<typeof b> => !!b);
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width } = useContentSize();
   const cardRef = useRef<CardHandle>(null);
   const [entry, setEntry] = useState<CupEntry | null | undefined>(undefined);
   const [sharing, setSharing] = useState(false);

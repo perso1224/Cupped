@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
+import { useContentSize } from '../../lib/contentWidth';
 import { Fragment, useCallback, useMemo, useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CupRow } from '../../components/CupRow';
 import { Icon } from '../../components/Icon';
@@ -35,7 +36,7 @@ import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
  */
 export default function Home() {
   const insets = useSafeAreaInsets();
-  const { width: screenW } = useWindowDimensions();
+  const { width: screenW } = useContentSize();
   // Küçük ekranda iki düğme yan yana sığmıyor (yazı iki satıra kayıyordu): alt alta
   const narrow = screenW < 360;
   const tabSpace = useTabBarSpace();

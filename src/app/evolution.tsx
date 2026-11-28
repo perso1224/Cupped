@@ -1,6 +1,7 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
+import { useContentSize } from '../lib/contentWidth';
 import { useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, useWindowDimensions, View, type TextProps } from 'react-native';
+import { Alert, StyleSheet, Text, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bean } from '../components/coffee';
 import { Icon } from '../components/Icon';
@@ -19,7 +20,7 @@ import { colors, fonts, type } from '../theme';
 export default function Evolution() {
   const { from, to } = useLocalSearchParams<{ from: string; to: string }>();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useContentSize();
   const profile = useProfile();
   const cardRef = useRef<CardHandle>(null);
   const [sharing, setSharing] = useState(false);

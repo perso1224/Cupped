@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useContentSize } from '../lib/contentWidth';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -11,7 +12,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
   type GestureResponderEvent,
 } from 'react-native';
@@ -71,7 +71,7 @@ export default function Wrapped() {
   const offset = offsetParam === '-1' ? -1 : 0;
   const pw = periodWord(kind, offset);
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useContentSize();
   const entries = useEntries();
 
   const now = new Date();

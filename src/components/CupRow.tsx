@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useContentSize } from '../lib/contentWidth';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { Stars } from './Stars';
 import { MethodGlyph } from './Glyph';
 import { PressScale } from './motion';
@@ -24,7 +25,7 @@ export function timeLabel(iso: string) {
 export function CupRow({ entry, timeOnly, plain }: { entry: CupEntry; timeOnly?: boolean; plain?: boolean }) {
   const Wrap = plain ? View : Card;
   const thumb = thumbUrl(entry.photoUri);
-  const { width } = useWindowDimensions();
+  const { width } = useContentSize();
   const narrow = width < 360; // küçük ekranda daha küçük görsel, satır uzamasın
   const size = narrow ? 48 : 64;
   return (

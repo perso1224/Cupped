@@ -1,7 +1,8 @@
 import { router, useScrollToTop } from 'expo-router';
+import { useContentSize } from '../lib/contentWidth';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Platform, StyleSheet, Text, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
@@ -117,7 +118,7 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
 
 function TabItem({ name, icon, label, focused, onPress }: { name: string; icon: string; label: string; focused: boolean; onPress: () => void }) {
   // Dar ekranda (ör. iPhone SE, küçük Android) etiketler birbirine değmesin
-  const compact = useWindowDimensions().width < 360;
+  const compact = useContentSize().width < 360;
   // Seçilince simge hafifçe zıplar (ilk açılışta değil, yalnızca sekme değişince)
   const [bump] = useState(() => new Animated.Value(1));
   const first = useRef(true);

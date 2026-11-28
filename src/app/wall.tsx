@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
+import { useContentSize } from '../lib/contentWidth';
 import { useMemo, useRef, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, useWindowDimensions, View, type TextProps } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, View, type TextProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bean } from '../components/coffee';
 import { CloseButton } from '../components/NavButtons';
@@ -25,7 +26,7 @@ const MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl',
  */
 export default function Wall() {
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useContentSize();
   const loaded = useEntries();
   const entries = useMemo(() => loaded ?? [], [loaded]);
   const code = useDamakCode();
