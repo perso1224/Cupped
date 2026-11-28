@@ -13,7 +13,7 @@ import { colors } from '../../theme';
 const SEPARATE_PLUS = Platform.OS === 'ios' && Number.parseFloat(String(Platform.Version)) >= 26.1;
 
 export default function TabsLayout() {
-  // Tablet (iPad, Android tablet): solda kenar çubuğu; telefonda platformun menüsü
+  // Android tablet: solda yüzen dikey menü; iPhone ve iPad: Apple'ın alt menüsü; Android telefon: kendi alt menümüz
   const { width } = useWindowDimensions();
   if (isWide(width)) return <CustomTabs sidebar />;
   return Platform.OS === 'ios' ? <IosTabs /> : <CustomTabs />;

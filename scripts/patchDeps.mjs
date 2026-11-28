@@ -21,6 +21,21 @@ const patches = [
       }
     }`,
   },
+  {
+    // iPad'de iPhone'daki alt menünün aynısı (WhatsApp'taki gibi): Apple'ın sekme çubuğu iPad'de normalde üstte
+    // durur. Sekme denetleyicisine "dar ekran" (compact) özelliği verilince iPhone'daki yüzen Liquid Glass alt menüyü
+    // çizer. Yalnızca iPad'de ve iOS 17+'da; iPhone'da hiçbir şey değişmez.
+    file: 'node_modules/react-native-screens/ios/tabs/host/RNSTabBarController.mm',
+    from: `  if (self = [super init]) {
+    _tabScreenControllers = nil;`,
+    to: `  if (self = [super init]) {
+    if (@available(iOS 17.0, *)) {
+      if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+        self.traitOverrides.horizontalSizeClass = UIUserInterfaceSizeClassCompact;
+      }
+    }
+    _tabScreenControllers = nil;`,
+  },
 ];
 
 for (const p of patches) {

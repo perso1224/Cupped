@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { useWindowDimensions } from 'react-native';
+import { Platform, useWindowDimensions } from 'react-native';
 
 /**
  * iPad (ve geniş ekran) uyarlaması: uygulamanın içeriği en fazla bu genişlikte, ekranın ortasında durur.
@@ -8,9 +8,12 @@ import { useWindowDimensions } from 'react-native';
  */
 export const CONTENT_MAX = 640;
 
-/** Tablet (iPad, Android tablet): menü solda yüzen dikey kapsül olur. */
+/**
+ * Android tablette menü solda yüzen dikey kapsül olur. iPad'de ise Apple'ın kendi alt menüsü iPhone'daki gibi
+ * altta durur (scripts/patchDeps.mjs: sekme çubuğu iPad'de "dar ekran" gibi çizilir), yan menü yok.
+ */
 export const WIDE_MIN = 700;
-export const isWide = (windowWidth: number) => windowWidth >= WIDE_MIN;
+export const isWide = (windowWidth: number) => Platform.OS !== 'ios' && windowWidth >= WIDE_MIN;
 
 /** Ekranın iki yanında bırakılacak boşluk (telefonda 0). */
 export function sidePad(windowWidth: number): number {
