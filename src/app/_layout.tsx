@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
 import { Alert, Appearance, AppState, Platform, useWindowDimensions, View } from 'react-native';
 import { sidePad } from '../lib/contentWidth';
+import { unlockTabletOrientation } from '../lib/tabletOrientation';
 import { BrandIntro } from '../components/BrandIntro';
 import { setIntroPlaying, useReducedMotion } from '../components/motion';
 import { refreshReminder, useNotificationNavigation } from '../lib/reminders';
@@ -14,6 +15,9 @@ import { consumeRecoveryNotice, consumeReturnRoute, migratePalateTypes, recordAc
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
 import { colors, isDark, themePref } from '../theme';
+
+// Android tablette yatay ekran açık (telefonlar dikey kalır)
+unlockTabletOrientation();
 
 /** Doğrudan bağlantıyla açılan ekranların altında her zaman sekmeler olsun (geri tuşu çıkmaza girmesin). */
 export const unstable_settings = { anchor: '(tabs)' };
