@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { usePagePad } from '../lib/contentWidth';
 import { BackSpacer, FloatingBack } from '../components/NavButtons';
 import { File } from 'expo-file-system';
 import { router } from 'expo-router';
@@ -47,6 +48,7 @@ function versionLabel(): string {
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   const [beta, setBeta] = useState(betaUnlocked);
   const versionTaps = useRef(0);
   // iPhone'da sistem penceresi; Android'de alttan liste (4-5 seçenek sığsın)
@@ -132,9 +134,9 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-    <ScrollView
+    <ScrollView showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: 16, paddingBottom: insets.bottom + 40 }}
+      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: 16 + pagePad, paddingBottom: insets.bottom + 40 }}
       keyboardShouldPersistTaps="handled"
     >
       <BackSpacer />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useContentSize } from '../lib/contentWidth';
+import { useContentSize, usePagePad } from '../lib/contentWidth';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams } from 'expo-router';
 import { QRCode } from '../components/QRCode';
@@ -22,6 +22,7 @@ import { colors, fonts, layout, type } from '../theme';
 /** Damak Uyumu: kendi kodun + arkadaşının kodu → telefonda hesaplanan uyum kartı (sunucu yok). */
 export default function MatchScreen() {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   const { width } = useContentSize();
   const entries = useEntries() ?? [];
   const profile = useProfile();
@@ -99,9 +100,9 @@ export default function MatchScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-    <ScrollView
+    <ScrollView showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: insets.bottom + 40 }}
+      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad + pagePad, paddingBottom: insets.bottom + 40 }}
       keyboardShouldPersistTaps="handled"
     >
       <BackSpacer />

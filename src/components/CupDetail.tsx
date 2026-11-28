@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useContentSize } from '../lib/contentWidth';
+import { useContentSize, sidePad } from '../lib/contentWidth';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +37,8 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
     .map((b) => BADGES.find((x) => x.id === b))
     .filter((b): b is NonNullable<typeof b> => !!b);
   const insets = useSafeAreaInsets();
+  // Tablette içerik ortada; kaydırma alanı tüm genişlikte (sayfanın kendi genişliğine göre: iPad'deki dar sayfada boşluk yok)
+  const [boxW, setBoxW] = useState(0);
   const { width } = useContentSize();
   const cardRef = useRef<CardHandle>(null);
   const [entry, setEntry] = useState<CupEntry | null | undefined>(undefined);
@@ -165,7 +167,7 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
     .join(' · ');
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, overflow: 'hidden' }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg, overflow: 'hidden' }} onLayout={(e) => setBoxW(e.nativeEvent.layout.width)}>
       {/* Düğmeler ağaçta önce: ekran okuyucu önce Geri/Paylaş'ı okusun (zIndex ile üstte çizilir). Arkalarında çubuk yok; sayfa kaysa da yalnızca düğmeler kalır */}
       {/* Fotoğrafın üstünde yüzen düğmeler: solda geri (detayda), sağda paylaş */}
       <View style={[styles.topButtons, { top: (mode === 'detail' ? insets.top : 0) + 12 }]} pointerEvents="box-none">
@@ -174,7 +176,8 @@ export function CupScreen({ mode }: { mode: 'result' | 'detail' }) {
       </View>
 
       <Animated.ScrollView
-        contentContainerStyle={{ paddingBottom: mode === 'result' ? insets.bottom + 110 : insets.bottom + 40 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: mode === 'result' ? insets.bottom + 110 : insets.bottom + 40, paddingHorizontal: sidePad(boxW) }}
       >
         {/* Fotoğraf ekranın yıldızı: üstte tam genişlik. Fotoğraf yoksa sıcak bir yer tutucu. */}
         <View style={[styles.hero, { height: heroH }]}>

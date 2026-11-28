@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useContentSize } from '../../lib/contentWidth';
+import { useContentSize, usePagePad } from '../../lib/contentWidth';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,6 +36,7 @@ import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
  */
 export default function Home() {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   const { width: screenW } = useContentSize();
   // Küçük ekranda iki düğme yan yana sığmıyor (yazı iki satıra kayıyordu): alt alta
   const narrow = screenW < 360;
@@ -275,10 +276,10 @@ export default function Home() {
   const pages = [todayPage, ...(settings.showCaffeine ? [caffeinePage] : []), streakPage, tastePage, favPage];
 
   return (
-    <ScrollView
+    <ScrollView showsVerticalScrollIndicator={false}
       ref={scrollRef}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: tabSpace }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20 + pagePad, paddingBottom: tabSpace }}
     >
       {/* Açılış logosu bitene kadar boş: sonra başlık ve kartlar sırayla süzülür */}
       {introDone ? (

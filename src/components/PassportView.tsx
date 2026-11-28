@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { usePagePad } from '../lib/contentWidth';
 import Svg, { Circle, G, Rect } from 'react-native-svg';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -18,6 +19,7 @@ import { useTabBarSpace, useTabScrollRef } from './TabBar';
 /** Damak Pasaportu sekmesinin içeriği (Profil > Koleksiyon'un ayrı sayfaları components/collection.tsx'i kullanır). */
 export function PassportView({ header }: { header: ReactNode }) {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   const tabSpace = useTabBarSpace();
   const scrollRef = useTabScrollRef();
   const loadedEntries = useEntries();
@@ -30,10 +32,10 @@ export function PassportView({ header }: { header: ReactNode }) {
   const topMethod = ALL_METHODS.reduce<Method | null>((best, m) => ((cupsBy[m] ?? 0) > (best ? (cupsBy[best] ?? 0) : 0) ? m : best), null);
 
   return (
-    <ScrollView
+    <ScrollView showsVerticalScrollIndicator={false}
       ref={scrollRef}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: tabSpace }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20 + pagePad, paddingBottom: tabSpace }}
     >
       {header}
       <Text style={styles.summary}>{tr.passport.summary(p.places.length, p.methods.length)}</Text>

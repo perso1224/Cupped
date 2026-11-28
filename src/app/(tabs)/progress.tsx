@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { usePagePad } from '../../lib/contentWidth';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
 
 export default function Progress() {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   const tabSpace = useTabBarSpace();
   const scrollRef = useTabScrollRef();
   const entries = useEntries() ?? [];
@@ -53,10 +55,10 @@ export default function Progress() {
     trend.change === null || trend.points.length < 4 ? null : trend.change >= 2 ? tr.progress.trendUp(trend.change) : trend.change <= -2 ? tr.progress.trendDown(-trend.change) : tr.progress.trendFlat;
 
   return (
-    <ScrollView
+    <ScrollView showsVerticalScrollIndicator={false}
       ref={scrollRef}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: tabSpace }}
+      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad + pagePad, paddingBottom: tabSpace }}
     >
       <Text accessibilityRole="header" style={styles.title}>{tr.progress.title}</Text>
 

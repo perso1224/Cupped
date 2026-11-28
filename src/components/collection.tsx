@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { usePagePad } from '../lib/contentWidth';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
@@ -17,9 +18,10 @@ export const ALL_METHODS: readonly Method[] = METHODS;
  */
 export function CollectionScreen({ title, summary, children }: { title: string; summary?: string; children: ReactNode }) {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   return (
     <View style={styles.screen}>
-      <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: insets.bottom + 48 }}>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.screen} contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad + pagePad, paddingBottom: insets.bottom + 48 }}>
         <BackSpacer />
         <Text accessibilityRole="header" style={styles.title}>{title}</Text>
         {summary ? <Text style={styles.summary}>{summary}</Text> : null}

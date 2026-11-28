@@ -1,4 +1,5 @@
 import { FEATURES } from '../../config/brand';
+import { usePagePad } from '../../lib/contentWidth';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -21,6 +22,7 @@ import { useTabBarSpace, useTabScrollRef } from '../../components/TabBar';
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   const tabSpace = useTabBarSpace();
   const scrollRef = useTabScrollRef();
   const entries = useEntries() ?? [];
@@ -65,10 +67,10 @@ export default function Profile() {
   }
 
   return (
-    <ScrollView
+    <ScrollView showsVerticalScrollIndicator={false}
       ref={scrollRef}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: tabSpace }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20 + pagePad, paddingBottom: tabSpace }}
     >
       <View style={styles.header}>
         <Text accessibilityRole="header" style={styles.largeTitle}>{tr.profile.title}</Text>

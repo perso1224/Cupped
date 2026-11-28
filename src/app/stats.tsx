@@ -1,4 +1,5 @@
 import { Redirect } from 'expo-router';
+import { usePagePad } from '../lib/contentWidth';
 import { BackSpacer, FloatingBack } from '../components/NavButtons';
 import { IS_STORE_BUILD } from '../lib/build';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -23,6 +24,7 @@ export default function Stats() {
 
 function StatsScreen() {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   const entries = useEntries() ?? [];
   const [metrics] = useMetrics();
   const profile = useProfile();
@@ -47,7 +49,7 @@ function StatsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 40 }}>
+    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad + pagePad, paddingBottom: 40 }}>
       <BackSpacer />
       <Text accessibilityRole="header" style={styles.title}>{tr.stats.title}</Text>
       <Text style={styles.intro}>{tr.stats.intro}</Text>

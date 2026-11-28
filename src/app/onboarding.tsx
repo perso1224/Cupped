@@ -5,6 +5,7 @@ import { Alert, Animated, Easing, KeyboardAvoidingView, StyleSheet, Text, TextIn
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressScale, haptic, reduceMotionNow, screenReaderNow } from '../components/motion';
 import { LogoMark } from '../components/LogoMark';
+import { usePagePad } from '../lib/contentWidth';
 import { Chip, PillButton } from '../components/ui';
 import { BRAND } from '../config/brand';
 import { tr, upper } from '../i18n/tr';
@@ -35,6 +36,7 @@ const QUESTIONS = FLOW.length - 2;
 
 export default function Onboarding() {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad();
   const [pos, setPos] = useState(0);
   const step = FLOW[pos];
   const next = () => setPos((p) => Math.min(FLOW.length - 1, p + 1));
@@ -235,7 +237,7 @@ export default function Onboarding() {
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 }}>
+      <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 + pagePad }}>
         {pos >= 1 && pos <= QUESTIONS ? (
           <View style={styles.topRow}>
             <PressScale onPress={back} hitSlop={12} scaleTo={0.9} accessibilityLabel={tr.settings.back}>

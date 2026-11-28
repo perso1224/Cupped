@@ -3,7 +3,7 @@ import { NativeTabs } from 'expo-router/native-tabs';
 import { Tabs } from 'expo-router/tabs';
 import { Platform, useWindowDimensions } from 'react-native';
 import { SideBar } from '../../components/SideBar';
-import { isWide, sidePad, SIDEBAR_W } from '../../lib/contentWidth';
+import { InTabsContext, isWide } from '../../lib/contentWidth';
 import { TabBar } from '../../components/TabBar';
 import { haptic, useReducedMotion } from '../../components/motion';
 import { tr } from '../../i18n/tr';
@@ -15,7 +15,7 @@ const SEPARATE_PLUS = Platform.OS === 'ios' && Number.parseFloat(String(Platform
 export default function TabsLayout() {
   // Tablet (iPad, Android tablet): solda kenar çubuğu; telefonda platformun menüsü
   const { width } = useWindowDimensions();
-  if (isWide(width)) return <CustomTabs sidebar width={width} />;
+  if (isWide(width)) return <CustomTabs sidebar />;
   return Platform.OS === 'ios' ? <IosTabs /> : <CustomTabs />;
 }
 
@@ -67,18 +67,17 @@ function IosTabs() {
 }
 
 /** Android (ve web): kendi çizdiğimiz yüzen menü (components/TabBar.tsx), ayrı "+" düğmesiyle. */
-function CustomTabs({ sidebar = false, width = 0 }: { sidebar?: boolean; width?: number }) {
+function CustomTabs({ sidebar = false }: { sidebar?: boolean }) {
   // Sekme değişince ekran yana hafifçe kayarak gelir; "hareketi azalt" açıksa anında değişir.
   const reduce = useReducedMotion();
-  // Tablette içerik, kenar çubuğunun sağındaki alanda ortalanır
-  const pad = sidebar ? sidePad(width - SIDEBAR_W) : 0;
   return (
+    // Sayfalar bu bağlamla tablette içeriği soldaki menünün altında bırakmaz (usePagePad)
+    <InTabsContext.Provider value>
     <Tabs
       tabBar={(props) => (sidebar ? <SideBar {...props} /> : <TabBar {...props} />)}
       screenOptions={{
         headerShown: false,
-        tabBarPosition: sidebar ? 'left' : 'bottom',
-        sceneStyle: { backgroundColor: colors.bg, paddingHorizontal: pad },
+        sceneStyle: { backgroundColor: colors.bg },
         animation: reduce ? 'none' : 'shift',
       }}
       screenListeners={{ tabPress: () => haptic.select() }}
@@ -90,5 +89,6 @@ function CustomTabs({ sidebar = false, width = 0 }: { sidebar?: boolean; width?:
       <Tabs.Screen name="passport" options={{ title: tr.tabs.passport }} />
       <Tabs.Screen name="profile" options={{ title: tr.tabs.profile }} />
     </Tabs>
+    </InTabsContext.Provider>
   );
 }

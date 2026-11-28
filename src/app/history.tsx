@@ -1,4 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
+import { usePagePad } from '../lib/contentWidth';
 import { Fragment, useMemo } from 'react';
 import { BackSpacer, FloatingBack } from '../components/NavButtons';
 import { FlatList, Platform, StyleSheet, Text, View } from 'react-native';
@@ -25,6 +26,7 @@ function groupByDay(list: CupEntry[]) {
 
 export default function History() {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   // ?place=<mekan anahtarı>&title=<ad> ya da ?method=<yöntem>: Pasaport'tan gelen filtre
   const { place, method, title } = useLocalSearchParams<{ place?: string; method?: Method; title?: string }>();
   // Silinen fincan geri dönünce listeden kayarak çıkar
@@ -39,9 +41,9 @@ export default function History() {
   return (
     // Uzun geçmişte sadece ekranda görünen günler çizilir (yüzlerce fincanda da akıcı kalsın)
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-    <FlatList
+    <FlatList showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad, paddingBottom: 40 }}
+      contentContainerStyle={{ paddingTop: insets.top + layout.topPad, paddingHorizontal: layout.screenPad + pagePad, paddingBottom: 40 }}
       data={groups}
       keyExtractor={(g) => g.label}
       initialNumToRender={6}

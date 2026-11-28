@@ -127,11 +127,11 @@ export default function RootLayout() {
     <>
       <StatusBar style="auto" />
       {/* "Hareketi azalt" açıksa (telefon ya da uygulama ayarı) ekran geçişleri kayma yerine solma */}
-      {/* iPad: her ekranın içeriği ortada, en fazla CONTENT_MAX genişlikte (telefonda yan boşluk 0) */}
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg, paddingHorizontal: pad }, ...(reduceMotion ? { animation: 'fade' as const } : {}) }}>
+      {/* iPad: sayfalar kaydırma alanında kendi yan boşluğunu verir (usePagePad); görsel ekranlar (kart, duvar, özet) aşağıda ortalanır */}
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, ...(reduceMotion ? { animation: 'fade' as const } : {}) }}>
         {/* Profil varsa uygulama, yoksa tanıtım. Profil silinince/oluşunca yığın temizce değişir. */}
         <Stack.Protected guard={!!profile}>
-          <Stack.Screen name="(tabs)" options={{ contentStyle: { backgroundColor: colors.bg } }} /* tablette kenar çubuğu kendi yerleşimini yapar */ />
+          <Stack.Screen name="(tabs)" />
           {/* Yığın ekranları: sağdan kayar, Geri ile döner */}
           <Stack.Screen name="cup/[id]" dangerouslySingular={(_, params) => String((params as { id?: string })?.id ?? '')} />
           <Stack.Screen name="history" {...single} />
@@ -145,9 +145,9 @@ export default function RootLayout() {
           {/* Modallar (fincan sonucu iPad'de zaten dar bir sayfa olarak açılır: yan boşluk yok) */}
           <Stack.Screen name="new" {...single} options={{ presentation: 'fullScreenModal', contentStyle: { backgroundColor: colors.bg } }} />
           <Stack.Screen name="result/[id]" {...single} options={{ presentation: 'modal', sheetGrabberVisible: true, contentStyle: { backgroundColor: colors.bg } }} />
-          <Stack.Screen name="card" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
-          <Stack.Screen name="wall" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
-          <Stack.Screen name="evolution" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+          <Stack.Screen name="card" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: colors.bg, paddingHorizontal: pad } }} />
+          <Stack.Screen name="wall" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: colors.bg, paddingHorizontal: pad } }} />
+          <Stack.Screen name="evolution" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: colors.bg, paddingHorizontal: pad } }} />
           <Stack.Screen
             name="wrapped"
             {...single}

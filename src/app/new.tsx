@@ -22,7 +22,7 @@ import {
   type ScrollViewInstance,
   useWindowDimensions,
 } from 'react-native';
-import { sidePad } from '../lib/contentWidth';
+import { sidePad, usePagePad } from '../lib/contentWidth';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../components/Icon';
 import { CLOSE_SIZE, CloseButton, FloatingClose, goBack } from '../components/NavButtons';
@@ -48,6 +48,7 @@ const KB_DONE = 'cupped-kb-done';
 
 export default function NewCup() {
   const insets = useSafeAreaInsets();
+  const pagePad = usePagePad(); // tablette içerik ortada, kaydırma her yerden
   const pad = sidePad(useWindowDimensions().width);
   // ?edit=<id>: var olan fincanı düzenle (fotoğraf adımı atlanır, alanlar dolu gelir)
   // ?again=<id>: aynı fincandan bir tane daha (yöntem, mekan, menşei ve tarif dolu gelir; fotoğraf yeni)
@@ -446,13 +447,13 @@ export default function NewCup() {
   const typedKey = placeNameKey(typed);
   return (
     // Android'de klavye formun altındaki alanları örtmesin (iOS'ta ScrollView kendisi ayarlıyor)
-    <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg, paddingHorizontal: pad }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* Fotoğraftan forma geçişte form yumuşakça belirir */}
       <FadeIn style={{ flex: 1 }}>
-      <ScrollView
+      <ScrollView showsVerticalScrollIndicator={false}
         ref={formScroll}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20 + pagePad, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
         automaticallyAdjustKeyboardInsets
