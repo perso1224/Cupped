@@ -20,7 +20,9 @@ import {
   TextInput,
   View,
   type ScrollViewInstance,
+  useWindowDimensions,
 } from 'react-native';
+import { sidePad } from '../lib/contentWidth';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../components/Icon';
 import { CLOSE_SIZE, CloseButton, FloatingClose, goBack } from '../components/NavButtons';
@@ -46,6 +48,7 @@ const KB_DONE = 'cupped-kb-done';
 
 export default function NewCup() {
   const insets = useSafeAreaInsets();
+  const pad = sidePad(useWindowDimensions().width);
   // ?edit=<id>: var olan fincanı düzenle (fotoğraf adımı atlanır, alanlar dolu gelir)
   // ?again=<id>: aynı fincandan bir tane daha (yöntem, mekan, menşei ve tarif dolu gelir; fotoğraf yeni)
   const { edit, again } = useLocalSearchParams<{ edit?: string; again?: string }>();
@@ -369,6 +372,7 @@ export default function NewCup() {
   }
 
   // --- 1. adım: fotoğraf ---
+  // iPad: kamera tüm ekranı kaplar, düğmeler ve form ortadaki içerik genişliğinde kalır (telefonda 0)
   if (step === 'photo') {
     return (
       <View style={styles.cameraScreen}>
@@ -376,7 +380,7 @@ export default function NewCup() {
         {permission == null ? null : permission.granted ? (
           <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" onCameraReady={() => setCameraReady(true)} />
         ) : (
-          <View style={[styles.permission, { paddingTop: insets.top + 60 }]}>
+          <View style={[styles.permission, { paddingTop: insets.top + 60, paddingHorizontal: 28 + pad }]}>
             <Text accessibilityRole="header" style={styles.permTitle}>{tr.capture.permissionTitle}</Text>
             <Text style={styles.permBody}>
               {permission.canAskAgain ? tr.capture.permissionBody : tr.capture.permissionDenied}
@@ -395,11 +399,11 @@ export default function NewCup() {
           </View>
         ) : null}
 
-        <View style={[styles.close, { top: insets.top + 8 }]}>
+        <View style={[styles.close, { top: insets.top + 8, left: 20 + pad }]}>
           <CloseButton dark onPress={closeNew} />
         </View>
 
-        <View style={[styles.cameraBar, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={[styles.cameraBar, { paddingBottom: insets.bottom + 20, paddingHorizontal: 20 + pad }]}>
           <PressScale onPress={pickFromGallery} scaleTo={0.93} style={styles.sideBtn}>
             <Icon name="images-outline" size={24} color={colors.onColor} />
             <Text style={styles.sideText}>{tr.capture.fromGallery}</Text>
@@ -442,7 +446,7 @@ export default function NewCup() {
   const typedKey = placeNameKey(typed);
   return (
     // Android'de klavye formun altındaki alanları örtmesin (iOS'ta ScrollView kendisi ayarlıyor)
-    <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'android' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg, paddingHorizontal: pad }}>
       {/* Fotoğraftan forma geçişte form yumuşakça belirir */}
       <FadeIn style={{ flex: 1 }}>
       <ScrollView

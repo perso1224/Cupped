@@ -143,7 +143,7 @@ export default function RootLayout() {
           <Stack.Screen name="stats" {...single} />
           <Stack.Screen name="match" {...single} />
           {/* Modallar (fincan sonucu iPad'de zaten dar bir sayfa olarak açılır: yan boşluk yok) */}
-          <Stack.Screen name="new" {...single} options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="new" {...single} options={{ presentation: 'fullScreenModal', contentStyle: { backgroundColor: colors.bg } }} />
           <Stack.Screen name="result/[id]" {...single} options={{ presentation: 'modal', sheetGrabberVisible: true, contentStyle: { backgroundColor: colors.bg } }} />
           <Stack.Screen name="card" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="wall" {...single} options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
