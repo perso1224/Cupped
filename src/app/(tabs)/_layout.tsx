@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { Tabs } from 'expo-router/tabs';
-import { Platform } from 'react-native';
+import { Platform, useWindowDimensions } from 'react-native';
+import { SideBar } from '../../components/SideBar';
+import { isWide, sidePad, SIDEBAR_W } from '../../lib/contentWidth';
 import { TabBar } from '../../components/TabBar';
 import { haptic, useReducedMotion } from '../../components/motion';
 import { tr } from '../../i18n/tr';
@@ -11,6 +13,9 @@ import { colors } from '../../theme';
 const SEPARATE_PLUS = Platform.OS === 'ios' && Number.parseFloat(String(Platform.Version)) >= 26.1;
 
 export default function TabsLayout() {
+  // Tablet (iPad, Android tablet): solda kenar çubuğu; telefonda platformun menüsü
+  const { width } = useWindowDimensions();
+  if (isWide(width)) return <CustomTabs sidebar width={width} />;
   return Platform.OS === 'ios' ? <IosTabs /> : <CustomTabs />;
 }
 
@@ -62,13 +67,20 @@ function IosTabs() {
 }
 
 /** Android (ve web): kendi çizdiğimiz yüzen menü (components/TabBar.tsx), ayrı "+" düğmesiyle. */
-function CustomTabs() {
+function CustomTabs({ sidebar = false, width = 0 }: { sidebar?: boolean; width?: number }) {
   // Sekme değişince ekran yana hafifçe kayarak gelir; "hareketi azalt" açıksa anında değişir.
   const reduce = useReducedMotion();
+  // Tablette içerik, kenar çubuğunun sağındaki alanda ortalanır
+  const pad = sidebar ? sidePad(width - SIDEBAR_W) : 0;
   return (
     <Tabs
-      tabBar={(props) => <TabBar {...props} />}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg }, animation: reduce ? 'none' : 'shift' }}
+      tabBar={(props) => (sidebar ? <SideBar {...props} /> : <TabBar {...props} />)}
+      screenOptions={{
+        headerShown: false,
+        tabBarPosition: sidebar ? 'left' : 'bottom',
+        sceneStyle: { backgroundColor: colors.bg, paddingHorizontal: pad },
+        animation: reduce ? 'none' : 'shift',
+      }}
       screenListeners={{ tabPress: () => haptic.select() }}
     >
       <Tabs.Screen name="index" options={{ title: tr.tabs.home }} />

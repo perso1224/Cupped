@@ -131,7 +131,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg, paddingHorizontal: pad }, ...(reduceMotion ? { animation: 'fade' as const } : {}) }}>
         {/* Profil varsa uygulama, yoksa tanıtım. Profil silinince/oluşunca yığın temizce değişir. */}
         <Stack.Protected guard={!!profile}>
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(tabs)" options={{ contentStyle: { backgroundColor: colors.bg } }} /* tablette kenar çubuğu kendi yerleşimini yapar */ />
           {/* Yığın ekranları: sağdan kayar, Geri ile döner */}
           <Stack.Screen name="cup/[id]" dangerouslySingular={(_, params) => String((params as { id?: string })?.id ?? '')} />
           <Stack.Screen name="history" {...single} />

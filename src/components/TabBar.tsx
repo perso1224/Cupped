@@ -1,8 +1,8 @@
 import { router, useScrollToTop } from 'expo-router';
-import { useContentSize } from '../lib/contentWidth';
+import { isWide, useContentSize } from '../lib/contentWidth';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Platform, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tr } from '../i18n/tr';
 import { useProfile } from '../lib/useProfile';
@@ -18,6 +18,9 @@ const ROW_PAD = 6;
 /** Sekme ekranlarının içeriği yüzen menünün altında kalmasın diye en alta bırakılacak boşluk. */
 export function useTabBarSpace() {
   const insets = useSafeAreaInsets();
+  const wide = isWide(useWindowDimensions().width);
+  // Tablette menü solda (kenar çubuğu): altta yalnızca biraz boşluk
+  if (wide) return insets.bottom + 32;
   if (Platform.OS === 'ios') {
     // iPhone'da Apple'ın kendi menüsü var. Alt güvenli alan menüyü zaten içeriyorsa (≥ 49) üstüne biraz boşluk;
     // içermiyorsa menünün yüksekliğini de ekle. İçerik camın arkasından akar, son satır menünün üstünde biter.
